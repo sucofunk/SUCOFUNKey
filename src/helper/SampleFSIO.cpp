@@ -15,7 +15,8 @@ SampleFSIO::SampleFSIO(unsigned int *extmemArray, long extmemSize, Screen *scree
   }
 
   // initialize waveFormBuffer for all 72 possible samples -> ToDo: find a more progressive data structure?
-  for (int s=0; s<72; s++) {
+  // waveFormBuffer for recorder is stored at position 72
+  for (int s=0; s<73; s++) {
     pixelToWaveformSamples[s] = -1;
     waveFormBufferLength[s] = 0;
     sampleLengthMS[s] = 0;
@@ -41,10 +42,19 @@ void SampleFSIO::setSongPath(char *songPath) {
         strcpy(sampleFilename[b][s], buff);
     }
   }
+
+  // generate correct path where the recorder will save a new record
+  strcpy(buff, _songPath);
+  strcat(buff, "/SAMPLES/RECORD.RAW");
+  strcpy(recorderFilename, buff);
 }
 
 char * SampleFSIO::getSongPath() {
   return _songPath;
+}
+
+boolean SampleFSIO::isRecodingAvailable() {
+  return SD.exists(recorderFilename);
 }
 
 void SampleFSIO::writeAllSamplesToWaveformBuffer() {
@@ -61,6 +71,12 @@ void SampleFSIO::writeAllSamplesToWaveformBuffer() {
         };
     }
   }
+
+  // generate waveform buffer for last recording (RECORD.RAW, saved at position 72 -> bank0 3, sample0 0)
+  if (isRecodingAvailable()) {
+    generateWaveFormBufferForSample(3, 0);
+  }
+
 };
 
 void SampleFSIO::clearWaveFormBufferById(byte sampleId72) {
@@ -70,20 +86,22 @@ void SampleFSIO::clearWaveFormBufferById(byte sampleId72) {
     }  
 }
 
-
 void SampleFSIO::generateWaveFormBufferForSample(byte bank0, byte sampleId0) {
     int heightDivisor = floor(32767/60); // assumes the display area is 120px (2*60px) high
     File sample;
     
+    byte bufferPosition = (24*bank0)+sampleId0;
+
     // clear waveformBuffer for Sample
     for (int i=0; i<320; i++) {
-      waveFormBuffer[bank0*24+sampleId0][i][0] = 0;
-      waveFormBuffer[bank0*24+sampleId0][i][1] = 0;
+      waveFormBuffer[bufferPosition][i][0] = 0;
+      waveFormBuffer[bufferPosition][i][1] = 0;
     }
 
+    char * filename = (bufferPosition == 72 ? recorderFilename : sampleFilename[bank0][sampleId0]);
 
-    if (SD.exists(sampleFilename[bank0][sampleId0])) {
-      sample = SD.open(sampleFilename[bank0][sampleId0]);
+    if (SD.exists(filename)) {
+      sample = SD.open(filename);
       if (!sample) {
         Serial.println("unable to open sample file");
         return;
@@ -92,8 +110,6 @@ void SampleFSIO::generateWaveFormBufferForSample(byte bank0, byte sampleId0) {
       Serial.println("Sample does not exist!");
       return;
     }
-
-    byte bufferPosition = (24*bank0)+sampleId0;
 
     long fsize = sample.size();
     long samples = fsize/2;
@@ -129,14 +145,9 @@ void SampleFSIO::generateWaveFormBufferForSample(byte bank0, byte sampleId0) {
       }
     } else {
       // write values straight to waveFormBuffer
-      int i = 0;
-      Serial.print("sizeof(peak)::");
-      Serial.println(sizeof(peak));      
+      int i = 0;     
       while (sample.available()) {
           sample.read(&peak, sizeof(peak));
-          Serial.print(i);
-          Serial.print("::");
-          Serial.println(peak);
           if (peak >= 0) {
             waveFormBuffer[bufferPosition][i][0] = 0;
             waveFormBuffer[bufferPosition][i][1] = abs(floor(peak/heightDivisor));
@@ -151,6 +162,7 @@ void SampleFSIO::generateWaveFormBufferForSample(byte bank0, byte sampleId0) {
 
     sample.close();    
 }
+
 
 
 
@@ -194,7 +206,6 @@ boolean SampleFSIO::copyFile(const char *f1, const char *f2) {
   to.close();
   return true;
 }
-
 
 boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart, long byteEnd, float volumeScaleFactor) {
   if (SD.exists(f2)) {
@@ -283,7 +294,6 @@ boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart,
 }
 
 
-
 // -------------------------------------------------------------------------------
 // reads a sample from sd card and copy it to extmem
 // returns offset for next sample
@@ -328,7 +338,6 @@ long SampleFSIO::copyRawFromSdToMemory(const char *filename, long startOffset) {
   return startOffset+c+2;
 }
 
-
 // sampleNumber according to array 0..71
 boolean SampleFSIO::addSampleToMemory(byte sampleNumber, boolean forceReload) {
   if (_sampleOffsets[sampleNumber] == -1 || forceReload) {
@@ -358,7 +367,6 @@ boolean SampleFSIO::addSampleToMemory(byte sampleNumber, boolean forceReload) {
   } 
   return false;   
 }
-
 
 boolean SampleFSIO::loadSamplesToMemory(boolean *sampleArray) {
   
@@ -394,7 +402,6 @@ unsigned int *SampleFSIO::getExtmemAddressData(byte sampleNumber) {
     return 0;
 }
 
-
 byte SampleFSIO::getExtmemUsagePercent() {
   float f = (((_nextOffset*8.0) / _extmemSize)) * 100;
   return round(f);
@@ -418,7 +425,6 @@ void SampleFSIO::readSampleBankStatusFromSD() {
   }
 };
 
-
 void SampleFSIO::deleteFile(const char *filename) {
 
     // ToDo: check if it is still playing -> stop playing
@@ -428,15 +434,11 @@ void SampleFSIO::deleteFile(const char *filename) {
     }    
 }
 
-
-
-
 long SampleFSIO::getByteCountFromMs(long ms) {
   // assumes format is 44.1 khz mono raw audio 16 bit signed int
   // *2 ??? -> int = 16 Bit = 2Byte
   return round(44.1*ms*2);
 };
-
 
 // sampleNUmber 1..72
 void SampleFSIO::generateInstrument(byte sampleNumber, int baseNote) {

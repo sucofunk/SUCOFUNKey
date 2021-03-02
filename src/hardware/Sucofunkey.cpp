@@ -227,6 +227,7 @@ void Sucofunkey::_handleKeyPressed() {
 
           // handle Function Key
           if (i == 8) {
+//            Serial.println("FN 1");
             _fnKeyHold = true;
             _fnKeyInterrupted = false;
             _fnKeyMillis = millis();
@@ -264,6 +265,8 @@ void Sucofunkey::_handleKeyPressed() {
               }
             }
             
+//            Serial.println("FN 2");
+
             _fnKeyHold = false;
             _fnKeyInterrupted = false;
           

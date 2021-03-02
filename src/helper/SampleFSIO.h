@@ -41,6 +41,7 @@ class SampleFSIO {
                                             {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false}};
         
         char sampleFilename[3][24][40];
+        char recorderFilename[40]; // waveformbuffer is saved at position 72 (--> bank0=3, sample0=0)
 
         void setSongPath(char *songPath);
         char * getSongPath();
@@ -89,13 +90,14 @@ class SampleFSIO {
         uint8_t ranges[1] = {127};
         instrument_data instrument{1, ranges, sampleData};
 */        
-        void generateWaveFormBufferForSample(byte bank, byte sampleId);
+        void generateWaveFormBufferForSample(byte bank0, byte sampleId0);
         void clearWaveFormBufferById(byte sampleId72);
+        boolean isRecodingAvailable();
 
-        byte waveFormBuffer[72][320][2];
-        long waveFormBufferLength[72];
-        long pixelToWaveformSamples[72];
-        long sampleLengthMS[72];
+        byte waveFormBuffer[73][320][2];
+        long waveFormBufferLength[73];
+        long pixelToWaveformSamples[73];
+        long sampleLengthMS[73];
 
     private:
         unsigned int *_extmemArray;
@@ -106,8 +108,6 @@ class SampleFSIO {
 
         long _nextOffset = 0;
         long _sampleOffsets[72] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
-
-        
 
         uint8_t _completeRange[1] = {127};
         AudioSynthWavetable::sample_data _sampleData[72][1]{};

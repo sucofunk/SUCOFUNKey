@@ -13,6 +13,7 @@
 #include "context/synth/Synth.h"
 #include "context/live/Live.h"
 #include "context/settings/Settings.h"
+#include "context/recorder/Recorder.h"
 #include <Audio.h>
 
 #include <Adafruit_ST7789.h>
@@ -34,7 +35,7 @@ void handleKeyboardEventQueue(void);
 void changeContext(byte context);
 
 enum AppContext {
-  HOME = 0, SAMPLER = 1, SEQUENCER = 2, SYNTH = 3, LIVE = 4, SETTINGS = 5, STARTUP = 6
+  HOME = 0, SAMPLER = 1, SEQUENCER = 2, SYNTH = 3, LIVE = 4, SETTINGS = 5, STARTUP = 6, RECORDER = 7
 };
 
 AppContext currentAppContext; // stores the current active "module" context (HOME|SAMPLER|...)
@@ -69,6 +70,7 @@ SampleFSIO sfsio(extmemArray, sizeof(extmemArray), &screen);
 
 Home  homeContext(&keyboard, &screen, activeSongPath);
 Sampler samplerContext(&keyboard, &screen, &fsio, &sfsio, &audioResources);
+Recorder recorderContext(&keyboard, &screen, &fsio, &sfsio, &audioResources);
 Sequencer sequencerContext(&keyboard, &screen);
 Synth synthContext(&keyboard, &screen);
 Live liveContext(&keyboard, &screen);
@@ -170,11 +172,11 @@ void setup() {
   // Enable the audio shield, select input and enable output
   audioResources.audioShield.enable();
 
-  audioResources.audioShield.inputSelect(audioResources.activeInput);
   keyboard.setInput(Sucofunkey::INPUT_LINE);
-
-  audioResources.audioShield.micGain(20);  //0-63
+  audioResources.audioShield.micGain(10);  //0-63
   audioResources.audioShield.volume(0.6);  //0-1
+
+  audioResources.audioShield.inputSelect(audioResources.activeInput);
 
   // erase psram (sample memory)
   for (unsigned long i=0; i<sizeof(extmemArray)/4; i++) {
@@ -226,7 +228,9 @@ void sendEventToActiveContext(Sucofunkey::keyQueueStruct event) {
     case AppContext::STARTUP:
             startupContext.handleEvent(event);
             break;
-
+    case AppContext::RECORDER:
+            recorderContext.handleEvent(event);
+            break;
     default:
             break;
   }
@@ -249,7 +253,9 @@ void sendTickToActiveContext() {
     case  AppContext::STARTUP:
            globalTickIntervalNew = startupContext.receiveTimerTick();
           break;
-
+    case  AppContext::RECORDER:
+           globalTickIntervalNew = recorderContext.receiveTimerTick();
+          break;
     default:
           break;
   }    
@@ -262,12 +268,22 @@ void sendTickToActiveContext() {
 
 // --- END Timing ---
 
+int z = 0;
 
 void loop() {
-  keyboard.hasEncoderChange();
-  keyboard.hasKeyPressed();
-  handleKeyboardEventQueue();
+  // recording? -> has highest priority -> store record buffer to sd..
+  if (recorderContext.currentState == recorderContext.RECORDER_RECORDING) recorderContext.continueRecording();
+  z++;
 
+  // handle encoder and keyboard events.. but divide into three loops to not disrupt recording
+  if (z == 1) keyboard.hasEncoderChange();
+  if (z == 2) keyboard.hasKeyPressed();
+  if (z == 3) {
+    handleKeyboardEventQueue();
+    z = 0;
+  }
+
+  // handle timer
   if (ticked) {
     ticked=false;
     sendTickToActiveContext();
@@ -275,28 +291,45 @@ void loop() {
 }
 
 
-void changeContext(AppContext context) {
-    currentAppContext = context;
-    
+void changeContext(AppContext context) {    
     homeContext.setActive(false);
     samplerContext.setActive(false);
     sequencerContext.setActive(false);
     synthContext.setActive(false);
     liveContext.setActive(false);
     settingsContext.setActive(false);
+    recorderContext.setActive(false);
 
     switch (context) {
-      case  AppContext::HOME: homeContext.setActive(true);
+      case  AppContext::HOME: 
+                  homeContext.setActive(true);
+                  currentAppContext = HOME;
                   break;
-      case  AppContext::SAMPLER: samplerContext.setActive(true);
+      case  AppContext::SAMPLER: 
+                  if (!recorderContext.isRecording()) {
+                    samplerContext.setActive(true);
+                    currentAppContext = SAMPLER;
+                  }                  
                   break;
-      case  AppContext::SEQUENCER: sequencerContext.setActive(true);
+      case  AppContext::SEQUENCER: 
+                  sequencerContext.setActive(true);
+                  currentAppContext = SEQUENCER;
                   break;
-      case  AppContext::SYNTH: synthContext.setActive(true);
+      case  AppContext::SYNTH: 
+                  synthContext.setActive(true);
+                  currentAppContext = SYNTH;
                   break;
-      case  AppContext::LIVE: liveContext.setActive(true);
+      case  AppContext::LIVE: 
+                  liveContext.setActive(true);
+                  currentAppContext = LIVE;
                   break;
-      case  AppContext::SETTINGS: settingsContext.setActive(true);
+      case  AppContext::SETTINGS: 
+                  settingsContext.setActive(true);
+                  currentAppContext = SETTINGS;
+                  break;                  
+      case  AppContext::RECORDER: 
+                  recorderContext.setActive(true);
+                  currentAppContext = RECORDER;
                   break;                  
       default: 
                   break;                  
@@ -315,6 +348,7 @@ void handleKeyboardEventQueue() {
     Serial.print("::");
     Serial.println(event.type);
 */
+
     if (event.type == Sucofunkey::EVENT_APPLICATION) {
       switch(event.index) {
         case Sucofunkey::SONGSELECTED:
@@ -326,6 +360,11 @@ void handleKeyboardEventQueue() {
           sfsio.writeAllSamplesToWaveformBuffer();
           changeContext(AppContext::HOME);          
           break;
+
+        case Sucofunkey::RECORDED:
+          changeContext(AppContext::SAMPLER);
+          break;
+
         default:
           break;
       }      
@@ -365,64 +404,22 @@ void handleKeyboardEventQueue() {
       }
     }
 
-/*
-    if (!preCheck && (event.type == Sucofunkey::KEY_OPERATION || event.type == Sucofunkey::KEY_FN_OPERATION || event.type == Sucofunkey::KEY_MENU_SELECTOR)) {
-      switch(event.index) {
-        case Sucofunkey::MENU:                              
-              break;        
-        case Sucofunkey::CURSOR_LEFT:
-              if (event.pressed) { keyboard.setBankDown(); };
-              break;
-        case Sucofunkey::CURSOR_RIGHT:
-              if (event.pressed) { keyboard.setBankUp(); };
-              break;
-        default:
-              break;
-      }
-    }
-*/
-    if (!preCheck) {
-/*      if (event.type == Sucofunkey::KEY_NOTE || event.type == Sucofunkey::KEY_FN_NOTE) {
-        Serial.println("NOTE");
-        byte sampleId = keyboard.getSampleIdByEventKey(event.index);
-        byte ledPIN = keyboard.getLEDPinBySampleId(sampleId);
-        keyboard.setLEDState(ledPIN, event.pressed);
-      }
-*/
-      sendEventToActiveContext(event);
-    }
-
-
-/*
-    if (event.type == Sucofunkey::KEY_NOTE || event.type == Sucofunkey::KEY_FN_NOTE) {
-      Serial.println("NOTE");
-      byte sampleId = keyboard.getSampleIdByEventKey(event.index);
-      byte ledPIN = keyboard.getLEDPinBySampleId(sampleId);
-      keyboard.setLEDState(ledPIN, event.pressed);
-    }
-
-    if (event.type == Sucofunkey::KEY_OPERATION) {
-    
-      if (event.index == Sucofunkey::PLAY) {
-        keyboard.setLEDState(keyboard.LED_PLAY, (event.pressed ? true : false));
+    if (!preCheck && currentAppContext != STARTUP && event.type == Sucofunkey::KEY_OPERATION) {    
+      
+      if (event.index == Sucofunkey::RECORD && event.pressed) { 
+        if (currentAppContext != RECORDER && !recorderContext.isRecording()) {
+          changeContext(RECORDER);
+          preCheck = true;
+        }
+        if (currentAppContext != RECORDER && recorderContext.isRecording()) {          
+          recorderContext.stopRecording();
+          preCheck = true;
+        }
       } 
-      if (event.index == Sucofunkey::RECORD) {
-        keyboard.setLEDState(keyboard.LED_RECORD, (event.pressed ? true : false));
-      }        
-
-      if (event.index == Sucofunkey::CURSOR_RIGHT && event.pressed) {
-        keyboard.setBankUp();
-      }
-
-      if (event.index == Sucofunkey::CURSOR_LEFT && event.pressed) {
-        keyboard.setBankDown();
-      }
-
-      if (event.index == Sucofunkey::INPUTSELECTOR && event.pressed) {
-        keyboard.toggleInput();
-      }
     }
-*/    
+
+    if (!preCheck) {
+      sendEventToActiveContext(event);
+    }   
   }
 }
-

@@ -58,7 +58,8 @@ class Sampler {
 
         byte _tempBank;
 
-        void _blinkSampleSlot(byte sampleId, boolean on);
+        void _blinkSampleSlot(byte sampleId1, boolean on);
+        void _play();
 };
 
 #endif

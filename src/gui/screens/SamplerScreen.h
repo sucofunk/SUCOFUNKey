@@ -15,10 +15,12 @@ class SamplerScreen {
         SamplerScreen(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *sfsio, AudioResources *audioResources);
         void handleEvent(Sucofunkey::keyQueueStruct event);
 
-        void showEmptyScreen();
+        void showEmptyScreen();        
         void showSampleInfo(byte bank0, byte sampleId0);
-        void showSampleInfo(byte bank0, byte sampleId0, float volumeScaleFactor);
+        void showSampleInfo(byte sampleId72, float volumeScaleFactor);        
+        void showSampleInfo(byte bank0, byte sampleId0, float volumeScaleFactor);        
         void setBottomMenu(BottomMenu bottomMenu);
+        void drawTrimMarker(int trimMarkerStartPosition, int trimMarkerEndPosition, byte sampleId72, float volumeScaleFactor);
         void drawTrimMarker(int trimMarkerStartPosition, int trimMarkerEndPosition, byte bank0, byte sampleId0, float volumeScaleFactor);
 
         void showSlotSelectionHint();

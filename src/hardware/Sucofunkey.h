@@ -208,6 +208,7 @@ class Sucofunkey {
         static const byte BOTTOM_NAV_ITEM1 = 213; 
         static const byte BOTTOM_NAV_ITEM2 = 214;
         static const byte BOTTOM_NAV_ITEM3 = 215;
+        static const byte RECORDED = 216;
 
         // just for debugging to Serial
         void printQueue();

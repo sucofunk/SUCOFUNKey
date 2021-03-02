@@ -25,15 +25,8 @@ void SamplerScreen::showEmptyScreen() {
 };
 
 
-
-void SamplerScreen::showSampleInfo(byte bank0, byte sampleId0) {
-    showSampleInfo(bank0, sampleId0, 1.0);
-}
-
-
-void SamplerScreen::showSampleInfo(byte bank0, byte sampleId0, float volumeScaleFactor) {
+void SamplerScreen::showSampleInfo(byte sampleId72, float volumeScaleFactor) {
     int zeroAxisY = (_screen->AREA_CONTENT.y2 - _screen->AREA_CONTENT.y1)/2+_screen->AREA_CONTENT.y1;
-    byte bufferPosition = (bank0*24)+sampleId0;
 
     _screen->fillArea(_screen->AREA_CONTENT, _screen->C_BLACK);
 
@@ -42,8 +35,16 @@ void SamplerScreen::showSampleInfo(byte bank0, byte sampleId0, float volumeScale
 
     // draw waveform
     for (int i=0; i<320; i++) {        
-      _screen->drawLine(i, floor(zeroAxisY+_sfsio->waveFormBuffer[bufferPosition][i][0]*volumeScaleFactor), i, floor(zeroAxisY-_sfsio->waveFormBuffer[bufferPosition][i][1]*volumeScaleFactor), (i >= _sfsio->waveFormBufferLength[bufferPosition] ? _screen->C_LIGHTGREY : _screen->C_WHITE ));
-    }        
+      _screen->drawLine(i, floor(zeroAxisY+_sfsio->waveFormBuffer[sampleId72][i][0]*volumeScaleFactor), i, floor(zeroAxisY-_sfsio->waveFormBuffer[sampleId72][i][1]*volumeScaleFactor), (i >= _sfsio->waveFormBufferLength[sampleId72] ? _screen->C_LIGHTGREY : _screen->C_WHITE ));
+    }
+}
+
+void SamplerScreen::showSampleInfo(byte bank0, byte sampleId0) {
+    showSampleInfo((bank0*24)+sampleId0, 1.0f);
+}
+
+void SamplerScreen::showSampleInfo(byte bank0, byte sampleId0, float volumeScaleFactor) {
+    showSampleInfo((bank0*24)+sampleId0, volumeScaleFactor);        
 }; 
 
 
@@ -51,36 +52,40 @@ void SamplerScreen::setBottomMenu(BottomMenu bottomMenu) {
     _bottomMenu = bottomMenu;    
 }
 
-void SamplerScreen::drawTrimMarker(int trimMarkerStartPosition, int trimMarkerEndPosition, byte bank0, byte sampleId0, float volumeScaleFactor) {
-    byte bufferPosition = (bank0*24)+sampleId0;
+
+void SamplerScreen::drawTrimMarker(int trimMarkerStartPosition, int trimMarkerEndPosition, byte sampleId72, float volumeScaleFactor) {
     int zeroAxisY = (_screen->AREA_CONTENT.y2 - _screen->AREA_CONTENT.y1)/2+_screen->AREA_CONTENT.y1;
 
     // Start Marker
     if (trimMarkerStartPosition > 0){
         _screen->drawLine(trimMarkerStartPosition-1, _screen->AREA_CONTENT.y1, trimMarkerStartPosition-1, _screen->AREA_CONTENT.y2, _screen->C_BLACK);
-        _screen->drawLine(trimMarkerStartPosition-1, floor(zeroAxisY+_sfsio->waveFormBuffer[bufferPosition][trimMarkerStartPosition-1][0]*volumeScaleFactor), trimMarkerStartPosition-1, floor(zeroAxisY-_sfsio->waveFormBuffer[bufferPosition][trimMarkerStartPosition-1][1]*volumeScaleFactor), _screen->C_WHITE);
+        _screen->drawLine(trimMarkerStartPosition-1, floor(zeroAxisY+_sfsio->waveFormBuffer[sampleId72][trimMarkerStartPosition-1][0]*volumeScaleFactor), trimMarkerStartPosition-1, floor(zeroAxisY-_sfsio->waveFormBuffer[sampleId72][trimMarkerStartPosition-1][1]*volumeScaleFactor), _screen->C_WHITE);
     }
     if (trimMarkerStartPosition < 319){
         _screen->drawLine(trimMarkerStartPosition+1, _screen->AREA_CONTENT.y1, trimMarkerStartPosition+1, _screen->AREA_CONTENT.y2, _screen->C_BLACK);    
-        _screen->drawLine(trimMarkerStartPosition+1, floor(zeroAxisY+_sfsio->waveFormBuffer[bufferPosition][trimMarkerStartPosition+1][0]*volumeScaleFactor), trimMarkerStartPosition+1, floor(zeroAxisY-_sfsio->waveFormBuffer[bufferPosition][trimMarkerStartPosition+1][1]*volumeScaleFactor), _screen->C_WHITE);
+        _screen->drawLine(trimMarkerStartPosition+1, floor(zeroAxisY+_sfsio->waveFormBuffer[sampleId72][trimMarkerStartPosition+1][0]*volumeScaleFactor), trimMarkerStartPosition+1, floor(zeroAxisY-_sfsio->waveFormBuffer[sampleId72][trimMarkerStartPosition+1][1]*volumeScaleFactor), _screen->C_WHITE);
     }
 
     _screen->drawLine(trimMarkerStartPosition, _screen->AREA_CONTENT.y1, trimMarkerStartPosition, _screen->AREA_CONTENT.y2, _screen->C_TRIM_START);
-    _screen->drawLine(trimMarkerStartPosition, floor(zeroAxisY+_sfsio->waveFormBuffer[bufferPosition][trimMarkerStartPosition][0]*volumeScaleFactor), trimMarkerStartPosition, floor(zeroAxisY-_sfsio->waveFormBuffer[bufferPosition][trimMarkerStartPosition][1]*volumeScaleFactor), _screen->C_LIGHTGREY);
+    _screen->drawLine(trimMarkerStartPosition, floor(zeroAxisY+_sfsio->waveFormBuffer[sampleId72][trimMarkerStartPosition][0]*volumeScaleFactor), trimMarkerStartPosition, floor(zeroAxisY-_sfsio->waveFormBuffer[sampleId72][trimMarkerStartPosition][1]*volumeScaleFactor), _screen->C_LIGHTGREY);
 
     // End Marker
     if (trimMarkerEndPosition > 0){
         _screen->drawLine(trimMarkerEndPosition-1, _screen->AREA_CONTENT.y1, trimMarkerEndPosition-1, _screen->AREA_CONTENT.y2, _screen->C_BLACK);
-        _screen->drawLine(trimMarkerEndPosition-1, floor(zeroAxisY+_sfsio->waveFormBuffer[bufferPosition][trimMarkerEndPosition-1][0]*volumeScaleFactor), trimMarkerEndPosition-1, floor(zeroAxisY-_sfsio->waveFormBuffer[bufferPosition][trimMarkerEndPosition-1][1]*volumeScaleFactor), _screen->C_WHITE);
+        _screen->drawLine(trimMarkerEndPosition-1, floor(zeroAxisY+_sfsio->waveFormBuffer[sampleId72][trimMarkerEndPosition-1][0]*volumeScaleFactor), trimMarkerEndPosition-1, floor(zeroAxisY-_sfsio->waveFormBuffer[sampleId72][trimMarkerEndPosition-1][1]*volumeScaleFactor), _screen->C_WHITE);
     }
 
     if (trimMarkerEndPosition < 319){
         _screen->drawLine(trimMarkerEndPosition+1, _screen->AREA_CONTENT.y1, trimMarkerEndPosition+1, _screen->AREA_CONTENT.y2, _screen->C_BLACK);    
-        _screen->drawLine(trimMarkerEndPosition+1, floor(zeroAxisY+_sfsio->waveFormBuffer[bufferPosition][trimMarkerEndPosition+1][0]*volumeScaleFactor), trimMarkerEndPosition+1, floor(zeroAxisY-_sfsio->waveFormBuffer[bufferPosition][trimMarkerEndPosition+1][1]*volumeScaleFactor), _screen->C_WHITE);
+        _screen->drawLine(trimMarkerEndPosition+1, floor(zeroAxisY+_sfsio->waveFormBuffer[sampleId72][trimMarkerEndPosition+1][0]*volumeScaleFactor), trimMarkerEndPosition+1, floor(zeroAxisY-_sfsio->waveFormBuffer[sampleId72][trimMarkerEndPosition+1][1]*volumeScaleFactor), _screen->C_WHITE);
     }
 
     _screen->drawLine(trimMarkerEndPosition, _screen->AREA_CONTENT.y1, trimMarkerEndPosition, _screen->AREA_CONTENT.y2, _screen->C_TRIM_END);
-    _screen->drawLine(trimMarkerEndPosition, floor(zeroAxisY+_sfsio->waveFormBuffer[bufferPosition][trimMarkerEndPosition][0]*volumeScaleFactor), trimMarkerEndPosition, floor(zeroAxisY-_sfsio->waveFormBuffer[bufferPosition][trimMarkerEndPosition][1]*volumeScaleFactor), _screen->C_LIGHTGREY);
+    _screen->drawLine(trimMarkerEndPosition, floor(zeroAxisY+_sfsio->waveFormBuffer[sampleId72][trimMarkerEndPosition][0]*volumeScaleFactor), trimMarkerEndPosition, floor(zeroAxisY-_sfsio->waveFormBuffer[sampleId72][trimMarkerEndPosition][1]*volumeScaleFactor), _screen->C_LIGHTGREY);
+}
+
+void SamplerScreen::drawTrimMarker(int trimMarkerStartPosition, int trimMarkerEndPosition, byte bank0, byte sampleId0, float volumeScaleFactor) {
+    drawTrimMarker(trimMarkerStartPosition, trimMarkerEndPosition, (bank0*24)+sampleId0, volumeScaleFactor);
 }
 
 

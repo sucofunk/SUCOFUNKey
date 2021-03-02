@@ -84,20 +84,12 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
                 currentState = SAMPLE_EDIT_TRIM;
               }
               break;
-        case Sucofunkey::PLAY:
-              if (currentState == SAMPLE_SELECTED) {
-                _audioResources->playSdRaw1.play(_sfsio->sampleFilename[_keyboard->getBank()-1][_activeSampleSlot-1]);
-              }
-              if (currentState == SAMPLE_EDIT_TRIM) {
-                int sampleId72 = (_keyboard->getBank()-1)*24+_activeSampleSlot-1;
-                uint32_t start = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerStartPosition;
-                uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerEndPosition;
-                _audioResources->playSdRaw1.play(_sfsio->sampleFilename[_keyboard->getBank()-1][_activeSampleSlot-1], start*2, end*2, _volumeScaleFactor);
-              }
-              break;        
-
         case Sucofunkey::PAUSE:
+              Serial.println("stop");
               _audioResources->playSdRaw1.stop();
+              break;              
+        case Sucofunkey::PLAY:
+              _play();
               break;        
       }
     }
@@ -113,7 +105,7 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
           _tempBank = _keyboard->getBank();
           currentState = SAMPLE_SELECTED;
           _bottomMenu.setupMenu2("Edit", 0, "Delete", 0);        
-          _samplerScreen.showSampleInfo(_keyboard->getBank()-1, sampleId-1);
+          _samplerScreen.showSampleInfo(_keyboard->getBank()-1, sampleId-1, 1.0);
           _audioResources->playSdRaw1.play(_sfsio->sampleFilename[_keyboard->getBank()-1][sampleId-1]);
         } else {
           _audioResources->playSdRaw1.stop();
@@ -126,11 +118,16 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
           _samplerScreen.showSavingMessage();
 
           // saving..
-          int sampleId72 = (_tempBank-1)*24+_activeSampleSlot-1;
+          int sampleId72 =  _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
           uint32_t start = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerStartPosition;
           uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * (_trimMarkerEndPosition+1);
 
-          _sfsio->copyFilePart(_sfsio->sampleFilename[_tempBank-1][_activeSampleSlot-1], _sfsio->sampleFilename[_keyboard->getBank()-1][sampleId-1], start*2, end*2, _volumeScaleFactor);
+          if (_activeSampleSlot == 0) {
+            _sfsio->copyFilePart(_sfsio->recorderFilename, _sfsio->sampleFilename[_keyboard->getBank()-1][sampleId-1], start*2, end*2, _volumeScaleFactor);
+          } else {
+            _sfsio->copyFilePart(_sfsio->sampleFilename[_tempBank-1][_activeSampleSlot-1], _sfsio->sampleFilename[_keyboard->getBank()-1][sampleId-1], start*2, end*2, _volumeScaleFactor);
+          }
+                    
           _sfsio->readSampleBankStatusFromSD();
           _sfsio->generateWaveFormBufferForSample(_keyboard->getBank()-1, sampleId-1);
 
@@ -141,8 +138,6 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
           _blinkSampleSlot(_activeSampleSlot, true);
         } 
       }
-
-   
     }
 
 
@@ -173,9 +168,10 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
     int maxWidth = 319;
 
     if (event.type == Sucofunkey::ENCODER && Sampler::currentState == SAMPLE_EDIT_TRIM) {
+        byte sample72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
         switch (event.index) {
           case Sucofunkey::ENCODER_1:
-                 maxWidth = _sfsio->waveFormBufferLength[(_tempBank-1)*24+_activeSampleSlot-1];
+                 maxWidth = _sfsio->waveFormBufferLength[sample72];
                 _trimMarkerStartPosition = _trimMarkerStartPosition + (event.pressed ? 1 : -1);
                 if (_trimMarkerStartPosition < 0) { _trimMarkerStartPosition = 0; };
                 if (_trimMarkerStartPosition > maxWidth-2) { _trimMarkerStartPosition = maxWidth-2; };
@@ -184,10 +180,10 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
                   _trimMarkerEndPosition++;
                 }
 
-                _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, _keyboard->getBank()-1, _activeSampleSlot-1, _volumeScaleFactor);
+                _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, sample72, _volumeScaleFactor);
                 break;
           case Sucofunkey::ENCODER_2:
-                maxWidth = _sfsio->waveFormBufferLength[(_tempBank-1)*24+_activeSampleSlot-1];
+                maxWidth = _sfsio->waveFormBufferLength[sample72];
                 _trimMarkerEndPosition += (event.pressed ? 1 : -1);
                 if (_trimMarkerEndPosition < 1) { _trimMarkerEndPosition = 1; };
                 if (_trimMarkerEndPosition > maxWidth-1) { _trimMarkerEndPosition = maxWidth-1; };
@@ -196,18 +192,17 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
                   _trimMarkerStartPosition--;
                 }
 
-                _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, _keyboard->getBank()-1, _activeSampleSlot-1, _volumeScaleFactor);                
+                _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, sample72, _volumeScaleFactor);                
                 break;          
           case Sucofunkey::ENCODER_3:
                 _volumeScaleFactor += (event.pressed ? 0.1 : -0.1);
                 if (_volumeScaleFactor < 0.1) _volumeScaleFactor = 0.1;
                 if (_volumeScaleFactor > 5.0) _volumeScaleFactor = 5.0;
                 _samplerScreen.showSampleInfo(_keyboard->getBank()-1, _activeSampleSlot-1, _volumeScaleFactor);
-                _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, _keyboard->getBank()-1, _activeSampleSlot-1, _volumeScaleFactor);
-                break;          
+                _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, sample72, _volumeScaleFactor);
+                break;
         }          
     }
-
 }
 
 long Sampler::receiveTimerTick() {
@@ -223,16 +218,47 @@ void Sampler::setActive(boolean active) {
   if (active) {
     _isActive = true;
     _keyboard->setBank(_activeBank);
-    _samplerScreen.showEmptyScreen();                
-    indicateFreeSamples(true, 250);
-    _activeSampleSlot = 0;
-    currentState = SAMPLE_NOTHING;
+
+    if (_sfsio->isRecodingAvailable()) {
+      _activeSampleSlot = 0;
+      _samplerScreen.showSampleInfo(3, 0, 1.0f);
+      currentState = SAMPLE_SELECTED;
+      // show menu instantly, as we want the user to edit/save the fresh record
+      handleEvent({_keyboard->MENU, true, false, _keyboard->KEY_OPERATION, 0});
+    } else {
+//      _keyboard->setBank(_activeBank);
+      _samplerScreen.showEmptyScreen();
+      indicateFreeSamples(true, 250);
+      _activeSampleSlot = 0;
+      currentState = SAMPLE_NOTHING;
+    }
+
   } else {
     _isActive = false;
     _keyboard->setBank(0);
     _blinkActiveSample = false;
     _keyboard->setLEDState(_activeSampleLEDPin, false);
     _audioResources->playSdRaw1.stop();
+  }
+}
+
+void Sampler::_play() {
+  // select sample to play (slot|recorder)
+  char * filename = (_activeSampleSlot == 0 ? _sfsio->recorderFilename : _sfsio->sampleFilename[_keyboard->getBank()-1][_activeSampleSlot-1]);
+
+  // play whole sample..
+  if (currentState == SAMPLE_SELECTED) {
+      _audioResources->playSdRaw1.play(filename);
+  }
+  
+  // .. or selected trim-part
+  if (currentState == SAMPLE_EDIT_TRIM) {
+    int sampleId72 = (_activeSampleSlot == 0 ? 72 : (_keyboard->getBank()-1)*24+_activeSampleSlot-1);
+
+    uint32_t start = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerStartPosition;
+    uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerEndPosition;
+
+    _audioResources->playSdRaw1.play(filename, start*2, end*2, _volumeScaleFactor);
   }
 }
 
@@ -259,14 +285,14 @@ void Sampler::indicateFreeSamples(boolean readFromSD, long ms) {
   }
 };
 
-void Sampler::_blinkSampleSlot(byte sampleId, boolean on){
-  if (on) {
+void Sampler::_blinkSampleSlot(byte sampleId1, boolean on){
+  if (on && sampleId1 > 0) {
     // turn current blinking LED off
     if (_activeSampleLEDPin != 0) {
       _keyboard->setLEDState(_activeSampleLEDPin, false);  
     }
 
-    _activeSampleLEDPin = _keyboard->getLEDPinBySampleId(sampleId);
+    _activeSampleLEDPin = _keyboard->getLEDPinBySampleId(sampleId1);
     _blinkActiveSample = true;
   } else {    
     _blinkActiveSample = false;
@@ -277,49 +303,60 @@ void Sampler::_blinkSampleSlot(byte sampleId, boolean on){
 
 void Sampler::editActiveSample() {
     currentState = SAMPLE_EDIT_TRIM;
+    byte sample72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
     _bottomMenu.setupMenu3("Save", 0, "Save as", 0, "Cancel", 0);
     _bottomMenu.showMenu(true);
-    _trimMarkerEndPosition = _sfsio->waveFormBufferLength[(_tempBank-1)*24+_activeSampleSlot-1]-1;
-    _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, _tempBank-1, _activeSampleSlot-1, _volumeScaleFactor);
+    _trimMarkerEndPosition = _sfsio->waveFormBufferLength[sample72]-1;
+    _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, sample72, _volumeScaleFactor);
     Serial.print("editActiveSample::endmarker::");
     Serial.println(_trimMarkerEndPosition-1);
 }
 
 void Sampler::deleteActiveSample() {
   Serial.println("deleteActiveSample");
-  _sfsio->deleteFile(_sfsio->sampleFilename[_tempBank-1][_activeSampleSlot-1]);
+  byte sample72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
+
+  _sfsio->deleteFile( _activeSampleSlot == 0 ? _sfsio->recorderFilename : _sfsio->sampleFilename[_tempBank-1][_activeSampleSlot-1]);
+  
   _sfsio->readSampleBankStatusFromSD();
-  _sfsio->clearWaveFormBufferById((_tempBank-1)*24+_activeSampleSlot-1);
-  _sfsio->waveFormBufferLength[(_tempBank-1)*24+_activeSampleSlot-1] = 0;
-  _samplerScreen.showSampleInfo(_tempBank-1, _activeSampleSlot-1);
+  _sfsio->clearWaveFormBufferById(sample72);
+  _sfsio->waveFormBufferLength[sample72] = 0;
+  _samplerScreen.showSampleInfo(sample72, 1.0);
   _bottomMenu.showMenu(false);
 }
 
 void Sampler::saveActiveSample() {
   _samplerScreen.showSavingMessage();
 
-  int sampleId72 = (_tempBank-1)*24+_activeSampleSlot-1;
+  int sampleId72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
   uint32_t start = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerStartPosition;
   uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * (_trimMarkerEndPosition+1);
 
+  char * filename = _activeSampleSlot == 0 ? _sfsio->recorderFilename : _sfsio->sampleFilename[_tempBank-1][_activeSampleSlot-1];
+
   // copy to temp file 
   _sfsio->deleteFile("TEMP.RAW");
-  _sfsio->copyFilePart(_sfsio->sampleFilename[_tempBank-1][_activeSampleSlot-1], "TEMP.RAW", start*2, end*2, _volumeScaleFactor);
+  _sfsio->copyFilePart(filename, "TEMP.RAW", start*2, end*2, _volumeScaleFactor);
 
   // remove sample 
-  _sfsio->deleteFile(_sfsio->sampleFilename[_tempBank-1][_activeSampleSlot-1]);
+  _sfsio->deleteFile(filename);
 
   // copy temp to sample 
-  _sfsio->copyFile("TEMP.RAW", _sfsio->sampleFilename[_tempBank-1][_activeSampleSlot-1]);
+  _sfsio->copyFile("TEMP.RAW", filename);
 
   // remove temp
   _sfsio->deleteFile("TEMP.RAW");
 
   _sfsio->readSampleBankStatusFromSD();
-  _sfsio->generateWaveFormBufferForSample(_keyboard->getBank()-1, _activeSampleSlot-1);
+  if (_activeSampleSlot == 0) {
+    _sfsio->generateWaveFormBufferForSample(3, 0);
+  } else {
+    _sfsio->generateWaveFormBufferForSample(_keyboard->getBank()-1, _activeSampleSlot-1);
+  }
+  
 
   currentState = SAMPLE_SELECTED;
-  _samplerScreen.showSampleInfo(_keyboard->getBank()-1, _activeSampleSlot-1);
+  _samplerScreen.showSampleInfo(sampleId72, 1.0);
   _bottomMenu.showMenu(false);
 
   _trimMarkerStartPosition = 0;
@@ -338,7 +375,13 @@ void Sampler::saveActiveSampleAs() {
 void Sampler::cancel() {
   Serial.println("cancel");
   currentState = SAMPLE_SELECTED;
-  _samplerScreen.showSampleInfo(_keyboard->getBank()-1, _activeSampleSlot-1);
+
+  if (_activeSampleSlot == 0) {
+    _samplerScreen.showSampleInfo(72, 1.0);
+  } else {
+    _samplerScreen.showSampleInfo(_keyboard->getBank()-1, _activeSampleSlot-1, 1.0);    
+  }
+  
   _bottomMenu.showMenu(false);
   _trimMarkerStartPosition = 0;
   _trimMarkerEndPosition = 319;

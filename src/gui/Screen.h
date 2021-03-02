@@ -99,6 +99,10 @@ class Screen {
         
         const uint16_t C_ORANGE = ST77XX_ORANGE;
 
+        const uint16_t C_PEAK_OVER = RGBtoColor(255, 0, 0);
+        const uint16_t C_PEAK_MUCH = RGBtoColor(245, 150, 5);
+        const uint16_t C_PEAK_OK = RGBtoColor(0, 255, 0);
+
         const uint16_t C_NAV_INACTIVE = RGBtoColor(100, 100, 100);
         const uint16_t C_NAV_ACTIVE = RGBtoColor(255, 255, 255);        
 
