@@ -18,8 +18,6 @@ void Recorder::handleEvent(Sucofunkey::keyQueueStruct event) {
     if (event.pressed) {
       switch(event.index) {
         case Sucofunkey::RECORD:
-            Serial.print("RECORD in Recorder::");
-            Serial.println(currentState);
             if (currentState == RECORDER_RECORDING) {
               _recorderScreen.showRecorderScreen();
               stopRecording();
@@ -28,14 +26,29 @@ void Recorder::handleEvent(Sucofunkey::keyQueueStruct event) {
               _recorderScreen.showRecorderScreenRecording();
             }
             break;
+        case Sucofunkey::INPUTSELECTOR:
+            _lastInput = _keyboard->getInput();
+            _keyboard->toggleInput();
+            activateInput();
+            break;
       }
     }
 
     if (event.type == Sucofunkey::ENCODER) {
         switch (event.index) {
           case Sucofunkey::ENCODER_1:
+                if (event.pressed) {
+                  _audioResources->increaseMicGain();
+                } else {
+                  _audioResources->decreaseMicGain();
+                }
                 break;
           case Sucofunkey::ENCODER_2:
+                if (event.pressed) {
+                  _audioResources->increaseLineInVolume();
+                } else {
+                  _audioResources->decreaseLineInVolume();
+                }
                 break;
           case Sucofunkey::ENCODER_3:
                 break;
@@ -60,9 +73,23 @@ void Recorder::setActive(boolean active) {
     _keyboard->setBank(0);
     currentState = RECORDER_NOTHING;
     _recorderScreen.showRecorderScreen();
+    _keyboard->setInput(_lastInput);
+    activateInput();    
   } else {
+    if (!_isActive) return;
     _isActive = false;
+    // store current Input for next recording
+    _lastInput = _keyboard->getInput();
     _keyboard->setBank(0);
+
+    if (currentState == RECORDER_NOTHING) {
+      _audioResources->muteInput();
+      _audioResources->muteResampling();
+      _lastInput = _keyboard->getInput();
+      _keyboard->setInput(Sucofunkey::INPUT_NONE);
+      activateInput();
+    }
+
   }
 }
 
@@ -73,10 +100,6 @@ void Recorder::startRecording() {
     }
 
     _frec = SD.open(_sfsio->recorderFilename, FILE_WRITE);
-
-    Serial.print(_sfsio->recorderFilename);
-    Serial.print("::");
-    Serial.println(_frec);
 
     if (_frec) {
         _keyboard->setLEDState(Sucofunkey::LED_RECORD, true);
@@ -89,7 +112,7 @@ void Recorder::startRecording() {
 void Recorder::continueRecording() {  
   if (_audioResources->queue1.available() >= 2) {
     
-    if (_audioResources->queue1.available() > 40) Serial.println(_audioResources->queue1.available());  
+//    if (_audioResources->queue1.available() > 40) Serial.println(_audioResources->queue1.available());  
 
     byte buffer[512];
     memcpy(buffer, _audioResources->queue1.readBuffer(), 256);
@@ -115,6 +138,12 @@ void Recorder::stopRecording() {
   _keyboard->setLEDState(Sucofunkey::LED_RECORD, false);
   currentState = RECORDER_NOTHING;
 
+  // recording stopped from another context? save selected input.
+  if (!_isActive) {
+    _lastInput = _keyboard->getInput();
+    _keyboard->setInput(Sucofunkey::INPUT_NONE);
+  }
+
   _sfsio->generateWaveFormBufferForSample(3, 0);
   _keyboard->addApplicationEventToQueue(_keyboard->RECORDED);
 }
@@ -122,3 +151,37 @@ void Recorder::stopRecording() {
 boolean Recorder::isRecording() {
     return currentState == RECORDER_RECORDING ? true : false;
 };
+
+
+void Recorder::activateInput() {
+  switch(_keyboard->getInput()) {
+    case Sucofunkey::INPUT_LINE:
+        _audioResources->setInputLine();
+        _audioResources->unmuteInput();
+        _audioResources->muteResampling();
+        break;
+    case Sucofunkey::INPUT_LINE_RESAMPLE:
+        _audioResources->setInputLine();
+        _audioResources->unmuteInput();
+        _audioResources->unmuteResampling();
+        break;
+    case Sucofunkey::INPUT_MIC:
+        _audioResources->setInputMic();
+        _audioResources->unmuteInput();
+        _audioResources->muteResampling();
+        break;
+    case Sucofunkey::INPUT_MIC_RESAMPLE:
+        _audioResources->setInputMic();
+        _audioResources->unmuteInput();
+        _audioResources->unmuteResampling();
+        break;
+    case Sucofunkey::INPUT_RESAMPLE:
+        _audioResources->muteInput();
+        _audioResources->unmuteResampling();
+        break;
+    case Sucofunkey::INPUT_NONE:
+        _audioResources->muteInput();
+        _audioResources->muteResampling();
+        break;    
+  }
+}

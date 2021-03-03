@@ -172,11 +172,10 @@ void setup() {
   // Enable the audio shield, select input and enable output
   audioResources.audioShield.enable();
 
-  keyboard.setInput(Sucofunkey::INPUT_LINE);
-  audioResources.audioShield.micGain(10);  //0-63
-  audioResources.audioShield.volume(0.6);  //0-1
-
-  audioResources.audioShield.inputSelect(audioResources.activeInput);
+  keyboard.setInput(Sucofunkey::INPUT_NONE);
+  audioResources.muteInput();
+  audioResources.muteResampling();
+  audioResources.audioShield.volume(0.6);  //0.0-1.0
 
   // erase psram (sample memory)
   for (unsigned long i=0; i<sizeof(extmemArray)/4; i++) {

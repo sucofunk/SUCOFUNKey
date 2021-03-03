@@ -39,10 +39,6 @@ void SamplerScreen::showSampleInfo(byte sampleId72, float volumeScaleFactor) {
     }
 }
 
-void SamplerScreen::showSampleInfo(byte bank0, byte sampleId0) {
-    showSampleInfo((bank0*24)+sampleId0, 1.0f);
-}
-
 void SamplerScreen::showSampleInfo(byte bank0, byte sampleId0, float volumeScaleFactor) {
     showSampleInfo((bank0*24)+sampleId0, volumeScaleFactor);        
 }; 

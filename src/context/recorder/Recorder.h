@@ -41,6 +41,10 @@ class Recorder {
         File _frec;
         unsigned long recByteSaved = 0L;
         RecorderScreen _recorderScreen;
+
+        byte _lastInput = Sucofunkey::INPUT_NONE;
+
+        void activateInput();
 };
 
 #endif

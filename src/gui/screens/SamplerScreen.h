@@ -16,7 +16,6 @@ class SamplerScreen {
         void handleEvent(Sucofunkey::keyQueueStruct event);
 
         void showEmptyScreen();        
-        void showSampleInfo(byte bank0, byte sampleId0);
         void showSampleInfo(byte sampleId72, float volumeScaleFactor);        
         void showSampleInfo(byte bank0, byte sampleId0, float volumeScaleFactor);        
         void setBottomMenu(BottomMenu bottomMenu);
