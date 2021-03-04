@@ -49,8 +49,8 @@ class AudioResources {
         AudioPlayMemory          playMem5;
         AudioPlayMemory          playMem6;
         AudioInputI2S            audioInput;
-        AudioPlaySdRawSUCO       playSdRaw1;
-        AudioPlaySdRawSUCO       playSdRaw2;
+        AudioPlaySdRawSUCO       playSdRaw;
+        AudioPlayMemory          playMem;
         AudioMixer4              recordMixer;
         AudioMixer4              mixerSDL;
         AudioMixer4              mixerSDR;

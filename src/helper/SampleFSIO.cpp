@@ -294,9 +294,12 @@ boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart,
 // reads a sample from sd card and copy it to extmem
 // returns offset for next sample
 // -------------------------------------------------------------------------------
-long SampleFSIO::copyRawFromSdToMemory(const char *filename, long startOffset) {    
+long SampleFSIO::copyRawFromSdToMemory(const char *filename, long startOffset) {
   File f;
   
+  Serial.print("Filename::");
+  Serial.println(filename);
+
   if (SD.exists(filename)) {
     f = SD.open(filename, O_READ);  
   } else {
@@ -335,27 +338,25 @@ long SampleFSIO::copyRawFromSdToMemory(const char *filename, long startOffset) {
 }
 
 // sampleNumber according to array 0..71
-boolean SampleFSIO::addSampleToMemory(byte sampleNumber, boolean forceReload) {
-  if (_sampleOffsets[sampleNumber] == -1 || forceReload) {
-      char filename[7];
-      long offset = 0;
+boolean SampleFSIO::addSampleToMemory(byte bank1, byte sampleId1, boolean forceReload) {
+  byte sample72 = (bank1-1)*24+sampleId1-1;
 
-      sprintf(filename, "%d.RAW", sampleNumber+1);
-      Serial.println(filename);
+  if (_sampleOffsets[sample72] == -1 || forceReload) {
+      long offset = 0;
 
       offset = _nextOffset;
 
-      _nextOffset = copyRawFromSdToMemory(filename, offset);
+      _nextOffset = copyRawFromSdToMemory(sampleFilename[bank1-1][sampleId1-1], offset);
       Serial.println(_nextOffset);
 
       if (_nextOffset == -1) {
         _nextOffset = offset;
-        _sampleOffsets[sampleNumber] = -1;
+        _sampleOffsets[sample72] = -1;
       } else {
-        _sampleOffsets[sampleNumber] = offset;
+        _sampleOffsets[sample72] = offset;
 
         // generate wavetable
-        generateInstrument(sampleNumber+1, 60);
+        //generateInstrument(sample72+1, 60);
 
         return true;
       }
@@ -370,9 +371,11 @@ boolean SampleFSIO::loadSamplesToMemory(boolean *sampleArray) {
   
   _nextOffset = 0; // reset extmem start pointer
 
-  for (byte i=0; i<sizeof(sampleArray)*8; i++) {
-    if (sampleArray[i]) {
-      addSampleToMemory(i, true);     
+  for (byte b=0; b<3; b++) {
+    for (byte s=0; s<24; s++) {
+      if (sampleArray[b*24+s]) {
+        addSampleToMemory(b+1, s+1, true);
+      }
     }
   }
   return true;
@@ -399,7 +402,20 @@ unsigned int *SampleFSIO::getExtmemAddressData(byte sampleNumber) {
 }
 
 byte SampleFSIO::getExtmemUsagePercent() {
+
+  // ToDo: make this correct!!!!
+
   float f = (((_nextOffset*8.0) / _extmemSize)) * 100;
+  
+  Serial.print("_nextOffset::");
+  Serial.println(_nextOffset);
+
+  Serial.print("_extmemSize::");
+  Serial.println(_extmemSize);
+
+  Serial.print("EXTMEM USAGE %::");
+  Serial.println(f);
+
   return round(f);
 };
 

@@ -545,8 +545,8 @@ byte Sucofunkey::getSampleIdByEventKey(byte eventKey) {
   return _eventKeyToSampleId[eventKey];
 };
 
-byte Sucofunkey::getLEDPinBySampleId(byte sampleId) {
-  return _sampleIdToLEDPIN[sampleId];
+byte Sucofunkey::getLEDPinBySampleId(byte sampleId1) {
+  return _sampleIdToLEDPIN[sampleId1];
 }
 
 byte Sucofunkey::getLEDPinByEventKey(byte eventKey) {

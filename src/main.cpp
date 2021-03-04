@@ -71,7 +71,8 @@ SampleFSIO sfsio(extmemArray, sizeof(extmemArray), &screen);
 Home  homeContext(&keyboard, &screen, activeSongPath);
 Sampler samplerContext(&keyboard, &screen, &fsio, &sfsio, &audioResources);
 Recorder recorderContext(&keyboard, &screen, &fsio, &sfsio, &audioResources);
-Sequencer sequencerContext(&keyboard, &screen);
+Sequencer sequencerContext(&keyboard, &screen, &sfsio, extmemArray, &audioResources);
+
 Synth synthContext(&keyboard, &screen);
 Live liveContext(&keyboard, &screen);
 Settings settingsContext(&keyboard, &screen);
@@ -117,10 +118,10 @@ AudioConnection          patchCord33(audioResources.audioInput, 0, audioResource
 AudioConnection          patchCord34(audioResources.audioInput, 0, audioResources.mixerOutL, 0);
 AudioConnection          patchCord35(audioResources.audioInput, 1, audioResources.recordMixer, 1);
 AudioConnection          patchCord36(audioResources.audioInput, 1, audioResources.mixerOutR, 0);
-AudioConnection          patchCord37(audioResources.playSdRaw1, 0, audioResources.mixerSDL, 0);
-AudioConnection          patchCord38(audioResources.playSdRaw1, 0, audioResources.mixerSDR, 0);
-AudioConnection          patchCord39(audioResources.playSdRaw2, 0, audioResources.mixerSDL, 1);
-AudioConnection          patchCord40(audioResources.playSdRaw2, 0, audioResources.mixerSDR, 1);
+AudioConnection          patchCord37(audioResources.playSdRaw, 0, audioResources.mixerSDL, 0);
+AudioConnection          patchCord38(audioResources.playSdRaw, 0, audioResources.mixerSDR, 0);
+AudioConnection          patchCord39(audioResources.playMem, 0, audioResources.mixerSDL, 1);
+AudioConnection          patchCord40(audioResources.playMem, 0, audioResources.mixerSDR, 1);
 AudioConnection          patchCord41(audioResources.recordMixer, audioResources.queue1);
 AudioConnection          patchCord42(audioResources.recordMixer, audioResources.peak1);
 AudioConnection          patchCord43(audioResources.mixerSDL, 0, audioResources.mixerPreOutL, 2);
@@ -247,7 +248,7 @@ void sendTickToActiveContext() {
            globalTickIntervalNew = samplerContext.receiveTimerTick();
           break;
     case  AppContext::SEQUENCER:
-           //globalTickIntervalNew = sequencer.receiveTimerTick();
+           globalTickIntervalNew = sequencerContext.receiveTimerTick();
           break;
     case  AppContext::STARTUP:
            globalTickIntervalNew = startupContext.receiveTimerTick();

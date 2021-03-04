@@ -5,7 +5,6 @@
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
 #include "fonts/OxygenMono_Regular8pt7b.h" // https://fonts.google.com/specimen/Oxygen+Mono
-//#include "../context/sequencer/Pattern.h"
 
 Screen::Screen(Adafruit_ST7789 *tft, int BL) {
   _tft = tft;
@@ -179,120 +178,6 @@ uint16_t Screen::RGBtoColor(byte r, byte g, byte b) {
   return color;
 };
 
-
-/*
-
-// -------------------------------------------------------------------------------------------
-// Sequencer Stuff
-// -------------------------------------------------------------------------------------------
-
-
-void Screen::initializeGrid(Pattern *pattern) {
-  _pattern = pattern;
-
-  _tft->fillScreen(C_BLACK);
-  _tft->setTextColor(C_WHITE);
-  _tft->setFont(&OxygenMono_Regular8pt7b);  
-
-  _tft->drawFastHLine(0, 20, _tft->width(), C_GRID_DARK);
-  _tft->drawFastHLine(0, 45, _tft->width(), C_GRID_DARK);
-  _tft->drawFastHLine(0, 70, _tft->width(), C_GRID_DARK);
-
-  _tft->drawFastHLine(0, 145, _tft->width(), C_GRID_DARK);
-  _tft->drawFastHLine(0, 170, _tft->width(), C_GRID_DARK);
-  _tft->drawFastHLine(0, 195, _tft->width(), C_GRID_DARK);
-  _tft->drawFastHLine(0, 220, _tft->width(), C_GRID_DARK);
-
-  _tft->drawFastVLine( 0, 20, _tft->height()-40, C_GRID_DARK);
-  _tft->drawFastVLine(39, 20, _tft->height()-39, C_GRID_BRIGHT);
-  _tft->drawFastVLine(109, 20, _tft->height()-40, C_GRID_DARK);
-  _tft->drawFastVLine(179, 20, _tft->height()-40, C_GRID_DARK);
-  _tft->drawFastVLine(249, 20, _tft->height()-40, C_GRID_DARK);  
-  _tft->drawFastVLine(319, 20, _tft->height()-40, C_GRID_DARK);   
-
-  _tft->drawFastHLine(0, 95, _tft->width(), C_GRID_BRIGHT);
-  _tft->drawFastHLine(0, 120, _tft->width(), C_GRID_BRIGHT);
-}
-
-// position = current position on highlighted row
-// patternLength = complete length of pattern (max 64)
-void Screen::drawTrackerAtPosition(uint16_t position, Pattern *p, bool editMode, byte highlightEvery) {
-  boolean highlight = false;
-  for (int r = 0; r<8; r++) {
-    if (position-3+r >= 0 && position-3+r < p->getPatternLength()){
-      sprintf(_cBuff3, "%03d", position-3+r);
-      
-      highlight = (((position-3+r)%highlightEvery)==0);
-
-      _drawGridCell(0, r, _cBuff3, highlight ? C_GRID_DARK : C_BLACK);
-      _drawGridCell(1, r, p->getSampleAt(1, position-3+r).displayText, highlight ? C_GRID_DARK : C_BLACK);
-      _drawGridCell(2, r, p->getSampleAt(2, position-3+r).displayText, highlight ? C_GRID_DARK : C_BLACK);      
-      _drawGridCell(3, r, p->getSampleAt(3, position-3+r).displayText, highlight ? C_GRID_DARK : C_BLACK);      
-      _drawGridCell(4, r, p->getSampleAt(4, position-3+r).displayText, highlight ? C_GRID_DARK : C_BLACK);      
-
-    } else {
-      if (editMode && position-3+r < 0) {
-        _drawEmptyRow(r);
-      }
-      if (editMode && position-3+r >= p->getPatternLength()) {
-        _drawEmptyRow(r);
-      }      
-    }
-  }
-}
-
-
-void Screen::drawCursorAtColumn(byte column) {
-  _tft->drawFastHLine(0, 95, _tft->width(), C_GRID_BRIGHT);
-  _tft->drawFastHLine(0, 120, _tft->width(), C_GRID_BRIGHT);
-  
-  _tft->drawFastHLine(39+((column-1)*70), 95, 70, C_WHITE);
-  _tft->drawFastHLine(39+((column-1)*70), 120, 70, C_WHITE);
-};
-
-
-void Screen::_drawEmptyRow(uint16_t row) {
-  _drawGridCell(0, row, "", C_BLACK);
-  _drawGridCell(1, row, "", C_BLACK);
-  _drawGridCell(2, row, "", C_BLACK);
-  _drawGridCell(3, row, "", C_BLACK); 
-  _drawGridCell(4, row, "", C_BLACK);   
-}
-
-
-void Screen::_drawGridCell(int col, int row, const char *text, uint16_t bgColor) {
-  _y = 21 + (row*25);
-
-  if (col == 0) {
-    _x = 0;  
-    _tft->fillRect(_x, _y, 39, 24, bgColor);
-    drawText(text, 4, _y+18);
-  } else {
-    _x = 40+(col-1)*70;
-    _tft->fillRect(_x, _y, 69, 24, bgColor);
-    drawText(text, _x+15, _y+18);
-  }
-} 
-
-
-void Screen::drawBPM(float bpm) {
-  _tft->setTextColor(C_WHITE);
-  _tft->setFont(&OxygenMono_Regular8pt7b);
-  _tft->fillRect(0, 221, 160, 19, C_BLACK);
-
-  sprintf(_cBuff10, "BPM: %g", bpm);
-  _tft->setCursor(4, 239);
-  _tft->print(_cBuff10);
-}
-
-
-void Screen::drawExtMemPercentage(byte percent) {
-  _tft->fillRect(219, 1, 100, 1, C_MEMORY_FREE);
-  _tft->fillRect(219, 1, percent, 1, C_MEMORY_USED);
-};
-
-*/
-
 void Screen::drawText(const char *text,int x, int y, uint16_t color, const GFXfont *font) {
   _tft->setFont(font);  
   _tft->setCursor(x, y);
@@ -304,4 +189,16 @@ void Screen::drawText(const char *text,int x, int y) {
   _tft->setTextColor(C_WHITE);
   _tft->setCursor(x, y);
   _tft->print(text);
+}
+
+void Screen::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
+  _tft->drawFastHLine(x, y, w, color);
+}
+
+void Screen::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
+  _tft->drawFastVLine(x, y, h, color);
+}
+
+void Screen::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
+  _tft->fillRect(x, y, w, h, color);
 }

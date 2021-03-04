@@ -19,7 +19,7 @@ class SampleFSIO {
         boolean copyFilePart(const char *f1, const char *f2, long byteStart, long byteEnd, float volumeScaleFactor);        
         
         long copyRawFromSdToMemory(const char *filename, long startOffset);
-        boolean addSampleToMemory(byte sampleNumber, boolean forceReload);
+        boolean addSampleToMemory(byte bank1, byte sampleId1, boolean forceReload);
         boolean loadSamplesToMemory(boolean *sampleArray);
 
         long getExtmemOffset(byte sampleNumber);

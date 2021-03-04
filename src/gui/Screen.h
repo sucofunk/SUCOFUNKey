@@ -4,8 +4,6 @@
 #include <Arduino.h>
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
 
-//#include "../context/sequencer/Pattern.h"
-
 class Screen {
     public:
         Screen(Adafruit_ST7789 *tft, int BL);  
@@ -58,14 +56,12 @@ class Screen {
         void drawText(const char *text,int x, int y, uint16_t color, const GFXfont *font);
         void drawText(const char *text,int x, int y);
 
-        uint16_t RGBtoColor(byte r, byte g, byte b);
+        void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
+        void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
 
-/*        void initializeGrid(Pattern *pattern); 
-        void drawTrackerAtPosition(uint16_t position, Pattern *p, bool editMode, byte highlightEvery);
-        void drawCursorAtColumn(byte column);
-        void drawBPM(float bpm);
-        void drawExtMemPercentage(byte percent);
-*/
+        void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
+
+        uint16_t RGBtoColor(byte r, byte g, byte b);
 
         // Color definitions
 
@@ -126,18 +122,8 @@ class Screen {
         uint16_t _dh = 0;
 
         uint16_t _x, _y = 0;
-/*        char _cBuff3[3];
-        char _cBuff10[10];
-
-        Pattern *_pattern;
-*/
 
         void _setColor(const int *colorArr);
-/*
-        void _drawEmptyRow(uint16_t row);
-        void _drawGridCell(int col, int row, const char *text, uint16_t bgColor);
-*/
-
 };
 
 #endif

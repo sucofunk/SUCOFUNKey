@@ -216,7 +216,7 @@ class Sucofunkey {
         void switchLEDsOff();
 
         byte getSampleIdByEventKey(byte eventKey);
-        byte getLEDPinBySampleId(byte sampleId);
+        byte getLEDPinBySampleId(byte sampleId1);
         byte getLEDPinByEventKey(byte eventKey);
         char getCharByEventKey(byte eventKey, byte index);        
         char getFilenameCharByEventKey(byte eventKey, byte index);        
