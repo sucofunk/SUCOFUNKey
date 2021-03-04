@@ -9,8 +9,8 @@ StartupScreen::StartupScreen(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, c
     _screen = screen;    
     _fsio = fsio;
     _activeSongName = activeSongName;
-    _logoArea = {_screen->AREA_SCREEN.x1, _screen->AREA_SCREEN.y2/3, _screen->AREA_SCREEN.x2, _screen->AREA_SCREEN.y2/3+20, false, _screen->C_STARTUP_BG};
-    _messageArea = {_screen->AREA_SCREEN.x1, _screen->AREA_SCREEN.y2/1.5, _screen->AREA_SCREEN.x2, _screen->AREA_SCREEN.y2/1.5+20, false, _screen->C_STARTUP_BG};
+    _logoArea = {_screen->AREA_SCREEN.x1, _screen->AREA_SCREEN.y2/3, _screen->AREA_SCREEN.x2, static_cast<int>(_screen->AREA_SCREEN.y2/3+20), false, _screen->C_STARTUP_BG};
+    _messageArea = {_screen->AREA_SCREEN.x1, static_cast<int>(_screen->AREA_SCREEN.y2/1.5), _screen->AREA_SCREEN.x2, static_cast<int>(_screen->AREA_SCREEN.y2/1.5+20), false, _screen->C_STARTUP_BG};
     _songSelector = SongSelector(_keyboard, _screen, _fsio, _activeSongName);
 }
 
@@ -63,16 +63,6 @@ void StartupScreen::transitionToSelection() {
 
     delay(200);
 
-/*    _screen->clearAreaLTR(_messageArea, _screen->C_BLACK, 2);
-    _screen->clearAreaRTL(_logoArea, _screen->C_BLACK, 2);
-    _screen->clearAreaLTR(_screen->AREA_SCREEN, _screen->C_ORANGE, 2);
- 
-    _logoArea.x1 = _screen->AREA_SCREEN.x1;
-    _logoArea.x2 = _screen->AREA_SCREEN.x2;
-    _logoArea.y1 = _screen->AREA_SCREEN.y1;
-    _logoArea.y2 = _screen->AREA_SCREEN.y2;
-    _screen->drawTextInArea(_logoArea, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, "SUCOFUNKey");
-*/
     _activeComponent = 1;
     _screen->clearAreaLTR(_logoArea, _screen->C_STARTUP_BG, 1);    
     _drawSongSelector();    

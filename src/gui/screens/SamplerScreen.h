@@ -25,6 +25,9 @@ class SamplerScreen {
         void showSlotSelectionHint();
         void showSavingMessage();
 
+        void drawPlayerPosition(int x, int start, int end);
+        void resetPlayerPosition();
+
     private:
         Sucofunkey *_keyboard;
         Screen *_screen;
@@ -32,6 +35,9 @@ class SamplerScreen {
         SampleFSIO *_sfsio;
         AudioResources *_audioResources;
         BottomMenu _bottomMenu;
+
+        int zeroAxisY;
+        boolean isPlayerPositionVisible = false;        
 };
 
 #endif

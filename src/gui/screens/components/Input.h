@@ -14,7 +14,7 @@ class Input {
         long receiveTimerTick();
         void activateInput();
         char * getInputValue();
-        void showErrorMessage(char * errorMessage, int showForMs);
+        void showErrorMessage(char const * errorMessage, int showForMs);
 
     private:
         Sucofunkey *_keyboard;

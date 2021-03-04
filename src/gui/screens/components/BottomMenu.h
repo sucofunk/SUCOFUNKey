@@ -9,19 +9,19 @@ class BottomMenu {
     public:
         BottomMenu();
         BottomMenu(Sucofunkey *keyboard, Screen *screen);
-        BottomMenu(Sucofunkey *keyboard, Screen *screen, char *label1, int retVal1, char *label3, int retVal3);
-        BottomMenu(Sucofunkey *keyboard, Screen *screen, char *label1, int retVal1, char *label2, int retVal2, char *label3, int retVal3);
+        BottomMenu(Sucofunkey *keyboard, Screen *screen, char const *label1, int retVal1, char const *label3, int retVal3);
+        BottomMenu(Sucofunkey *keyboard, Screen *screen, char const *label1, int retVal1, char const *label2, int retVal2, char const *label3, int retVal3);
         
         void handleEvent(Sucofunkey::keyQueueStruct event);
         
-        void setupMenu3(char *label1, int retVal1, char *label2, int retVal2, char *label3, int retVal3);
-        void setupMenu2(char *label1, int retVal1, char *label3, int retVal3);
+        void setupMenu3(char const *label1, int retVal1, char const *label2, int retVal2, char const *label3, int retVal3);
+        void setupMenu2(char const *label1, int retVal1, char const *label3, int retVal3);
         
         void setMenuItems(byte itemCount);
 
-        void setItem1Label(char *label);
-        void setItem2Label(char *label);
-        void setItem3Label(char *label);
+        void setItem1Label(char const *label);
+        void setItem2Label(char const *label);
+        void setItem3Label(char const *label);
         void setItem1CallbackValue(int retVal);
         void setItem2CallbackValue(int retVal);
         void setItem3CallbackValue(int retVal);
@@ -37,9 +37,9 @@ class BottomMenu {
         byte _itemCount = 0;
         byte _selectedItem = 1;
         boolean _visible = false;
-        char *_label1;
-        char *_label2;
-        char *_label3;
+        char const *_label1;
+        char const *_label2;
+        char const *_label3;
         int _retVal1;
         int _retVal2;
         int _retVal3;

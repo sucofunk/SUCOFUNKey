@@ -8,6 +8,7 @@ SamplerScreen::SamplerScreen(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, S
     _fsio = fsio;
     _sfsio = sfsio;
     _audioResources = audioResources;
+    zeroAxisY = (_screen->AREA_CONTENT.y2 - _screen->AREA_CONTENT.y1)/2+_screen->AREA_CONTENT.y1;
 }
 
 void SamplerScreen::handleEvent(Sucofunkey::keyQueueStruct event) {
@@ -16,7 +17,7 @@ void SamplerScreen::handleEvent(Sucofunkey::keyQueueStruct event) {
 void SamplerScreen::showEmptyScreen() {
     _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);
 
-    Screen::Area text1 = {_screen->AREA_SCREEN.x1, _screen->AREA_SCREEN.y2*0.5-20, _screen->AREA_SCREEN.x2, _screen->AREA_SCREEN.y2*0.5, false, _screen->C_BLACK};
+    Screen::Area text1 = {_screen->AREA_SCREEN.x1, static_cast<int>(_screen->AREA_SCREEN.y2*0.5-20), _screen->AREA_SCREEN.x2, static_cast<int>(_screen->AREA_SCREEN.y2*0.5), false, _screen->C_BLACK};
     Screen::Area text2 = {text1.x1, text1.y2+1, text1.x2, text1.y2+21, false, _screen->C_BLACK};    
 
     _screen->drawTextInArea(text1, Screen::TEXTPOSITION_HCENTER_VCENTER, false, Screen::TEXTSIZE_MEDIUM, _screen->C_WHITE,     "Select a sample");
@@ -26,9 +27,14 @@ void SamplerScreen::showEmptyScreen() {
 
 
 void SamplerScreen::showSampleInfo(byte sampleId72, float volumeScaleFactor) {
-    int zeroAxisY = (_screen->AREA_CONTENT.y2 - _screen->AREA_CONTENT.y1)/2+_screen->AREA_CONTENT.y1;
+    //int zeroAxisY = (_screen->AREA_CONTENT.y2 - _screen->AREA_CONTENT.y1)/2+_screen->AREA_CONTENT.y1;
 
+    _screen->fillArea(_screen->AREA_HEADLINE, _screen->C_BLACK);
     _screen->fillArea(_screen->AREA_CONTENT, _screen->C_BLACK);
+
+    if (sampleId72 == 72) {
+        _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_TOP, false, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, "Latest Recording");
+    }
 
     // draw zero line
     _screen->drawLine(0, zeroAxisY, 320, zeroAxisY, _screen->C_WHITE);
@@ -50,8 +56,6 @@ void SamplerScreen::setBottomMenu(BottomMenu bottomMenu) {
 
 
 void SamplerScreen::drawTrimMarker(int trimMarkerStartPosition, int trimMarkerEndPosition, byte sampleId72, float volumeScaleFactor) {
-    int zeroAxisY = (_screen->AREA_CONTENT.y2 - _screen->AREA_CONTENT.y1)/2+_screen->AREA_CONTENT.y1;
-
     // Start Marker
     if (trimMarkerStartPosition > 0){
         _screen->drawLine(trimMarkerStartPosition-1, _screen->AREA_CONTENT.y1, trimMarkerStartPosition-1, _screen->AREA_CONTENT.y2, _screen->C_BLACK);
@@ -91,4 +95,20 @@ void SamplerScreen::showSlotSelectionHint() {
 
 void SamplerScreen::showSavingMessage() {
     _screen->drawTextInArea(_screen->AREA_BOTTOM_MENU, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, _screen->C_WARNING, "Saving sample..");
+};
+
+void SamplerScreen::drawPlayerPosition(int x, int start, int end) {
+    if (!isPlayerPositionVisible) isPlayerPositionVisible = true;
+
+    if (x < start) x = start;
+    if (x > end) x = end;
+    _screen->drawLine(start, zeroAxisY, x, zeroAxisY, _screen->C_PLAYER_POSITION);
+
+};
+
+void SamplerScreen::resetPlayerPosition() {
+    if (isPlayerPositionVisible) {
+        isPlayerPositionVisible = false;
+        _screen->drawLine(0, zeroAxisY, 320, zeroAxisY, _screen->C_WHITE);        
+    }    
 };

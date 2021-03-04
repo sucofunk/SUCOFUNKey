@@ -91,7 +91,7 @@ void Input::_redrawCursor() {
     }
 }
 
-void Input::showErrorMessage(char * errorMessage, int showForMs) {
+void Input::showErrorMessage(char const * errorMessage, int showForMs) {
     _screen->drawTextInArea(_inputArea, Screen::TEXTPOSITION_LEFT_VCENTER, true, Screen::TEXTSIZE_MEDIUM, _screen->C_GREY, _inputValue);
     _screen->drawTextInArea(_inputArea, Screen::TEXTPOSITION_LEFT_VCENTER, true, Screen::TEXTSIZE_MEDIUM, _screen->C_WARNING, errorMessage);
     delay(showForMs);

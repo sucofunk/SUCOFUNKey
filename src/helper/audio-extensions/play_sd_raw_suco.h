@@ -48,8 +48,8 @@ private:
 	uint32_t file_size;
 	volatile uint32_t file_offset;
 	volatile bool playing;
-	uint32_t _startPosition;
-	uint32_t _endPosition;
+	int _startPosition;
+	int _endPosition;
 	float _volumeScaleFactor;
 };
 

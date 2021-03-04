@@ -8,8 +8,8 @@ RecorderScreen::RecorderScreen(Sucofunkey *keyboard, Screen *screen, FSIO *fsio,
     _fsio = fsio;
     _sfsio = sfsio;
     _audioResources = audioResources;
-    _peakArea = {_screen->AREA_SCREEN.x2*0.5-105, _screen->AREA_SCREEN.y2-50, _screen->AREA_SCREEN.x2*0.5+105, _screen->AREA_SCREEN.y2-43, false, _screen->C_BLACK};
-    _textArea = {_screen->AREA_SCREEN.x1, _screen->AREA_SCREEN.y2*0.5-20, _screen->AREA_SCREEN.x2, _screen->AREA_SCREEN.y2*0.5, false, _screen->C_BLACK};   
+    _peakArea = {static_cast<int>(_screen->AREA_SCREEN.x2*0.5-105), _screen->AREA_SCREEN.y2-50, static_cast<int>(_screen->AREA_SCREEN.x2*0.5+105), _screen->AREA_SCREEN.y2-43, false, _screen->C_BLACK};
+    _textArea = {_screen->AREA_SCREEN.x1, static_cast<int>(_screen->AREA_SCREEN.y2*0.5-20), _screen->AREA_SCREEN.x2, static_cast<int>(_screen->AREA_SCREEN.y2*0.5), false, _screen->C_BLACK};   
 }
 
 void RecorderScreen::showRecorderScreen() {

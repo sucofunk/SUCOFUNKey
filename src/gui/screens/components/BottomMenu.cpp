@@ -32,7 +32,7 @@ void BottomMenu::handleEvent(Sucofunkey::keyQueueStruct event) {
     }
 };
 
-BottomMenu::BottomMenu(Sucofunkey *keyboard, Screen *screen, char *label1, int retVal1, char *label3, int retVal3) {
+BottomMenu::BottomMenu(Sucofunkey *keyboard, Screen *screen, char const *label1, int retVal1, char const *label3, int retVal3) {
     _keyboard = keyboard;
     _screen = screen;    
     _label1 = label1;
@@ -43,7 +43,7 @@ BottomMenu::BottomMenu(Sucofunkey *keyboard, Screen *screen, char *label1, int r
     _selectedItem = 1;
 };
 
-BottomMenu::BottomMenu(Sucofunkey *keyboard, Screen *screen, char *label1, int retVal1, char *label2, int retVal2, char *label3, int retVal3) {
+BottomMenu::BottomMenu(Sucofunkey *keyboard, Screen *screen, char const *label1, int retVal1, char const *label2, int retVal2, char const *label3, int retVal3) {
     _keyboard = keyboard;
     _screen = screen;    
     _label1 = label1;
@@ -56,7 +56,7 @@ BottomMenu::BottomMenu(Sucofunkey *keyboard, Screen *screen, char *label1, int r
     _selectedItem = 1;    
 };
 
-void BottomMenu::setupMenu3(char *label1, int retVal1, char *label2, int retVal2, char *label3, int retVal3) {
+void BottomMenu::setupMenu3(char const *label1, int retVal1, char const *label2, int retVal2, char const *label3, int retVal3) {
     _label1 = label1;
     _label2 = label2;
     _label3 = label3;
@@ -67,7 +67,7 @@ void BottomMenu::setupMenu3(char *label1, int retVal1, char *label2, int retVal2
     _selectedItem = 1;
 };
 
-void BottomMenu::setupMenu2(char *label1, int retVal1, char *label3, int retVal3) {
+void BottomMenu::setupMenu2(char const *label1, int retVal1, char const *label3, int retVal3) {
     _label1 = label1;
     _label3 = label3;
     _retVal1 = retVal1;
@@ -81,15 +81,15 @@ void BottomMenu::setMenuItems(byte itemCount) {
     _itemCount = itemCount;
 };
 
-void BottomMenu::setItem1Label(char *label) {
+void BottomMenu::setItem1Label(char const *label) {
     _label1 = label;
 };
 
-void BottomMenu::setItem2Label(char *label) {
+void BottomMenu::setItem2Label(char const *label) {
     _label2 = label;
 };
 
-void BottomMenu::setItem3Label(char *label) {
+void BottomMenu::setItem3Label(char const *label) {
     _label3 = label;
 };
 

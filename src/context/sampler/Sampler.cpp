@@ -85,7 +85,6 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
               }
               break;
         case Sucofunkey::PAUSE:
-              Serial.println("stop");
               _audioResources->playSdRaw1.stop();
               break;              
         case Sucofunkey::PLAY:
@@ -195,7 +194,7 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
                 _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, sample72, _volumeScaleFactor);                
                 break;          
           case Sucofunkey::ENCODER_3:
-                _volumeScaleFactor += (event.pressed ? 0.1 : -0.1);
+                _volumeScaleFactor += (event.pressed ? 0.025 : -0.025);
                 if (_volumeScaleFactor < 0.1) _volumeScaleFactor = 0.1;
                 if (_volumeScaleFactor > 5.0) _volumeScaleFactor = 5.0;
                 _samplerScreen.showSampleInfo(_keyboard->getBank()-1, _activeSampleSlot-1, _volumeScaleFactor);
@@ -206,12 +205,24 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
 }
 
 long Sampler::receiveTimerTick() {
-    if (_blinkActiveSample && _activeSampleLEDPin != 0) {
+    _timerCounter++;
+
+    if (_timerCounter == 3 && _blinkActiveSample && _activeSampleLEDPin != 0) {
       _blinkActiveSampleStatus = !_blinkActiveSampleStatus;
-      _keyboard->setLEDState(_activeSampleLEDPin, _blinkActiveSampleStatus);
+      _keyboard->setLEDState(_activeSampleLEDPin, _blinkActiveSampleStatus);      
     }
 
-    return 300000;
+    if (_timerCounter == 3) {
+      _timerCounter = 0;
+    }
+
+    if (_audioResources->playSdRaw1.isPlaying()) {
+      indicatePlayerPosition();
+    } else {
+      _samplerScreen.resetPlayerPosition();
+    }    
+
+    return 100000;
 }
 
 void Sampler::setActive(boolean active) {
@@ -226,7 +237,6 @@ void Sampler::setActive(boolean active) {
       // show menu instantly, as we want the user to edit/save the fresh record
       handleEvent({_keyboard->MENU, true, false, _keyboard->KEY_OPERATION, 0});
     } else {
-//      _keyboard->setBank(_activeBank);
       _samplerScreen.showEmptyScreen();
       indicateFreeSamples(true, 250);
       _activeSampleSlot = 0;
@@ -321,8 +331,8 @@ void Sampler::deleteActiveSample() {
   _sfsio->readSampleBankStatusFromSD();
   _sfsio->clearWaveFormBufferById(sample72);
   _sfsio->waveFormBufferLength[sample72] = 0;
-  _samplerScreen.showSampleInfo(sample72, 1.0);
   _bottomMenu.showMenu(false);
+  _samplerScreen.showEmptyScreen();  
 }
 
 void Sampler::saveActiveSample() {
@@ -353,7 +363,6 @@ void Sampler::saveActiveSample() {
   } else {
     _sfsio->generateWaveFormBufferForSample(_keyboard->getBank()-1, _activeSampleSlot-1);
   }
-  
 
   currentState = SAMPLE_SELECTED;
   _samplerScreen.showSampleInfo(sampleId72, 1.0);
@@ -386,4 +395,16 @@ void Sampler::cancel() {
   _trimMarkerStartPosition = 0;
   _trimMarkerEndPosition = 319;
   _volumeScaleFactor = 1.0;
+}
+
+
+void Sampler::indicatePlayerPosition() {
+  int sampleId72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
+  
+  uint32_t pixelMs = _sfsio->sampleLengthMS[sampleId72] / 319;
+  Serial.print("pixelMs::");
+  Serial.println(pixelMs);
+  if (_audioResources->playSdRaw1.isPlaying()) {
+    _samplerScreen.drawPlayerPosition(_audioResources->playSdRaw1.positionMillis() / pixelMs, (currentState == SAMPLE_EDIT_TRIM ? _trimMarkerStartPosition : 0), (currentState == SAMPLE_EDIT_TRIM ? _trimMarkerEndPosition : 319));
+  }
 }

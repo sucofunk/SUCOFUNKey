@@ -215,8 +215,6 @@ boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart,
 
   File from;
   File to;
-  long bs = 256;  
-  byte buffer[bs];
 
   from = SD.open(f1);
   to = SD.open(f2, FILE_WRITE);
@@ -252,9 +250,7 @@ boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart,
   }
 
   from.seek(byteStart);
-  long pos = byteStart;
-  long restBuffer;   
-
+  
   int16_t intBuff = 0;
   byte byteBuffer[256];
   char t1;

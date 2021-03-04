@@ -17,14 +17,14 @@ SongSelector::SongSelector(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, cha
     _screen = screen;    
     _fsio = fsio;
     _activeSongName = activeSongName;
-    _AREA_SONGSELECTOR = { _screen->AREA_SCREEN.x1, floor(_screen->AREA_SCREEN.y2*0.2), _screen->AREA_SCREEN.x2, _screen->AREA_SCREEN.y2, false, _screen->C_BLACK};
+    _AREA_SONGSELECTOR = { _screen->AREA_SCREEN.x1, static_cast<int>(_screen->AREA_SCREEN.y2*0.2), _screen->AREA_SCREEN.x2, _screen->AREA_SCREEN.y2, false, _screen->C_BLACK};
     int padding = 10;
     int height = _AREA_SONGSELECTOR.y2 - _AREA_SONGSELECTOR.y1 - padding*2;
-    _AREA_SONGSELECTOR_LINE_1 = { _AREA_SONGSELECTOR.x1+padding, _AREA_SONGSELECTOR.y1+padding, _AREA_SONGSELECTOR.x2-padding, floor(_AREA_SONGSELECTOR.y1+(height*0.2)+padding), false, _AREA_SONGSELECTOR.bgColor};
-    _AREA_SONGSELECTOR_LINE_2 = { _AREA_SONGSELECTOR.x1+padding, floor(_AREA_SONGSELECTOR.y1+(height*0.2)+padding), _AREA_SONGSELECTOR.x2-padding, floor(_AREA_SONGSELECTOR.y1+(height*0.4)+padding), false, _AREA_SONGSELECTOR.bgColor};
-    _AREA_SONGSELECTOR_LINE_3 = { _AREA_SONGSELECTOR.x1+padding, floor(_AREA_SONGSELECTOR.y1+(height*0.4)+padding), _AREA_SONGSELECTOR.x2-padding, floor(_AREA_SONGSELECTOR.y1+(height*0.6)+padding), false, _AREA_SONGSELECTOR.bgColor};
-    _AREA_SONGSELECTOR_LINE_4 = { _AREA_SONGSELECTOR.x1+padding, floor(_AREA_SONGSELECTOR.y1+(height*0.6)+padding), _AREA_SONGSELECTOR.x2-padding, floor(_AREA_SONGSELECTOR.y1+(height*0.8)+padding), false, _AREA_SONGSELECTOR.bgColor};
-    _AREA_SONGSELECTOR_LINE_5 = { _AREA_SONGSELECTOR.x1+padding, floor(_AREA_SONGSELECTOR.y1+(height*0.8)+padding), _AREA_SONGSELECTOR.x2-padding, _AREA_SONGSELECTOR.y1+height+padding, false, _AREA_SONGSELECTOR.bgColor};    
+    _AREA_SONGSELECTOR_LINE_1 = { _AREA_SONGSELECTOR.x1+padding, _AREA_SONGSELECTOR.y1+padding, _AREA_SONGSELECTOR.x2-padding, static_cast<int>(_AREA_SONGSELECTOR.y1+(height*0.2)+padding), false, _AREA_SONGSELECTOR.bgColor};
+    _AREA_SONGSELECTOR_LINE_2 = { _AREA_SONGSELECTOR.x1+padding, static_cast<int>(_AREA_SONGSELECTOR.y1+(height*0.2)+padding), _AREA_SONGSELECTOR.x2-padding, static_cast<int>(_AREA_SONGSELECTOR.y1+(height*0.4)+padding), false, _AREA_SONGSELECTOR.bgColor};
+    _AREA_SONGSELECTOR_LINE_3 = { _AREA_SONGSELECTOR.x1+padding, static_cast<int>(_AREA_SONGSELECTOR.y1+(height*0.4)+padding), _AREA_SONGSELECTOR.x2-padding, static_cast<int>(_AREA_SONGSELECTOR.y1+(height*0.6)+padding), false, _AREA_SONGSELECTOR.bgColor};
+    _AREA_SONGSELECTOR_LINE_4 = { _AREA_SONGSELECTOR.x1+padding, static_cast<int>(_AREA_SONGSELECTOR.y1+(height*0.6)+padding), _AREA_SONGSELECTOR.x2-padding, static_cast<int>(_AREA_SONGSELECTOR.y1+(height*0.8)+padding), false, _AREA_SONGSELECTOR.bgColor};
+    _AREA_SONGSELECTOR_LINE_5 = { _AREA_SONGSELECTOR.x1+padding, static_cast<int>(_AREA_SONGSELECTOR.y1+(height*0.8)+padding), _AREA_SONGSELECTOR.x2-padding, _AREA_SONGSELECTOR.y1+height+padding, false, _AREA_SONGSELECTOR.bgColor};    
     _input = Input(_keyboard, _screen, _fsio, _AREA_SONGSELECTOR_LINE_1);
 }
 
@@ -55,7 +55,6 @@ void SongSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
       switch(event.index) {          
         case Sucofunkey::CURSOR_UP:         
             if (event.pressed) {
-                Serial.println("UP");
                 if (_activeItem > 0) {
                     _activeItem--;
                     drawSongSelector();
@@ -67,7 +66,6 @@ void SongSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
             break;
         case Sucofunkey::CURSOR_DOWN:
             if (event.pressed) {
-                Serial.println("DOWN");
                 if (_activeItem < 4 && _songCount > _activeItem) { 
                     _activeItem++;
                     drawSongSelector();
@@ -80,10 +78,7 @@ void SongSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::SET:
         case Sucofunkey::ENCODER_1_PUSH:
             if (event.pressed) {
-                Serial.println("SET");
                 if (_activeItem == 0 && _offset == -1) {
-                    Serial.println("create new song");
-
                     _activeComponent = 1; // activate input field
                     _screen->clearAreaLTR(_screen->AREA_SCREEN, _screen->C_STARTUP_BG, 1);                
                     _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, "Record title");

@@ -32,6 +32,8 @@ class Sampler {
         void saveActiveSampleAs();
         void cancel();
 
+        void indicatePlayerPosition();
+
     private:
         Sucofunkey *_keyboard;
         Screen *_screen;
@@ -60,6 +62,8 @@ class Sampler {
 
         void _blinkSampleSlot(byte sampleId1, boolean on);
         void _play();
+
+        int _timerCounter = 0;
 };
 
 #endif
