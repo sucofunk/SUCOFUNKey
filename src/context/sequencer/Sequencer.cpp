@@ -21,7 +21,9 @@ Sequencer::Sequencer(Sucofunkey *keyboard, Screen *screen, SampleFSIO *sfsio, un
 // returns the current tick speed.. as tempo changes are not handled global
 long Sequencer::receiveTimerTick() {
   if (_isPlaying) {
-    _playNext();
+    _playNext();    
+    _keyboard->setLEDState(Sucofunkey::LED_PLAY, _playLEDon);
+    _playLEDon = !_playLEDon;
   }
   return _playbackTickSpeed;
 }
@@ -54,10 +56,12 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               break;
         case Sucofunkey::PAUSE:
                 pausePattern();
+                _keyboard->setLEDState(Sucofunkey::LED_PLAY, false);
               break;
         case Sucofunkey::FN_PLAY:
                 Serial.println("Loading Samples to Extmem");
                 _sfsio->loadSamplesToMemory(_pattern.getSamplesUsed());
+                Serial.println("done");
                 break;   
         case Sucofunkey::FN_SET:
                 _pattern.unsetSampleAt(_cursorColumn, _cursorRow);
@@ -122,12 +126,18 @@ void Sequencer::loadSetPlay(byte bank1, byte sample1, byte column, int row) {
   if (_sfsio->sampleBanksStatus[bank1-1][sample1-1]) {
     _audioResources->playMem.stop();
     _pattern.setSampleAt(column, row, (bank1-1)*24+sample1, 0, 64);
+
     // load Sample if not in extmem yet
-    _sfsio->addSampleToMemory(bank1, sample1, false);
-    _sequencerScreen.drawExtMemPercentage(_sfsio->getExtmemUsagePercent());
-    moveRow(1);
-    _sequencerScreen.drawTrackerAtPosition(_cursorRow, &_pattern, true, _highlightEvery);
-    _audioResources->playMem.play(_extmemArray + _sfsio->getExtmemOffset((bank1-1)*24+sample1));
+    if(_sfsio->addSampleToMemory(bank1, sample1, false)) {
+      // success.. there was enough memory ;)
+      _sequencerScreen.drawExtMemPercentage(_sfsio->getExtmemUsagePercent());
+      moveRow(1);
+      _sequencerScreen.drawTrackerAtPosition(_cursorRow, &_pattern, true, _highlightEvery);
+      _audioResources->playMem.play(_extmemArray + _sfsio->getExtmemOffset((bank1-1)*24+sample1));
+    } else {
+      // failed, because there is not enough memory left
+      _pattern.unsetSampleAt(column, row);
+    }   
   }
 }
 
@@ -213,14 +223,6 @@ void Sequencer::_playNext() {
 
     for (byte c=0; c<_pattern.channels; c++) {
       if (_pattern.getSampleAt(c+1, _cursorRow).sampleNumber < 255 && _sfsio->getExtmemOffset(_pattern.getSampleAt(c+1, _cursorRow).sampleNumber) != -1) {
-
-/*        Serial.print("Playing from Extmem::");
-        Serial.print(_pattern.getSampleAt(c+1, _cursorRow).displayText);
-        Serial.print("::");
-        Serial.print(_pattern.getSampleAt(c+1, _cursorRow).sampleNumber);
-        Serial.print("::@");
-        Serial.println(_sfsio->getExtmemOffset(_pattern.getSampleAt(c+1, _cursorRow).sampleNumber));
-*/
         switch(c) {
           case 0:
             if (_pattern.getSampleAt(c+1, _cursorRow).sampleNumber == 254) {

@@ -33,7 +33,7 @@ uint16_t Pattern::getPatternSpeed()
 
 void Pattern::setSampleAt(byte column, uint16_t row, byte sampleNumber, byte stereoPosition, byte velocity)
 {    
-    _samplesUsed[sampleNumber - 1] = true;   
+    samplesUsed[sampleNumber - 1] = true;   
 
     _channel[column - 1][row].sampleNumber = sampleNumber;
     sprintf(_channel[column - 1][row].displayText, "S%02d", sampleNumber);
@@ -63,11 +63,23 @@ Pattern::sampleStruct Pattern::getSampleAt(byte column, uint16_t row)
     return _channel[column - 1][row];
 };
 
-boolean *Pattern::getSamplesUsed()
+boolean * Pattern::getSamplesUsed()
 {
-    // ToDo:: recheck Pattern, as samples might have been removed
+    for (byte i = 0; i < 72; i++) {
+        samplesUsed[i] = false;
+    }
     
-    return _samplesUsed;
+    for (byte c = 0; c < channels; c++)
+    {
+        for (byte i = 0; i < 128; i++)
+        {
+            if (_channel[c][i].sampleNumber != 255) {
+                samplesUsed[_channel[c][i].sampleNumber-1] = true;
+            }
+        }
+    }
+
+    return samplesUsed;
 };
 
 void Pattern::_clearPattern()

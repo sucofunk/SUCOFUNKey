@@ -27,6 +27,10 @@ class Pattern {
         sampleStruct getSampleAt(byte column, uint16_t row);
 
         boolean *getSamplesUsed();
+        boolean samplesUsed[72] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+                                    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+                                    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
+                
 
     private:
         SampleFSIO *_sfsio;
@@ -37,14 +41,7 @@ class Pattern {
         
         sampleStruct _channel[4][128];
 
-        boolean _samplesUsed[72] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-                                    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-                                    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
-        
-
-
         void _clearPattern();
-
 };
 
 #endif

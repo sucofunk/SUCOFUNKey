@@ -297,9 +297,6 @@ boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart,
 long SampleFSIO::copyRawFromSdToMemory(const char *filename, long startOffset) {
   File f;
   
-  Serial.print("Filename::");
-  Serial.println(filename);
-
   if (SD.exists(filename)) {
     f = SD.open(filename, O_READ);  
   } else {
@@ -312,6 +309,7 @@ long SampleFSIO::copyRawFromSdToMemory(const char *filename, long startOffset) {
 
   uint32_t header = 0;
   header = fileType;
+
   uint32_t fs = f.size() >> 1; // same as divided by 2
   long c = f.size()/4;
   uint16_t buff[2];
@@ -352,6 +350,7 @@ boolean SampleFSIO::addSampleToMemory(byte bank1, byte sampleId1, boolean forceR
       if (_nextOffset == -1) {
         _nextOffset = offset;
         _sampleOffsets[sample72] = -1;
+        return false;
       } else {
         _sampleOffsets[sample72] = offset;
 
@@ -362,14 +361,18 @@ boolean SampleFSIO::addSampleToMemory(byte bank1, byte sampleId1, boolean forceR
       }
 
   } 
-  return false;   
+  return true;   
 }
 
 boolean SampleFSIO::loadSamplesToMemory(boolean *sampleArray) {
   
   // ToDo: check memory status -> handle extmem overflow!
-  
+
   _nextOffset = 0; // reset extmem start pointer
+
+  for (int i = 0; i < 72; i++) {
+    _sampleOffsets[i] = -1;
+  }
 
   for (byte b=0; b<3; b++) {
     for (byte s=0; s<24; s++) {
@@ -402,20 +405,7 @@ unsigned int *SampleFSIO::getExtmemAddressData(byte sampleNumber) {
 }
 
 byte SampleFSIO::getExtmemUsagePercent() {
-
-  // ToDo: make this correct!!!!
-
-  float f = (((_nextOffset*8.0) / _extmemSize)) * 100;
-  
-  Serial.print("_nextOffset::");
-  Serial.println(_nextOffset);
-
-  Serial.print("_extmemSize::");
-  Serial.println(_extmemSize);
-
-  Serial.print("EXTMEM USAGE %::");
-  Serial.println(f);
-
+  float f = (static_cast<float>(_nextOffset) / static_cast<float>(_extmemSize/4)) * 100.0;
   return round(f);
 };
 

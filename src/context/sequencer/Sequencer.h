@@ -48,6 +48,8 @@ class Sequencer {
         
         void _playNext();
         byte _activeNoteLEDPin = 0;
+
+        boolean _playLEDon = false;
 };
 
 #endif
