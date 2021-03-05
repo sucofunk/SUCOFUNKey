@@ -142,6 +142,8 @@ void Recorder::stopRecording() {
   if (!_isActive) {
     _lastInput = _keyboard->getInput();
     _keyboard->setInput(Sucofunkey::INPUT_NONE);
+    _audioResources->muteInput();
+    _audioResources->muteResampling();
   }
 
   _sfsio->generateWaveFormBufferForSample(3, 0);

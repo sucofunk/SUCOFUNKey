@@ -55,6 +55,14 @@ long globalTickInterval = 1000000; // intervall in microseconds -> starts at 1s
 long globalTickIntervalNew;
 void globalTick();
 
+// Interval Timer for recording
+IntervalTimer globalTickTimerRec;
+volatile boolean tickedRec = false;
+long globalTickIntervalRec = 1000000; // intervall in microseconds -> starts at 1s
+long globalTickIntervalRecNew;
+void globalTickRec();
+
+
 AudioResources audioResources;
 
 // Hardware SPI for LCD Screen
@@ -195,7 +203,8 @@ void setup() {
 
   // start globalTickInterval Timer
   globalTickTimer.begin(globalTick, globalTickInterval);
-  
+  globalTickTimerRec.begin(globalTickRec, globalTickIntervalRec);
+
   delay(500);
   
   if (ok) {
@@ -242,23 +251,27 @@ void globalTick() {
   ticked = true;
 }
 
+void globalTickRec() {
+  tickedRec = true;
+}
+
+
 void sendTickToActiveContext() {
   switch(currentAppContext) {
     case  AppContext::SAMPLER:
            globalTickIntervalNew = samplerContext.receiveTimerTick();
           break;
     case  AppContext::SEQUENCER:
-           globalTickIntervalNew = sequencerContext.receiveTimerTick();
+           //globalTickIntervalNew = sequencerContext.receiveTimerTick();
           break;
     case  AppContext::STARTUP:
            globalTickIntervalNew = startupContext.receiveTimerTick();
           break;
-    case  AppContext::RECORDER:
-           globalTickIntervalNew = recorderContext.receiveTimerTick();
-          break;
     default:
           break;
   }    
+
+  globalTickIntervalNew = sequencerContext.receiveTimerTick();
 
   if (globalTickIntervalNew != globalTickInterval) {
     globalTickInterval = globalTickIntervalNew;
@@ -283,6 +296,16 @@ void loop() {
     z = 0;
   }
 
+  if (tickedRec) {
+    tickedRec = false;
+    globalTickIntervalRecNew = recorderContext.receiveTimerTick();
+    
+    if (globalTickIntervalRecNew != globalTickIntervalRec) {
+      globalTickIntervalRec = globalTickIntervalRecNew;
+      globalTickTimerRec.update(globalTickIntervalRec);
+    }  
+  }
+
   // handle timer
   if (ticked) {
     ticked=false;
@@ -294,7 +317,15 @@ void loop() {
 void changeContext(AppContext context) {    
     homeContext.setActive(false);
     samplerContext.setActive(false);
-    sequencerContext.setActive(false);
+
+    if (currentAppContext == SEQUENCER && sequencerContext.isPlaying() && context == SAMPLER) {
+      // warning?
+      // or fix it with two seperated timers.. but maybe we need them later for something else..
+    } 
+    else {
+      sequencerContext.setActive(false);
+    }
+        
     synthContext.setActive(false);
     liveContext.setActive(false);
     settingsContext.setActive(false);
@@ -306,7 +337,7 @@ void changeContext(AppContext context) {
                   currentAppContext = HOME;
                   break;
       case  AppContext::SAMPLER: 
-                  if (!recorderContext.isRecording()) {
+                  if (!recorderContext.isRecording() && !sequencerContext.isPlaying()) {
                     samplerContext.setActive(true);
                     currentAppContext = SAMPLER;
                   }                  

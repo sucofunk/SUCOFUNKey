@@ -22,8 +22,8 @@ Sequencer::Sequencer(Sucofunkey *keyboard, Screen *screen, SampleFSIO *sfsio, un
 long Sequencer::receiveTimerTick() {
   if (_isPlaying) {
     _playNext();    
-    _keyboard->setLEDState(Sucofunkey::LED_PLAY, _playLEDon);
     _playLEDon = !_playLEDon;
+    _keyboard->setLEDState(Sucofunkey::LED_PLAY, _playLEDon);    
   }
   return _playbackTickSpeed;
 }
@@ -97,8 +97,17 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               _sequencerScreen.drawBPM(_bpm);
             } else {
               moveRow((event.pressed ? 1 : -1));
-            }          
+            }
           break;
+        
+        case Sucofunkey::ENCODER_2:
+            if (_isPlaying) {
+              // what will be the function?
+            } else {
+              moveColumn((event.pressed ? 1 : -1));
+            }
+          break;
+
       }
     }
 
@@ -112,10 +121,11 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
     if (!_isPlaying) {
         byte sample = _pattern.getSampleAt(_cursorColumn, _cursorRow).sampleNumber;
         if (sample != 255) {
+          sample -= 1;
           byte b = sample/24;
           byte s = sample%24;
           _keyboard->setBank(b+1);
-          _activeNoteLEDPin = _keyboard->getLEDPinBySampleId(s);
+          _activeNoteLEDPin = _keyboard->getLEDPinBySampleId(s+1);
           _keyboard->setLEDState(_activeNoteLEDPin, true);
         }        
     }    
@@ -137,6 +147,7 @@ void Sequencer::loadSetPlay(byte bank1, byte sample1, byte column, int row) {
     } else {
       // failed, because there is not enough memory left
       _pattern.unsetSampleAt(column, row);
+      Serial.println("out of memory");
     }   
   }
 }
@@ -189,6 +200,8 @@ void Sequencer::setActive(boolean active) {
  else {
     _isActive = false;
     _keyboard->setBank(0);
+    _keyboard->setLEDState(_activeNoteLEDPin, false);
+    _activeNoteLEDPin = 0;
   }
 }
 
@@ -219,11 +232,15 @@ void Sequencer::pausePattern() {
 
 void Sequencer::_playNext() {
     if (_playedFirstRow) { _cursorRow++; } else { _playedFirstRow = true; };
-    _sequencerScreen.drawTrackerAtPosition(_cursorRow, &_pattern, true, _highlightEvery);
+    
+    if (_isActive) {
+      _sequencerScreen.drawTrackerAtPosition(_cursorRow, &_pattern, true, _highlightEvery);
+    }
 
-    for (byte c=0; c<_pattern.channels; c++) {
+    for (byte c=0; c < _pattern.channels; c++) {
       if (_pattern.getSampleAt(c+1, _cursorRow).sampleNumber < 255 && _sfsio->getExtmemOffset(_pattern.getSampleAt(c+1, _cursorRow).sampleNumber) != -1) {
         switch(c) {
+          // ToDo: set mixers to velocity of note.
           case 0:
             if (_pattern.getSampleAt(c+1, _cursorRow).sampleNumber == 254) {
               _audioResources->playMem1.stop();
@@ -263,9 +280,14 @@ void Sequencer::_playNext() {
 }
 
 void Sequencer::stopAllChannels() {
+  _playLEDon = false;
   _audioResources->playMem.stop();
   _audioResources->playMem1.stop();
   _audioResources->playMem2.stop();
   _audioResources->playMem3.stop();
   _audioResources->playMem4.stop();
+}
+
+boolean Sequencer::isPlaying() {
+  return _isPlaying;
 }

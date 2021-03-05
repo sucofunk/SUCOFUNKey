@@ -24,6 +24,7 @@ class Sequencer {
         void playPattern();
         void pausePattern();
         void stopAllChannels();
+        boolean isPlaying();
     private:
         Sucofunkey *_keyboard;
         Screen *_screen;        
