@@ -60,6 +60,7 @@ class Screen {
         void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
 
         void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
+        void drawCircle(int16_t x, int16_t y, int16_t r, boolean fill, uint16_t color);
 
         uint16_t RGBtoColor(byte r, byte g, byte b);
 

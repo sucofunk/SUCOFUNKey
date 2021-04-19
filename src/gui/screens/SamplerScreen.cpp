@@ -88,6 +88,10 @@ void SamplerScreen::drawTrimMarker(int trimMarkerStartPosition, int trimMarkerEn
     drawTrimMarker(trimMarkerStartPosition, trimMarkerEndPosition, (bank0*24)+sampleId0, volumeScaleFactor);
 }
 
+void SamplerScreen::removeTrimMarker(int position, byte sampleId72, float volumeScaleFactor) {
+    _screen->drawLine(position, _screen->AREA_CONTENT.y1, position, _screen->AREA_CONTENT.y2, _screen->C_BLACK);
+    _screen->drawLine(position, floor(zeroAxisY+_sfsio->waveFormBuffer[sampleId72][position][0]*volumeScaleFactor), position, floor(zeroAxisY-_sfsio->waveFormBuffer[sampleId72][position][1]*volumeScaleFactor), _screen->C_WHITE);
+}
 
 void SamplerScreen::showSlotSelectionHint() {
     _screen->drawTextInArea(_screen->AREA_BOTTOM_MENU, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, _screen->C_WARNING, "Select a free slot");

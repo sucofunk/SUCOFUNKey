@@ -34,7 +34,8 @@ class SequencerScreen {
 
         Pattern *_pattern;
         void _drawEmptyRow(uint16_t row);
-        void _drawGridCell(int col, int row, const char *text, uint16_t bgColor);
+        //void _drawGridCell(int col, int row, const char *text, uint16_t bgColor);
+        void _drawGridCell(int col, int row, boolean hasContent, const char *text, byte stereoPosition, byte velocity, uint16_t bgColor);
 };
 
 #endif

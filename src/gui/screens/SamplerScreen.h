@@ -21,6 +21,7 @@ class SamplerScreen {
         void setBottomMenu(BottomMenu bottomMenu);
         void drawTrimMarker(int trimMarkerStartPosition, int trimMarkerEndPosition, byte sampleId72, float volumeScaleFactor);
         void drawTrimMarker(int trimMarkerStartPosition, int trimMarkerEndPosition, byte bank0, byte sampleId0, float volumeScaleFactor);
+        void removeTrimMarker(int position, byte sampleId72, float volumeScaleFactor);
 
         void showSlotSelectionHint();
         void showSavingMessage();

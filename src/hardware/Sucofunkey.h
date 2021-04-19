@@ -7,6 +7,8 @@
 
 class Sucofunkey {
     public:
+        static const uint8_t faderPin = A0;
+
         static const byte KEY_NOTE = 1;
         static const byte KEY_OPERATION = 2;
         static const byte KEY_FN_NOTE = 3;
@@ -23,7 +25,7 @@ class Sucofunkey {
         static const byte INPUT_LINE = 2;
         static const byte INPUT_RESAMPLE = 3;        
         static const byte INPUT_MIC_RESAMPLE = 4;
-        static const byte INPUT_LINE_RESAMPLE = 5;
+        static const byte INPUT_LINE_RESAMPLE = 5;        
 
         typedef struct keyQueueStruct {
             byte  index;
@@ -52,6 +54,7 @@ class Sucofunkey {
         void toggleInput();
         byte getInput();
 
+        int getFaderValue(uint8_t pin, int scaleMin, int scaleMax);
 
         // MCP 1/2/3 for Keys -> Encoders are handled separately
 
@@ -228,6 +231,8 @@ class Sucofunkey {
         int _intKeyPin3;
         int _intEncPin;
        
+        int _lastFaderReading = 0;
+
         Adafruit_MCP23017 _mcp1;
         Adafruit_MCP23017 _mcp2;
         Adafruit_MCP23017 _mcp3;

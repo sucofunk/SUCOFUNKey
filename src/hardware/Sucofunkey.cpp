@@ -530,6 +530,18 @@ byte Sucofunkey::getInput() {
   return _activeInput;
 };
 
+// returns the value from an analog input (fader) and scales it to the defined min max range
+// e.g. range is from 100 to 200, input (0..1023) is 512 --> 150
+int Sucofunkey::getFaderValue(uint8_t pin, int scaleMin, int scaleMax) {
+  int faderIn = analogRead(pin);
+
+  if (abs(faderIn - _lastFaderReading) > 3) {
+    _lastFaderReading = faderIn;
+  }
+  
+  return static_cast<int>(floor(scaleMin+(((scaleMax-scaleMin)/1023.0)*_lastFaderReading)));
+};
+
 
 
 void Sucofunkey::switchLEDsOff() {

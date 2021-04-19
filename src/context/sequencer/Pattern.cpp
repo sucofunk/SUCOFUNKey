@@ -46,13 +46,13 @@ void Pattern::unsetSampleAt(byte column, uint16_t row) {
     if (_channel[column - 1][row].sampleNumber == 255) {
         _channel[column - 1][row].sampleNumber = 254;
         sprintf(_channel[column - 1][row].displayText, " ~");
-        _channel[column - 1][row].stereoPosition = 0;
-        _channel[column - 1][row].velocity = 0;
+        _channel[column - 1][row].stereoPosition = 64;
+        _channel[column - 1][row].velocity = 64;
     } else {
         // just remove the sample
         _channel[column - 1][row].sampleNumber = 255;
         sprintf(_channel[column - 1][row].displayText, " ");
-        _channel[column - 1][row].stereoPosition = 0;
+        _channel[column - 1][row].stereoPosition = 64;
         _channel[column - 1][row].velocity = 64;
     } 
 };
@@ -82,6 +82,32 @@ boolean * Pattern::getSamplesUsed()
     return samplesUsed;
 };
 
+
+void Pattern::increaseVelocity(byte column, byte row) {
+    if (_channel[column - 1][row].velocity < 126) {
+        _channel[column - 1][row].velocity += 2;
+    }
+};
+
+void Pattern::decreaseVelocity(byte column, byte row) {
+    if (_channel[column - 1][row].velocity > 1) {
+        _channel[column - 1][row].velocity -= 2;
+    }
+};        
+
+void Pattern::stereoPositionTickLeft(byte column, byte row) {
+    if (_channel[column - 1][row].stereoPosition > 0) {
+        _channel[column - 1][row].stereoPosition--;
+    }
+};
+
+void Pattern::stereoPositionTickRight(byte column, byte row) {
+    if (_channel[column - 1][row].stereoPosition < 127) {
+        _channel[column - 1][row].stereoPosition++;
+    }
+};
+
+
 void Pattern::_clearPattern()
 {
     for (byte c = 0; c < channels; c++)
@@ -90,7 +116,7 @@ void Pattern::_clearPattern()
         {
             _channel[c][i].sampleNumber = 255;
             sprintf(_channel[c][i].displayText, " ");
-            _channel[c][i].stereoPosition = 0;
+            _channel[c][i].stereoPosition = 64;
             _channel[c][i].velocity = 64;
         }
     }

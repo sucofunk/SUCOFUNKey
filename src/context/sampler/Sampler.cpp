@@ -90,6 +90,20 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::PLAY:
               _play();
               break;        
+        case Sucofunkey::ENCODER_1_PUSH:
+              if (currentState == SAMPLE_EDIT_TRIM && _faderState != FaderState::TRIM_START) {
+                _faderState = FaderState::TRIM_START;
+              } else {
+                _faderState = FaderState::IDLE;
+              }              
+              break;
+        case Sucofunkey::ENCODER_2_PUSH:
+              if (currentState == SAMPLE_EDIT_TRIM && _faderState != FaderState::TRIM_END) {
+                _faderState = FaderState::TRIM_END;
+              } else {
+                _faderState = FaderState::IDLE;
+              }              
+              break;              
       }
     }
 
@@ -221,6 +235,24 @@ long Sampler::receiveTimerTick() {
     } else {
       _samplerScreen.resetPlayerPosition();
     }    
+
+    if (currentState == SAMPLE_EDIT_TRIM) {
+      byte sample72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
+      switch(_faderState) {
+        case FaderState::TRIM_START:
+          _samplerScreen.removeTrimMarker(_trimMarkerStartPosition, sample72, _volumeScaleFactor);
+          _trimMarkerStartPosition = _keyboard->getFaderValue(_keyboard->faderPin, 0, _trimMarkerEndPosition-1);
+          _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, sample72, _volumeScaleFactor);
+        break;
+        case FaderState::TRIM_END:
+          _samplerScreen.removeTrimMarker(_trimMarkerEndPosition, sample72, _volumeScaleFactor);
+          // ToDo: Endposition might be smaller that screen width!!!
+          _trimMarkerEndPosition = _keyboard->getFaderValue(_keyboard->faderPin, _trimMarkerStartPosition+1, 320);
+          _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, sample72, _volumeScaleFactor);
+        break;
+
+      }
+    }
 
     return 100000;
 }

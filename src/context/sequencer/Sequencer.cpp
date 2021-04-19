@@ -108,6 +108,29 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
             }
           break;
 
+        case Sucofunkey::ENCODER_3:
+            if (event.pressed) {
+              _pattern.increaseVelocity(_cursorColumn, _cursorRow);
+            } else {
+              _pattern.decreaseVelocity(_cursorColumn, _cursorRow);
+            }
+            _sequencerScreen.drawTrackerAtPosition(_cursorRow, &_pattern, true, _highlightEvery);
+
+            Serial.print("velocity::");
+            Serial.println(_pattern.getSampleAt(_cursorColumn, _cursorRow).velocity);
+          break;
+
+        case Sucofunkey::ENCODER_4:
+            if (event.pressed) {
+              _pattern.stereoPositionTickRight(_cursorColumn, _cursorRow);
+            } else {
+              _pattern.stereoPositionTickLeft(_cursorColumn, _cursorRow);
+            }
+            _sequencerScreen.drawTrackerAtPosition(_cursorRow, &_pattern, true, _highlightEvery);
+
+            Serial.print("panorama::");
+            Serial.println(_pattern.getSampleAt(_cursorColumn, _cursorRow).stereoPosition);            
+          break;
       }
     }
 
@@ -135,7 +158,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
 void Sequencer::loadSetPlay(byte bank1, byte sample1, byte column, int row) {
   if (_sfsio->sampleBanksStatus[bank1-1][sample1-1]) {
     _audioResources->playMem.stop();
-    _pattern.setSampleAt(column, row, (bank1-1)*24+sample1, 0, 64);
+    _pattern.setSampleAt(column, row, (bank1-1)*24+sample1, 64, 64);
 
     // load Sample if not in extmem yet
     if(_sfsio->addSampleToMemory(bank1, sample1, false)) {
@@ -240,11 +263,22 @@ void Sequencer::_playNext() {
     for (byte c=0; c < _pattern.channels; c++) {
       if (_pattern.getSampleAt(c+1, _cursorRow).sampleNumber < 255 && _sfsio->getExtmemOffset(_pattern.getSampleAt(c+1, _cursorRow).sampleNumber) != -1) {
         switch(c) {
-          // ToDo: set mixers to velocity of note.
           case 0:
             if (_pattern.getSampleAt(c+1, _cursorRow).sampleNumber == 254) {
               _audioResources->playMem1.stop();
             } else {
+
+              // ToDo: set mixers to velocity of note --> optimize
+
+              if (_pattern.getSampleAt(1, _cursorRow).stereoPosition < 64) {
+                _audioResources->mixerMem1L.gain(0, (_pattern.getSampleAt(1, _cursorRow).velocity/127.0)*1.0 );
+                _audioResources->mixerMem1R.gain(0, (_pattern.getSampleAt(1, _cursorRow).velocity/127.0)*(_pattern.getSampleAt(1, _cursorRow).stereoPosition/64.0));
+              } else {                
+                _audioResources->mixerMem1L.gain(0, (_pattern.getSampleAt(1, _cursorRow).velocity/127.0)*((127-_pattern.getSampleAt(1, _cursorRow).stereoPosition)/64.0));
+                _audioResources->mixerMem1R.gain(0, (_pattern.getSampleAt(1, _cursorRow).velocity/127.0)*1.0 );
+              }
+          
+              Serial.println(_pattern.getSampleAt(1, _cursorRow).velocity);
               _audioResources->playMem1.play(_extmemArray + _sfsio->getExtmemOffset(_pattern.getSampleAt(c+1, _cursorRow).sampleNumber));
             }
             break;

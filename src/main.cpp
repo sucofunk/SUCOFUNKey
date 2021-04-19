@@ -30,6 +30,8 @@ int PIN_SCREEN_DC = 39;
 int PIN_SCREEN_RST = 35;
 int PIN_SCREEN_BL = 34;
 
+int faderValue = 0;
+
 // Function definitions
 void handleKeyboardEventQueue(void);
 void changeContext(byte context);

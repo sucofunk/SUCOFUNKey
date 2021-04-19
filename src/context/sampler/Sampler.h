@@ -25,6 +25,14 @@ class Sampler {
             SAMPLE_WAIT_SAVE_SLOT = 3
         };        
 
+        enum FaderState
+        {
+            IDLE = 0,
+            TRIM_START = 1,
+            TRIM_END = 2,
+            VOLUME = 3
+        };
+
         // menu functions
         void editActiveSample();
         void deleteActiveSample();
@@ -44,6 +52,7 @@ class Sampler {
         byte _activeBank = 1;
 
         int currentState = SAMPLE_NOTHING;
+        int _faderState = FaderState::IDLE;
 
         SamplerScreen _samplerScreen;
 

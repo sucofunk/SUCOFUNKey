@@ -202,3 +202,11 @@ void Screen::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
 void Screen::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
   _tft->fillRect(x, y, w, h, color);
 }
+
+void Screen::drawCircle(int16_t x, int16_t y, int16_t r, boolean fill, uint16_t color) {
+  if (fill) {
+    _tft->fillCircle(x, y, r, color);
+  } else {
+    _tft->drawCircle(x, y, r, color);
+  }
+}

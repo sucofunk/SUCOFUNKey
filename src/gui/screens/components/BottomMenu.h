@@ -12,6 +12,12 @@ class BottomMenu {
         BottomMenu(Sucofunkey *keyboard, Screen *screen, char const *label1, int retVal1, char const *label3, int retVal3);
         BottomMenu(Sucofunkey *keyboard, Screen *screen, char const *label1, int retVal1, char const *label2, int retVal2, char const *label3, int retVal3);
         
+        enum BottomMenuItemType {
+            STANDARD = 0,       // normal menu point
+            SUBMENU = 1,        // will open a second level as sub-menu
+            ENCODERVALUE = 2    // can handle encoder changes e.g. BPM change
+        };
+
         void handleEvent(Sucofunkey::keyQueueStruct event);
         
         void setupMenu3(char const *label1, int retVal1, char const *label2, int retVal2, char const *label3, int retVal3);
