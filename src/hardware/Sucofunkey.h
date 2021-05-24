@@ -5,18 +5,19 @@
 #include "Adafruit_MCP23017.h"
 #include <cppQueue.h> // https://github.com/SMFSW/Queue
 
+// Version 3 for SUCOFUNKey V3 (PCB Revision)
+
 class Sucofunkey {
     public:
-        static const uint8_t faderPin = A0;
+        // PIN number on Teensy 4.1 where the fader is connected to
+        static const uint8_t faderPin = 40;
 
         static const byte KEY_NOTE = 1;
         static const byte KEY_OPERATION = 2;
         static const byte KEY_FN_NOTE = 3;
         static const byte KEY_FN_OPERATION = 4;
-        static const byte KEY_FREE = 5; // free to use MCP3 (GPB3-7) PINs
-        static const byte KEY_FN_FREE = 6; // free to use MCP3 (GPB3-7) PINs
         static const byte ENCODER = 7;
-        static const byte KEY_MENU_SELECTOR = 8;
+        static const byte KEY_MENU_OPERATION = 8;
         static const byte KEY_MENU_NOTE = 9;
         static const byte EVENT_APPLICATION = 10;
 
@@ -28,22 +29,23 @@ class Sucofunkey {
         static const byte INPUT_LINE_RESAMPLE = 5;        
 
         typedef struct keyQueueStruct {
-            byte  index;
+            int  index;
             bool  pressed;
             bool  ignore;
             byte  type;  // KEY_NOTE | KEY_OPERATION | KEY_FN_NOTE | KEY_FN_OPERATION | KEY_FREE | ENCODER | APPLICATION
             int   value; // can be used to return values from callbacks
         } Key;
 
+        // ToDo: move interrupt pins to static const?
+        Sucofunkey(int intPinMCP1, int intPinMCP2, int intPinMCP3, int intPinMCP4, int intPinMCP5);
         Sucofunkey(int intKeyPin1, int intEncPin, int intKeyPin2, int intKeyPin3);
         boolean hasKeyPressed();
 
         boolean hasEvents();
-        boolean hasEncoderChange();
         keyQueueStruct getNextEvent();
-        void addApplicationEventToQueue(byte eventId);
+        void addApplicationEventToQueue(int eventId);
         void setIgnoreKeys(bool state);
-        void setLEDState(byte led, bool state);
+        void setLEDState(int led, bool state);
 
         void setBank(byte nr);
         void setBankUp();
@@ -56,162 +58,176 @@ class Sucofunkey {
 
         int getFaderValue(uint8_t pin, int scaleMin, int scaleMax);
 
-        // MCP 1/2/3 for Keys -> Encoders are handled separately
+        // The following values for keys/leds correspond to the MCP PINs.
+        // 0..79
+        // 0=MCP1 A0, 1=MCP1 A1, ..., 79=MCP5 B7
+        static const int FUNCTION = 18; //40;
+        static const int MENU = 17; //41;
+        static const int SET = 16; //42;
+        static const int PLAY = 33; //16;
+        static const int PAUSE = 32; //17;
+        static const int RECORD = 53; //18;
+        static const int INPUTSELECTOR = 51; //19;
+        static const int CURSOR_LEFT = 67; //20;
+        static const int CURSOR_UP = 66; //21;
+        static const int CURSOR_DOWN = 65; //22;
+        static const int CURSOR_RIGHT = 64; //23;
 
-        static const byte FUNCTION = 40;
-        static const byte MENU = 41;
-        static const byte SET = 42;
-        static const byte PLAY = 16;
-        static const byte PAUSE = 17;
-        static const byte RECORD = 18;
-        static const byte INPUTSELECTOR = 19;
-        static const byte CURSOR_LEFT = 20;
-        static const byte CURSOR_UP = 21;
-        static const byte CURSOR_DOWN = 22;
-        static const byte CURSOR_RIGHT = 23;
+        // FN + Key -> Offset 100 + key
+        static const int FN_FUNCTION = 118; // 90; // 3 Seconds FN to go to settings
+        static const int FN_MENU = 117; // 91;
+        static const int FN_SET = 116; // 92;
+        static const int FN_PLAY = 133; // 66;
+        static const int FN_PAUSE = 132; // 67;
+        static const int FN_RECORD = 153; // 68;
+        static const int FN_INPUTSELECTOR = 151; // 69;
+        static const int FN_CURSOR_LEFT = 167; // 70;
+        static const int FN_CURSOR_UP = 166; //71;
+        static const int FN_CURSOR_DOWN = 165; //72;
+        static const int FN_CURSOR_RIGHT = 164; //73;
 
-        static const byte FN_FUNCTION = 90; // 3 Seconds FN to go to settings
-        static const byte FN_MENU = 91;
-        static const byte FN_SET = 92;
-        static const byte FN_PLAY = 66;
-        static const byte FN_PAUSE = 67;
-        static const byte FN_RECORD = 68;
-        static const byte FN_INPUTSELECTOR = 69;
-        static const byte FN_CURSOR_LEFT = 70;
-        static const byte FN_CURSOR_UP = 71;
-        static const byte FN_CURSOR_DOWN = 72;
-        static const byte FN_CURSOR_RIGHT = 73;
+        // Menu + Key -> Offset 200 + key
+        static const int MENU_MENU = 217; // 141; // 3 Seconds MENU to go to home screen
+        static const int MENU_SET = 216; // 142;
+        static const int MENU_PLAY = 233; // 116;
+        static const int MENU_PAUSE = 232; // 117;
+        static const int MENU_RECORD = 253; // 118;
+        static const int MENU_INPUTSELECTOR = 251; // 119;
+        static const int MENU_CURSOR_LEFT = 267; // 120;
+        static const int MENU_CURSOR_UP = 266; // 121;
+        static const int MENU_CURSOR_DOWN = 265; // 122;
+        static const int MENU_CURSOR_RIGHT = 264; // 123;
 
-        static const byte MENU_MENU = 141; // 3 Seconds MENU to go to home screen
-        static const byte MENU_SET = 142;
-        static const byte MENU_PLAY = 116;
-        static const byte MENU_PAUSE = 117;
-        static const byte MENU_RECORD = 118;
-        static const byte MENU_INPUTSELECTOR = 119;
-        static const byte MENU_CURSOR_LEFT = 120;
-        static const byte MENU_CURSOR_UP = 121;
-        static const byte MENU_CURSOR_DOWN = 122;
-        static const byte MENU_CURSOR_RIGHT = 123;
+        static const int ENCODER_1_PUSH = 10; // 43;
+        static const int ENCODER_2_PUSH = 6; // 44;
+        static const int ENCODER_3_PUSH = 3; // 45;
+        static const int ENCODER_4_PUSH = 0; // 46;
+        //static const uint8_t GPB7 = 47;
 
-        static const byte ENCODER_1_PUSH = 43;
-        static const byte ENCODER_2_PUSH = 44;
-        static const byte ENCODER_3_PUSH = 45;
-        static const byte ENCODER_4_PUSH = 46;
-        static const byte GPB7 = 47;
+        static const int FN_ENCODER_1_PUSH = 110; // 93;
+        static const int FN_ENCODER_2_PUSH = 106; // 94;
+        static const int FN_ENCODER_3_PUSH = 103; // 95;
+        static const int FN_ENCODER_4_PUSH = 100; // 96;
+        //static const uint8_t FN_GPB7 = 97;
 
-        static const byte FN_ENCODER_1_PUSH = 93;
-        static const byte FN_ENCODER_2_PUSH = 94;
-        static const byte FN_ENCODER_3_PUSH = 95;
-        static const byte FN_ENCODER_4_PUSH = 96;
-        static const byte FN_GPB7 = 97;
+        static const int MENU_ENCODER_1_PUSH = 210; // 93;
+        static const int MENU_ENCODER_2_PUSH = 206; // 94;
+        static const int MENU_ENCODER_3_PUSH = 203; // 95;
+        static const int MENU_ENCODER_4_PUSH = 200; // 96;
 
-        static const byte MENU_GPB3 = 143;
-        static const byte MENU_GPB4 = 144;
-        static const byte MENU_GPB5 = 145;
-        static const byte MENU_GPB6 = 146;
-        static const byte MENU_GPB7 = 147;
+        static const int F_1 = 20; // 8;
+        static const int FS_1 = 22; // 9;
+        static const int G_1 = 24; // 10;
+        static const int GS_1 = 28; // 11;
+        static const int A_1 = 26; // 12;
+        static const int AS_1 = 35; // 13;
+        static const int B_1 = 30; // 14;
+        static const int C_1 = 37; // 15;
+        static const int CS_1 = 40; // 0;
+        static const int D_1 = 41; // 1;
+        static const int DS_1 = 45; // 2;
+        static const int E_1 = 43; // 3;
+        static const int F_2 = 46; // 4;
+        static const int FS_2 = 54; // 5;
+        static const int G_2 = 57; // 6;
+        static const int GS_2 = 61; // 7;
+        static const int A_2 = 59; // 24;
+        static const int AS_2 = 62; // 25;
+        static const int B_2 = 69; // 26;
+        static const int C_2 = 70; // 27;
+        static const int CS_2 = 75; // 28;
+        static const int D_2 = 73; // 29;
+        static const int DS_2 = 78; // 30;
+        static const int E_2 = 77; // 31;
 
-        static const byte F_1 = 8;
-        static const byte FS_1 = 9;
-        static const byte G_1 = 10;
-        static const byte GS_1 = 11;
-        static const byte A_1 = 12;
-        static const byte AS_1 = 13;
-        static const byte B_1 = 14;
-        static const byte C_1 = 15;
-        static const byte CS_1 = 0;
-        static const byte D_1 = 1;
-        static const byte DS_1 = 2;
-        static const byte E_1 = 3;
-        static const byte F_2 = 4;
-        static const byte FS_2 = 5;
-        static const byte G_2 = 6;
-        static const byte GS_2 = 7;
-        static const byte A_2 = 24;
-        static const byte AS_2 = 25;
-        static const byte B_2 = 26;
-        static const byte C_2 = 27;
-        static const byte CS_2 = 28;
-        static const byte D_2 = 29;
-        static const byte DS_2 = 30;
-        static const byte E_2 = 31;
+        // FN + Key -> Offset 100 + key
+        static const int FN_F_1 = 120; // 58;
+        static const int FN_FS_1 = 122; // 59;
+        static const int FN_G_1 = 124; // 60;
+        static const int FN_GS_1 = 128; // 61;
+        static const int FN_A_1 = 126; // 62;
+        static const int FN_AS_1 = 135; // 63;
+        static const int FN_B_1 = 130; // 64;
+        static const int FN_C_1 = 137; // 65;
+        static const int FN_CS_1 = 140; // 50;
+        static const int FN_D_1 = 141; // 51;
+        static const int FN_DS_1 = 145; // 52;
+        static const int FN_E_1 = 143; // 53;
+        static const int FN_F_2 = 146; // 54;
+        static const int FN_FS_2 = 154; // 55;
+        static const int FN_G_2 = 157; // 56;
+        static const int FN_GS_2 = 161; // 57;
+        static const int FN_A_2 = 159; // 74;
+        static const int FN_AS_2 = 162; // 75;
+        static const int FN_B_2 = 169; // 76;
+        static const int FN_C_2 = 170; // 77;
+        static const int FN_CS_2 = 175; // 78;
+        static const int FN_D_2 = 173; // 79;
+        static const int FN_DS_2 = 178; // 80;
+        static const int FN_E_2 = 177; // 81;
 
-        // Offset 50 for Function Key + Note Keys
-        static const byte FN_F_1 = 58;
-        static const byte FN_FS_1 = 59;
-        static const byte FN_G_1 = 60;
-        static const byte FN_GS_1 = 61;
-        static const byte FN_A_1 = 62;
-        static const byte FN_AS_1 = 63;
-        static const byte FN_B_1 = 64;
-        static const byte FN_C_1 = 65;
-        static const byte FN_CS_1 = 50;
-        static const byte FN_D_1 = 51;
-        static const byte FN_DS_1 = 52;
-        static const byte FN_E_1 = 53;
-        static const byte FN_F_2 = 54;
-        static const byte FN_FS_2 = 55;
-        static const byte FN_G_2 = 56;
-        static const byte FN_GS_2 = 57;
-        static const byte FN_A_2 = 74;
-        static const byte FN_AS_2 = 75;
-        static const byte FN_B_2 = 76;
-        static const byte FN_C_2 = 77;
-        static const byte FN_CS_2 = 78;
-        static const byte FN_D_2 = 79;
-        static const byte FN_DS_2 = 80;
-        static const byte FN_E_2 = 81;
-
-        // MCP 4 & 5 for LEDs
-        static const byte LED_PLAY = 7;
-        static const byte LED_RECORD = 6;
+        static const int LED_PLAY = 7; // 7;
+        static const int LED_RECORD = 52; // 6;
         
-        static const byte LED_INPUT_MIC = 5;
-        static const byte LED_INPUT_LINE = 4;
-        static const byte LED_INPUT_RESAMPLE = 3;
+        static const int LED_INPUT_MIC = 50; // 5;
+        static const int LED_INPUT_LINE = 49; // 4;
+        static const int LED_INPUT_RESAMPLE = 48; // 3;
 
-        static const byte LED_BANK_1 = 2;
-        static const byte LED_BANK_2 = 1;
-        static const byte LED_BANK_3 = 0;
+        static const int LED_BANK_1 = 15; // 2;
+        static const int LED_BANK_2 = 14; // 1;
+        static const int LED_BANK_3 = 13; // 0;
 
-        static const byte LED_F_1 = 24;
-        static const byte LED_FS_1 = 25;
-        static const byte LED_G_1 = 26;
-        static const byte LED_GS_1 = 27;
-        static const byte LED_A_1 = 28;
-        static const byte LED_AS_1 = 29;
-        static const byte LED_B_1 = 30;
-        static const byte LED_C_1 = 31;
-        static const byte LED_CS_1 = 16;
-        static const byte LED_D_1 = 17;
-        static const byte LED_DS_1 = 19;
-        static const byte LED_E_1 = 18;
-        static const byte LED_F_2 = 20;
-        static const byte LED_FS_2 = 21;
-        static const byte LED_G_2 = 22;
-        static const byte LED_GS_2 = 23;
-        static const byte LED_A_2 = 8;
-        static const byte LED_AS_2 = 9;
-        static const byte LED_B_2 = 10;
-        static const byte LED_C_2 = 11;
-        static const byte LED_CS_2 = 12;
-        static const byte LED_D_2 = 13;
-        static const byte LED_DS_2 = 14;
-        static const byte LED_E_2 = 15;
+        static const int LED_F_1 = 19; // 24;
+        static const int LED_FS_1 = 21; // 25;
+        static const int LED_G_1 = 23; // 26;
+        static const int LED_GS_1 = 27; // 27;
+        static const int LED_A_1 = 25; // 28;
+        static const int LED_AS_1 = 31; // 29;
+        static const int LED_B_1 = 29; // 30;
+        static const int LED_C_1 = 36; // 31;
+        static const int LED_CS_1 = 39; // 16;
+        static const int LED_D_1 = 38; // 17;
+        static const int LED_DS_1 = 44; // 19;
+        static const int LED_E_1 = 42; // 18;
+        static const int LED_F_2 = 47; // 20;
+        static const int LED_FS_2 = 55; // 21;
+        static const int LED_G_2 = 56; // 22;
+        static const int LED_GS_2 = 60; // 23;
+        static const int LED_A_2 = 58; // 8;
+        static const int LED_AS_2 = 63; // 9;
+        static const int LED_B_2 = 68; // 10;
+        static const int LED_C_2 = 71; // 11;
+        static const int LED_CS_2 = 74; // 12;
+        static const int LED_D_2 = 72; // 13;
+        static const int LED_DS_2 = 79; // 14;
+        static const int LED_E_2 = 76; // 15;
 
-        static const byte ENCODER_1 = 200;
-        static const byte ENCODER_2 = 201;
-        static const byte ENCODER_3 = 202;
-        static const byte ENCODER_4 = 203;                        
+        static const int ENCODER_1_1 = 12;
+        static const int ENCODER_1_2 = 11;
 
-        // Application specific events
-        static const byte SONGSELECTED = 210; // callback for song selector
-        static const byte INPUT_SET    = 211; // SET value at input field
-        static const byte INPUT_CANCEL = 212; // FN+SET to cancel a input
-        static const byte BOTTOM_NAV_ITEM1 = 213; 
-        static const byte BOTTOM_NAV_ITEM2 = 214;
-        static const byte BOTTOM_NAV_ITEM3 = 215;
-        static const byte RECORDED = 216;
+        static const int ENCODER_2_1 = 9;
+        static const int ENCODER_2_2 = 8;
+
+        static const int ENCODER_3_1 = 5;
+        static const int ENCODER_3_2 = 4;
+
+        static const int ENCODER_4_1 = 2;
+        static const int ENCODER_4_2 = 1;
+
+        // Encoder events, will be pre-processed from ENCODER_N_1 and ENCODER_N_2
+        static const int ENCODER_1 = 300;
+        static const int ENCODER_2 = 301;
+        static const int ENCODER_3 = 302;
+        static const int ENCODER_4 = 303;
+
+        // Application specific events (starting at 310)
+        static const int SONGSELECTED = 310; // callback for song selector
+        static const int INPUT_SET    = 311; // SET value at input field
+        static const int INPUT_CANCEL = 312; // FN+SET to cancel a input
+        static const int BOTTOM_NAV_ITEM1 = 313; 
+        static const int BOTTOM_NAV_ITEM2 = 314;
+        static const int BOTTOM_NAV_ITEM3 = 315;
+        static const int RECORDED = 316;
 
         // just for debugging to Serial
         void printQueue();
@@ -229,7 +245,10 @@ class Sucofunkey {
         int _intKeyPin1;
         int _intKeyPin2;
         int _intKeyPin3;
-        int _intEncPin;
+        int _intKeyPin4;
+        int _intKeyPin5;
+
+        int _intEncPin; // todo: remove
        
         int _lastFaderReading = 0;
 
@@ -244,34 +263,99 @@ class Sucofunkey {
         boolean _fnKeyInterrupted;
         boolean _menuKeyHold;
         boolean _menuKeyInterrupted;
-        unsigned long  _fnKeyMillis;
-        unsigned long  _menuKeyMillis;
+        unsigned long _fnKeyMillis;
+        unsigned long _menuKeyMillis;
         
         // needs to be true to e.g. not change menu context while recording
         boolean _ignoreKeys;
         boolean _isRecording;
-        // Sucokey current values, used to identify status changes
-        bool _values_mcp1[16] =  {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
-        bool _values_mcp2[16] =  {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
-        bool _values_mcp3[16] =  {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
+
+        // are pins for Input (true) or Output (false) pins are: A0,..,A7,B0,..,B7
+        // 0..15                       A0      A1      A2      A3      A4      A5      A6      A7      B0      B1      B2      B3      B4      B5      B6      B7
+        bool _input_mcp1[16]      =  {true,   true,   true,   true,   true,   true,   true,   false,  true,   true,   true,   true,   true,   false,  false,  false};
+        byte _input_type_mcp1[16] =  {KEY_OPERATION, ENCODER, ENCODER, KEY_OPERATION, ENCODER, ENCODER, KEY_OPERATION, 0, ENCODER, ENCODER, KEY_OPERATION, ENCODER, ENCODER, 0, 0, 0};
+        //byte _input_type_mcp1[16] =  {KEY_NOTE, KEY_OPERATION, ENCODER, 0};
+
+        // 16 .. 31
+        bool _input_mcp2[16]      =  {true,   true,   true,   false,  true,   false,  true,   false,  true,   false,  true,   false,  true,   false,  true,   false};
+        byte _input_type_mcp2[16] =  {KEY_OPERATION, KEY_OPERATION, KEY_OPERATION, 0, KEY_NOTE, 0, KEY_NOTE, 0, KEY_NOTE, 0, KEY_NOTE, 0, KEY_NOTE, 0, KEY_NOTE, 0};        
+
+        // 32 .. 47
+        bool _input_mcp3[16]      =  {true,   true,   true,   true,   false,  true,   false,  false,  true,   true,   false,  true,   false,  true,   true,  false};        
+        byte _input_type_mcp3[16] =  {KEY_OPERATION, KEY_OPERATION, KEY_OPERATION, KEY_NOTE, 0, KEY_NOTE, 0, 0, KEY_NOTE, KEY_NOTE, 0, KEY_NOTE, 0, KEY_NOTE, KEY_NOTE, 0};
+
+        // 48 .. 63
+        bool _input_mcp4[16]      =  {false,  false,  false,  true,   false,  true,   true,   false,  false,  true,   false,  true,   false,  true,   true,   false};
+        byte _input_type_mcp4[16] =  {0, 0, 0, KEY_OPERATION, 0, KEY_OPERATION, KEY_NOTE, 0, 0, KEY_NOTE, 0, KEY_NOTE, 0, KEY_NOTE, KEY_NOTE, 0};
+
+        // 64 .. 71
+        bool _input_mcp5[16]      =  {true,   true,   true,   true,   false,  true,   true,   false,  false,  true,   false,  true,   false,  true,   true,   false};
+        byte _input_type_mcp5[16] =  {KEY_OPERATION, KEY_OPERATION, KEY_OPERATION, KEY_OPERATION, 0, KEY_NOTE, KEY_NOTE, 0, 0, KEY_NOTE, 0, KEY_NOTE, 0, KEY_NOTE, KEY_NOTE, 0};        
+        
+        uint16_t _values_mcp1_last = 0;
+        uint16_t _values_mcp2_last = 0;
+        uint16_t _values_mcp3_last = 0;
+        uint16_t _values_mcp4_last = 0;
+        uint16_t _values_mcp5_last = 0;
+
+        uint16_t _values_mcp1_current = 0;
+        uint16_t _values_mcp2_current = 0;
+        uint16_t _values_mcp3_current = 0;
+        uint16_t _values_mcp4_current = 0;
+        uint16_t _values_mcp5_current = 0;
        
         // sampleIDs start at 1 -> F1 = 1 ... E2 = 32
-        const byte _eventKeyToSampleId[32] = {  9, 10, 11, 12, 13, 14, 15, 16,  1,  2, 
-                                                3,  4,  5,  6,  7,  8,  0,  0,  0,  0, 
-                                                0,  0,  0,  0, 17, 18, 19, 20, 21, 22, 
-                                               23, 24 };
-        const byte _sampleIdToLEDPIN[25]  =  { 0, 24, 25, 26, 27, 28, 29, 30, 31, 16, 17, 19, 18, 20, 21, 22, 23, 8, 9, 10, 11, 12, 13, 14, 15 };
 
-        const char _eventKeyToChar[32][2] = {{'4', '_'},{'K', 'L'},{'5', '.'},{'M', 'N'},{'O', 'P'},{'6', ','},{'Q', 'R'},{'7', ':'},{'A', 'B'},{'1', '!'},
-                                             {'C', 'D'},{'2', '?'},{'E', 'F'},{'3', '-'},{'G', 'H'},{'I', 'J'},{' ', ' '},{' ', ' '},{' ', ' '},{' ', ' '},
-                                             {' ', ' '},{' ', ' '},{' ', ' '},{' ', ' '},{'S', 'T'},{'8', ';'},{'U', 'V'},{'W', 'X'},{'9', '#'},{'Y', 'Z'},
-                                             {'0', '+'},{' ', ' '}};
-        const char _eventKeyToCharFilename[32][2] = {
-                                            {'4', '_'},{'K', 'L'},{'5', '5'},{'M', 'N'},{'O', 'P'},{'6', '6'},{'Q', 'R'},{'7', ':'},{'A', 'B'},{'1', '!'},
-                                             {'C', 'D'},{'2', '2'},{'E', 'F'},{'3', '-'},{'G', 'H'},{'I', 'J'},{' ', ' '},{' ', ' '},{' ', ' '},{' ', ' '},
-                                             {' ', ' '},{' ', ' '},{' ', ' '},{' ', ' '},{'S', 'T'},{'8', '8'},{'U', 'V'},{'W', 'X'},{'9', '#'},{'Y', 'Z'},
-                                             {'0', ' '},{' ', ' '}};
 
+        // Hier weiter machen!
+
+        typedef struct lookUpTableStruct {
+            int  sampleId;
+            String name;
+            char character[2];
+            char filenameCharacter[2];
+            byte LED_PIN;
+        } LookUpTableEntry;
+
+        //                                        0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,  15
+        //                                        16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31
+        //                                        32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47
+        //                                        48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63
+        //                                        64,  65,  66,  67,  68,  69,  70,  71,  72,  73,  74,  75,  76,  77,  78,  79
+
+        const byte _eventKeyToLookUpTable[80] = { 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 
+                                                  127, 127, 127, 127, 0,   127, 1,   127, 2,   127, 4,   127, 3,   127, 6,   127,
+                                                  127, 127, 127, 5,   127, 7,   127, 127, 8,   9,   127, 11,  127, 10,  12,  127,
+                                                  127, 127, 127, 127, 127, 127, 13,  127, 127, 14,  127, 16,  127, 15,  17,  127,
+                                                  127, 127, 127, 127, 127, 18,  19,  127, 127, 21,  127, 20,  127, 23,  22,  127 };
+
+
+        const LookUpTableEntry _noteKeysLookUpTable[24] = {
+            {  1, "F1",  {'A', 'B'}, {'A', 'B'}, LED_F_1},
+            {  2, "F#1", {'1', '!'}, {'1', '!'}, LED_FS_1},
+            {  3, "G1",  {'C', 'D'}, {'C', 'D'}, LED_G_1},
+            {  4, "G#1", {'2', '?'}, {'2', '2'}, LED_GS_1},
+            {  5, "A1",  {'E', 'F'}, {'E', 'F'}, LED_A_1},
+            {  6, "A#1", {'3', '-'}, {'3', '-'}, LED_AS_1},
+            {  7, "B1",  {'G', 'H'}, {'G', 'H'}, LED_B_1},
+            {  8, "C1",  {'I', 'J'}, {'I', 'J'}, LED_C_1},
+            {  9, "C#1", {'4', '_'}, {'4', '_'}, LED_CS_1},
+            { 10, "D1",  {'K', 'L'}, {'K', 'L'}, LED_D_1},
+            { 11, "D#1", {'5', '.'}, {'5', '5'}, LED_DS_1},
+            { 12, "E1",  {'M', 'N'}, {'M', 'N'}, LED_E_1},
+            { 13, "F2",  {'O', 'P'}, {'O', 'P'}, LED_F_2},
+            { 14, "F#2", {'6', ','}, {'6', '6'}, LED_FS_2},
+            { 15, "G2",  {'Q', 'R'}, {'Q', 'R'}, LED_G_2},
+            { 16, "G#2", {'7', ':'}, {'7', ':'}, LED_GS_2},
+            { 17, "A2",  {'S', 'T'}, {'S', 'T'}, LED_A_2},
+            { 18, "A#2", {'8', ';'}, {'8', '8'}, LED_AS_2},
+            { 19, "B2",  {'U', 'V'}, {'U', 'V'}, LED_B_2},
+            { 20, "C2",  {'W', 'X'}, {'W', 'X'}, LED_C_2},
+            { 21, "C#2", {'9', '#'}, {'9', '9'}, LED_CS_2},
+            { 22, "D2",  {'Y', 'Z'}, {'Y', 'Z'}, LED_D_2},
+            { 23, "D#2", {'0', '+'}, {'0', '0'}, LED_DS_2},
+            { 24, "E2",  {' ', ' '}, {' ', ' '}, LED_E_2}
+        };
 
         // one entry for each rotary encoder
         uint8_t _encoderTempValues[4] = {0, 0, 0, 0};
@@ -279,14 +363,17 @@ class Sucofunkey {
         static void _intCallBack1();
         static void _intCallBack2();
         static void _intCallBack3();
+        static void _intCallBack4();
+        static void _intCallBack5();                
         static void _intCallBackEnc();
 
         void _setupInterrupts();
 
         void _handleKeyPressed();
+        void _mcpKeysPressedToQueueEvents(uint16_t mcpValuesCurrent, uint16_t mcpValuesOld, uint16_t mcpOffset, bool* mcpInput, byte* mcpInputTypes);
+        int _readRotaryEncoder(byte encoderNr, uint8_t valuePinL, uint8_t valuePinR, int eventId);
 
-        void _handleEncoderUpdate();
-        int _readRotaryEncoder(byte encoderNr, uint8_t valuePinL, uint8_t valuePinR, byte eventId);
+        bool getBooleanValueFrom16BitInt(uint16_t values, int pos);  
 
         byte _activeBank = 0;  // 1..3 defines the active bank (LED); 0 == all LEDs turned off
         byte _activeInput = INPUT_NONE;

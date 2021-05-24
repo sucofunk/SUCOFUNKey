@@ -3,7 +3,6 @@
 #include "../../gui/Screen.h"
 #include "Recorder.h"
 
-
 Recorder::Recorder(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *sfsio, AudioResources *audioResources) {
     _keyboard = keyboard;    
     _screen = screen;

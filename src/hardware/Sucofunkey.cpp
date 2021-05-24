@@ -7,80 +7,137 @@
 
 static volatile bool _keyPressedInterrupt1 = false;
 static volatile bool _keyPressedInterrupt2 = false;
-static volatile bool _keyPressedInterrupt3 = true;
+static volatile bool _keyPressedInterrupt3 = false;
+static volatile bool _keyPressedInterrupt4 = false;
+static volatile bool _keyPressedInterrupt5 = false;
+
 static volatile bool _encoderInterrupt = false;
 
 cppQueue keyQueue(sizeof(Sucofunkey::Key), 42, FIFO);
 
 
-Sucofunkey::Sucofunkey(int intKeyPin1, int intEncPin, int intKeyPin2, int intKeyPin3)
- {
-    _intKeyPin1 = intKeyPin1;
-    _intKeyPin2 = intKeyPin2;
-    _intKeyPin3 = intKeyPin3;
-    _intEncPin = intEncPin;
+Sucofunkey::Sucofunkey(int intPinMCP1, int intPinMCP2, int intPinMCP3, int intPinMCP4, int intPinMCP5) {
+  _intKeyPin1 = intPinMCP1;
+  _intKeyPin2 = intPinMCP2;
+  _intKeyPin3 = intPinMCP3;
+  _intKeyPin4 = intPinMCP4;
+  _intKeyPin5 = intPinMCP5;
 
-    _keyPressedInterrupt1 = false;
-    _keyPressedInterrupt2 = false;
-    _keyPressedInterrupt3 = true;
-    _encoderInterrupt = false;
+  // Is the Function Key held for a key combination?
+  _fnKeyHold = false;
+  _fnKeyInterrupted = false;
+
+  // Is the Menu Key held for a key combination with rotary encoder push buttons or record button?
+  _menuKeyHold = false;
+      
+  // needs to be true to e.g. not change menu context while recording
+  _ignoreKeys = false;
+
+  pinMode(_intKeyPin1, INPUT_PULLUP);
+  pinMode(_intKeyPin2, INPUT_PULLUP);
+  pinMode(_intKeyPin3, INPUT_PULLUP);
+  pinMode(_intKeyPin4, INPUT_PULLUP);
+  pinMode(_intKeyPin5, INPUT_PULLUP);
+
+  _setupInterrupts();    
 
 
-    // Is the Function Key held for a key combination?
-    _fnKeyHold = false;
-    _fnKeyInterrupted = false;
+  // Init mcp23017 ICs of SucoKey
+  _mcp1.begin(0, &Wire2);
+  _mcp2.begin(1, &Wire2);
+  _mcp3.begin(2, &Wire2);
+  _mcp4.begin(3, &Wire2);
+  _mcp5.begin(4, &Wire2);
 
-    // Is the Menu Key held for a key combination with rotary encoder push buttons or record button?
-    _menuKeyHold = false;
-        
-    // needs to be true to e.g. not change menu context while recording
-    _ignoreKeys = false;
 
-    // Init mcp23017 ICs of SucoKey
-    _mcp1.begin(0, &Wire2);
-    _mcp2.begin(1, &Wire2);
-    _mcp3.begin(2, &Wire2);
-    _mcp4.begin(3, &Wire2);
-    _mcp5.begin(4, &Wire2);
-
-    pinMode(_intKeyPin1, INPUT_PULLUP);
-    pinMode(_intKeyPin2, INPUT_PULLUP);
-//    pinMode(_intKeyPin3, INPUT_PULLUP);    
-//    pinMode(_intEncPin, INPUT_PULLUP);
-
-    _setupInterrupts();    
-
-    // enable first mcp for keys: C#1 D1 D#1 E1 F2 F#2 G2 G#2 F1 F#1 G1 G#1 A1 A#1 B1 C1
-    _mcp1.setupInterrupts(true,false,LOW);
-    for (int i=0; i<16; i++) {
+  _mcp1.setupInterrupts(true,false,LOW);
+  
+  for (int i=0; i<16; i++) {
+      if (_input_mcp1[i]) {
+        // Input
         _mcp1.pinMode(i, INPUT);
         _mcp1.pullUp (i, HIGH);
         _mcp1.setupInterruptPin(i, CHANGE);
-    }
+      } else {
+        // LED
+        _mcp1.pinMode(i, OUTPUT);
+        _mcp1.digitalWrite(i, LOW);
+      }
+  }
 
-    // enable second mcp for keys: Play Pause Record Input Left Up Down Right A2 A#2 B2 C2 C#2 D2 D#2 E2
-    _mcp2.setupInterrupts(true,false,LOW);
-    for (int i=0; i<16; i++) {
+  _mcp2.setupInterrupts(true,false,LOW);
+  
+  for (int i=0; i<16; i++) {
+      if (_input_mcp2[i]) {
+        // Input
         _mcp2.pinMode(i, INPUT);
         _mcp2.pullUp (i, HIGH);
         _mcp2.setupInterruptPin(i, CHANGE);
-    }
+      } else {
+        // LED
+        _mcp2.pinMode(i, OUTPUT);
+        _mcp2.digitalWrite(i, LOW);          
+      }
+  }
 
-    // enable third mcp for keys: ENC1 ENC2 ... ENC 8 (IRQ on _intEncPin) || Function Menu Set GPB3 GPB4 GPB5 GPB6 GPB7 (IRQ on _intKeyPin3)
-    // NOTE: 25.01.2021: Removed IRQ for MCP3, as it crashed the i2c communication after a few seconds, when rotating the encoders.. pith polling it works.
-    //_mcp3.setupInterrupts(false,false,LOW);
-    for (int i=0; i<16; i++) {
+  _mcp3.setupInterrupts(true,false,LOW);
+  
+  for (int i=0; i<16; i++) {
+      if (_input_mcp3[i]) {
+        // Input
         _mcp3.pinMode(i, INPUT);
         _mcp3.pullUp (i, HIGH);
-//        _mcp3.setupInterruptPin(i, CHANGE);
-    }
+        _mcp3.setupInterruptPin(i, CHANGE);
+      } else {
+        // LED
+        _mcp3.pinMode(i, OUTPUT);
+        _mcp3.digitalWrite(i, LOW);          
+      }
+  }
 
-    // set mcp4 and mcp5 to output for LEDs
-    for (int i=0; i<16; i++) {
-      _mcp4.pinMode(i, OUTPUT);
-      _mcp5.pinMode(i, OUTPUT);
-    }
+  _mcp4.setupInterrupts(true,false,LOW);
+  
+  for (int i=0; i<16; i++) {
+      if (_input_mcp4[i]) {
+        // Input
+        _mcp4.pinMode(i, INPUT);
+        _mcp4.pullUp (i, HIGH);
+        _mcp4.setupInterruptPin(i, CHANGE);
+      } else {
+        // LED
+        _mcp4.pinMode(i, OUTPUT);
+        _mcp4.digitalWrite(i, LOW);          
+      }
+  }
+
+  _mcp5.setupInterrupts(true,false,LOW);
+  
+  for (int i=0; i<16; i++) {
+      if (_input_mcp5[i]) {
+        // Input
+        _mcp5.pinMode(i, INPUT);
+        _mcp5.pullUp (i, HIGH);
+        _mcp5.setupInterruptPin(i, CHANGE);
+      } else {
+        // LED
+        _mcp5.pinMode(i, OUTPUT);
+        _mcp5.digitalWrite(i, LOW);          
+      }
+  }
+
+  // force a first read and "reset" the MCP23017 IRQ system
+  _keyPressedInterrupt1 = false;
+  _values_mcp1_current = _mcp1.readGPIOAB();
+  _keyPressedInterrupt2 = false;
+  _values_mcp2_current = _mcp2.readGPIOAB();
+  _keyPressedInterrupt3 = false;
+  _values_mcp3_current = _mcp3.readGPIOAB();    
+  _keyPressedInterrupt4 = false;
+  _values_mcp4_current = _mcp4.readGPIOAB();
+  _keyPressedInterrupt5 = false;
+  _values_mcp5_current = _mcp5.readGPIOAB();
 }
+
 
 // -------------------------------------------------------------------------------------------------
 // SucoKey Interrupt Handling
@@ -90,231 +147,200 @@ Sucofunkey::Sucofunkey(int intKeyPin1, int intEncPin, int intKeyPin2, int intKey
 void Sucofunkey::_setupInterrupts() {
    attachInterrupt(digitalPinToInterrupt(_intKeyPin1), _intCallBack1, FALLING);
    attachInterrupt(digitalPinToInterrupt(_intKeyPin2), _intCallBack2, FALLING);
-   //attachInterrupt(digitalPinToInterrupt(_intKeyPin3), _intCallBack3, FALLING);
-   //attachInterrupt(digitalPinToInterrupt(_intEncPin), _intCallBackEnc,FALLING);    
+   attachInterrupt(digitalPinToInterrupt(_intKeyPin3), _intCallBack3, FALLING);
+   attachInterrupt(digitalPinToInterrupt(_intKeyPin4), _intCallBack4, FALLING);
+   attachInterrupt(digitalPinToInterrupt(_intKeyPin5), _intCallBack5, FALLING);
 }
 
 
 void Sucofunkey::_intCallBack1() {
   _keyPressedInterrupt1=true;
-}
+} 
 
 void Sucofunkey::_intCallBack2() {
   _keyPressedInterrupt2=true;
 }
 
-/*
 void Sucofunkey::_intCallBack3() {
   _keyPressedInterrupt3=true;
 }
 
-void Sucofunkey::_intCallBackEnc() {
-  _encoderInterrupt=true; 
+void Sucofunkey::_intCallBack4() {
+  _keyPressedInterrupt4=true;
 }
-*/
+
+void Sucofunkey::_intCallBack5() {
+  _keyPressedInterrupt5=true;
+}
 
 
 void Sucofunkey::_handleKeyPressed() {
-  byte eventNumber;
 
-  if (_keyPressedInterrupt1) { // must be a normal NOTE, as there are no other Keys connected to that MCP
-    _keyPressedInterrupt1 = false;
+  if (_keyPressedInterrupt1) {        
+        _keyPressedInterrupt1 = false;
+        _values_mcp1_last = _values_mcp1_current;
+        _values_mcp1_current = _mcp1.readGPIOAB();
+        _mcpKeysPressedToQueueEvents(_values_mcp1_current, _values_mcp1_last, 0, _input_mcp1, _input_type_mcp1);
+  }
 
-    for (byte i=0; i<16; i++) {
+  if (_keyPressedInterrupt2) {        
+        _keyPressedInterrupt2 = false;
+        _values_mcp2_last = _values_mcp2_current;
+        _values_mcp2_current = _mcp2.readGPIOAB();
+        _mcpKeysPressedToQueueEvents(_values_mcp2_current, _values_mcp2_last, 16, _input_mcp2, _input_type_mcp2);        
+  }
 
-      eventNumber = i;
-      // if function key is pressed too, add 50 as offset
-      if (_fnKeyHold) { 
-        eventNumber += 50; 
-        _fnKeyInterrupted = true;
-      }
-      
-      // if menu key is pressed too, but function (rated higher) not, add 100 as offset
-      if (_menuKeyHold && !_fnKeyHold) { 
-        eventNumber += 100; 
-        _menuKeyInterrupted = true;
-      }
+  if (_keyPressedInterrupt3) {        
+        _keyPressedInterrupt3 = false;
+        _values_mcp3_last = _values_mcp3_current;
+        _values_mcp3_current = _mcp3.readGPIOAB();
+        _mcpKeysPressedToQueueEvents(_values_mcp3_current, _values_mcp3_last, 32, _input_mcp3, _input_type_mcp3);
+  }
 
-      if (_mcp1.digitalRead(i) == 0) {
-        if (_values_mcp1[i] == false) {
-          _values_mcp1[i] = true;          
-          keyQueueStruct k = {eventNumber, true, _ignoreKeys, (_fnKeyHold ? KEY_FN_NOTE : (_menuKeyHold ? KEY_MENU_NOTE : KEY_NOTE))};
-          keyQueue.push(&k);
-        }        
-      } else {
-        if (_values_mcp1[i] == true) {
-          _values_mcp1[i] = false;
-          keyQueueStruct k = {eventNumber, false, _ignoreKeys, (_fnKeyHold ? KEY_FN_NOTE : (_menuKeyHold ? KEY_MENU_NOTE : KEY_NOTE))};
-          keyQueue.push(&k);
-        }        
-      }
-    }
-  } 
+  if (_keyPressedInterrupt4) {        
+        _keyPressedInterrupt4 = false;
+        _values_mcp4_last = _values_mcp4_current;
+        _values_mcp4_current = _mcp4.readGPIOAB();
+        _mcpKeysPressedToQueueEvents(_values_mcp4_current, _values_mcp4_last, 48, _input_mcp4, _input_type_mcp4);        
+  }
 
-  if (_keyPressedInterrupt2) { 
-    _keyPressedInterrupt2 = false;
-    for (byte i=0; i<16; i++) {
+  if (_keyPressedInterrupt5) {        
+        _keyPressedInterrupt5 = false;
+        _values_mcp5_last = _values_mcp5_current;
+        _values_mcp5_current = _mcp5.readGPIOAB();
+        _mcpKeysPressedToQueueEvents(_values_mcp5_current, _values_mcp5_last, 64, _input_mcp5, _input_type_mcp5);        
+  }
+}
 
-      eventNumber = i+16;
-      // if function key is pressed too, add 50 as offset
-      if (_fnKeyHold) { 
-        eventNumber += 50; 
-        _fnKeyInterrupted = true;
-      }
-      
-      // if menu key is pressed too, but function (rated higher) not, add 100 as offset
-      if (_menuKeyHold && !_fnKeyHold) { 
-        eventNumber += 100; 
-        _menuKeyInterrupted = true;
-      }
-
-      byte keyType = 0;
-
-      if (i < 8) {
-        keyType = (_fnKeyHold ? KEY_FN_OPERATION : (_menuKeyHold ? KEY_MENU_SELECTOR : KEY_OPERATION));
-      } else {
-        keyType = (_fnKeyHold ? KEY_FN_NOTE : (_menuKeyHold ? KEY_MENU_NOTE : KEY_NOTE));
-      }
-
-      if (_mcp2.digitalRead(i) == 0) {
-        if (_values_mcp2[i] == false) {
-          _values_mcp2[i] = true;          
-          keyQueueStruct k = {eventNumber, true, _ignoreKeys, keyType};
-          keyQueue.push(&k);
-        }        
-      } else {
-        if (_values_mcp2[i] == true) {
-          _values_mcp2[i] = false;
-          keyQueueStruct k = {eventNumber, false, _ignoreKeys, keyType};
-          keyQueue.push(&k);
-        }        
-      }
-    }
-  } 
+void Sucofunkey::_mcpKeysPressedToQueueEvents(uint16_t mcpValuesCurrent, uint16_t mcpValuesOld, uint16_t mcpOffset, bool* mcpInput, byte* mcpInputTypes) {  
+  // get differing values -> XOR
+  uint16_t diffVals = mcpValuesCurrent ^ mcpValuesOld;
+  bool keyStatus;
+  int offset = 0;
+  bool sendKey = true;
+  byte inputType;   
+  bool enc1Handled = false;
+  bool enc2Handled = false;
+  bool enc3Handled = false;
+  bool enc4Handled = false;
 
 
-//  if (_keyPressedInterrupt3) {    
-    for (byte i=8; i<16; i++) {
-      
-      eventNumber = i+32;
+  for (int i=0; i<16; i++) {
+    // check if value corresponds to an input on the mcp and if a change happened (bit switched)
+    if (mcpInput[i] == true && getBooleanValueFrom16BitInt(diffVals, i) == true) {      
 
-      byte keyType = 0;
+        // 100 = Function Key hold, 200 = Menu Key hold
+        offset = 0;
+        sendKey = true;
 
-      if (i < 15) {
-        keyType = (_fnKeyHold ? KEY_FN_OPERATION : ( _menuKeyHold ? KEY_MENU_SELECTOR : KEY_OPERATION ));
-      } else {
-        keyType = (_fnKeyHold ? KEY_FN_FREE : ( _menuKeyHold ? KEY_MENU_SELECTOR : KEY_FREE ));
-      }
+        // read encoders
+        if (mcpInputTypes[i] == ENCODER) {
+          sendKey = false;
 
-      // key pressed..
-      if (_mcp3.digitalRead(i) == 0) {
-        if (_values_mcp3[i] == false) {
-          _values_mcp3[i] = true;
-
-          // Key combination with Function + X
-          if (_fnKeyHold) {
-            // offset to const values with FN_
-            eventNumber += 50;
-            _fnKeyInterrupted = true;
-          } 
-
-          // Key combination with Menu + X
-          if (_menuKeyHold) {
-            // offset to const values with MENU_
-            eventNumber += 100;
-            _menuKeyInterrupted = true;
-          } 
-
-          // handle Function Key
-          if (i == 8) {
-//            Serial.println("FN 1");
-            _fnKeyHold = true;
-            _fnKeyInterrupted = false;
-            _fnKeyMillis = millis();
-          } else {
-
-            if (i == 9) {
-              _menuKeyHold = true;
-              _menuKeyInterrupted = false;
-              _menuKeyMillis = millis();              
-            } else {
-              // add every other key to queue, but not the function or menu key, as they are handled separate                       
-              keyQueueStruct k = {eventNumber, true, _ignoreKeys, keyType};
-              keyQueue.push(&k);
-            }
+          switch(i+offset) {
+            case ENCODER_4_2:
+            case ENCODER_4_1:
+              if (!enc4Handled) _readRotaryEncoder(3, getBooleanValueFrom16BitInt(mcpValuesCurrent, 1), getBooleanValueFrom16BitInt(mcpValuesCurrent, 2),  ENCODER_4);            
+              enc4Handled = true;
+              break;
+            case ENCODER_3_2:
+            case ENCODER_3_1:
+              if (!enc3Handled) _readRotaryEncoder(2, getBooleanValueFrom16BitInt(mcpValuesCurrent, 4), getBooleanValueFrom16BitInt(mcpValuesCurrent, 5),  ENCODER_3);
+              enc3Handled = true;
+              break;
+            case ENCODER_2_2:
+            case ENCODER_2_1:
+              if (!enc2Handled) _readRotaryEncoder(1, getBooleanValueFrom16BitInt(mcpValuesCurrent, 8), getBooleanValueFrom16BitInt(mcpValuesCurrent, 9),  ENCODER_2);
+              enc2Handled = true;            
+              break;
+            case ENCODER_1_2:
+            case ENCODER_1_1:
+              if (!enc1Handled) _readRotaryEncoder(0, getBooleanValueFrom16BitInt(mcpValuesCurrent, 11), getBooleanValueFrom16BitInt(mcpValuesCurrent, 12),  ENCODER_1);
+              enc1Handled = true;            
+              break;
+            default:
+              break;
           }
-          
-        }        
-      } else { // key released..
-                        
-        if (_values_mcp3[i] == true) {
-          _values_mcp3[i] = false;
+        }
 
-          // handle Function Key
-          if (i == 8) {
-            // Fuction key pressed for at least 3 seconds? send event FN_FUNCTION (go to home menu)
+        // inverting the boolean value because the mcp signals LOW when a button is pressed!
+        keyStatus = !getBooleanValueFrom16BitInt(mcpValuesCurrent, i);
+
+        // Function Key?
+        if (i+mcpOffset == FUNCTION) {
+          if (keyStatus) {
+            _fnKeyHold = true;
+            _fnKeyMillis = millis();
+            _fnKeyInterrupted = false;
+            sendKey = false;
+          } else {
+            // Fuction key pressed for at least 3 seconds? send event FN_FUNCTION -> FUNCTION + 100
             if (_fnKeyHold && !_fnKeyInterrupted && (millis() - _fnKeyMillis >= 3000)) {
-              //_fnKeyMillis = 0;
-              keyQueueStruct k = {FN_FUNCTION, true, _ignoreKeys, KEY_OPERATION};
-              keyQueue.push(&k);
+              offset = 100;
+              keyStatus = true;
             } else {
-              // Fuction key released and hold time was less than 1 seconds -> FUCNTION (2) event
+              // function key pressed and released within 1 second, send function key to queue
               if (_fnKeyHold && !_fnKeyInterrupted && (millis() - _fnKeyMillis < 1500)) {
-                keyQueueStruct k = {FUNCTION, true, _ignoreKeys, KEY_OPERATION};
-                keyQueue.push(&k);
+                keyStatus = true;
+              } else {
+                sendKey = false;
               }
             }
-            
-//            Serial.println("FN 2");
-
             _fnKeyHold = false;
             _fnKeyInterrupted = false;
-          
-          } else {
-            // handle menu key
-            if (i == 9) {
-              if (_menuKeyHold && !_menuKeyInterrupted && (millis() - _menuKeyMillis >= 3000)) {
-                keyQueueStruct k = {MENU_MENU, true, _ignoreKeys, KEY_OPERATION};
-                keyQueue.push(&k);                
-              } else {
-                if (_menuKeyHold && !_menuKeyInterrupted && (millis() - _menuKeyMillis < 1500)) {
-                  keyQueueStruct k = {MENU, true, _ignoreKeys, KEY_OPERATION};
-                  keyQueue.push(&k);                
-                }
-              } 
-
-              _menuKeyHold = false;
-              _menuKeyInterrupted = false;
-            } else {
-              // handle all other keys on the first mcp
-              // add event offset, if function key is pressed too
-              if (_fnKeyHold) { 
-                eventNumber += 50; 
-                } else {
-                  if (_menuKeyHold) { eventNumber += 100; };
-                }
-
-              keyQueueStruct k = {eventNumber, false, _ignoreKeys, keyType};
-              keyQueue.push(&k);
-            }
-          }                    
+          }          
+        } else {
+          if (_fnKeyHold) _fnKeyInterrupted = true;
         }
+
+
+        // Menu Key?
+        if (i+mcpOffset == MENU) {
+          if (keyStatus) {
+            _menuKeyHold = true;
+            _menuKeyMillis = millis();
+            _menuKeyInterrupted = false;
+            sendKey = false;
+          } else {
+            // Fuction key pressed for at least 3 seconds? send event FN_FUNCTION -> FUNCTION + 100
+            if (_menuKeyHold && !_menuKeyInterrupted && (millis() - _menuKeyMillis >= 3000)) {
+              offset = 200;
+              keyStatus = true;
+            } else {
+              // function key pressed and released within 1 second, send function key to queue
+              if (_menuKeyHold && !_menuKeyInterrupted && (millis() - _menuKeyMillis < 1500)) {
+                keyStatus = true;
+              } else {
+                sendKey = false;
+              }
+            }
+            _menuKeyHold = false;
+            _menuKeyInterrupted = false;
+          }          
+        } else {
+          if (_menuKeyHold) _menuKeyInterrupted = true;
+        }
+
+        if (_menuKeyHold) offset = 200; 
+        if (_fnKeyHold) offset = 100;         
+
+      if (sendKey) {
+        inputType = mcpInputTypes[i];
+        if (_menuKeyHold && inputType == KEY_NOTE) inputType = KEY_MENU_NOTE;
+        if (_menuKeyHold && inputType == KEY_OPERATION) inputType = KEY_MENU_OPERATION;
+
+        if (_fnKeyHold && inputType == KEY_NOTE) inputType = KEY_FN_NOTE;
+        if (_fnKeyHold && inputType == KEY_OPERATION) inputType = KEY_FN_OPERATION;
+
+        keyQueueStruct k = {i+mcpOffset+offset, keyStatus, _ignoreKeys, inputType};
+        keyQueue.push(&k);
       }
     }
-//  }
-
-  //_keyPressedInterrupt3 = false; 
+  }
 }
 
-void Sucofunkey::_handleEncoderUpdate() {
-  _readRotaryEncoder(0, _mcp3.digitalRead(0), _mcp3.digitalRead(1), ENCODER_1);
-  _readRotaryEncoder(1, _mcp3.digitalRead(2), _mcp3.digitalRead(3), ENCODER_2);
-  _readRotaryEncoder(2, _mcp3.digitalRead(4), _mcp3.digitalRead(5), ENCODER_3);
-  _readRotaryEncoder(3, _mcp3.digitalRead(6), _mcp3.digitalRead(7), ENCODER_4);
-  //_encoderInterrupt = false;
-}
 
-int Sucofunkey::_readRotaryEncoder(byte encoderNr, uint8_t valuePinL, uint8_t valuePinR, byte eventId) {
+int Sucofunkey::_readRotaryEncoder(byte encoderNr, uint8_t valuePinL, uint8_t valuePinR, int eventId) {
   static unsigned char p;
 
   switch(p=valuePinL | valuePinR<<1) {
@@ -339,29 +365,18 @@ int Sucofunkey::_readRotaryEncoder(byte encoderNr, uint8_t valuePinL, uint8_t va
       _encoderTempValues[encoderNr]=p;
   }
   
-  return 0;
+  return 0;  
 };
 
 
 // check if an interrupt was fired and add key to queue
 boolean Sucofunkey::hasKeyPressed() {
-  if (_keyPressedInterrupt1 || _keyPressedInterrupt2 || _keyPressedInterrupt3) {
+  if (_keyPressedInterrupt1 || _keyPressedInterrupt2 || _keyPressedInterrupt3 || _keyPressedInterrupt4 || _keyPressedInterrupt5) {
     _handleKeyPressed();
     return true;
   } else {
     return false;
   }
-}
-
-// check if an interrupt was fired for rotary encoders
-boolean Sucofunkey::hasEncoderChange() {
-
-//  if (_encoderInterrupt) {
-    _handleEncoderUpdate();
-    return true;
-//  } else {
-//    return false;
-//  }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -398,7 +413,7 @@ Sucofunkey::Key Sucofunkey::getNextEvent() {
   return k;
 };
 
-void Sucofunkey::addApplicationEventToQueue(byte eventId) {
+void Sucofunkey::addApplicationEventToQueue(int eventId) {
   keyQueueStruct k = { eventId, true, false, EVENT_APPLICATION };
   keyQueue.push(&k);
 }
@@ -415,20 +430,26 @@ void Sucofunkey::setIgnoreKeys(boolean state) {
 
 // -------------------------------------------------------------------------------------------------
 
-void Sucofunkey::setLEDState(byte led, bool state) {
-  if (state) {
-    if (led <= 15) {
-      _mcp5.digitalWrite(led, HIGH);  
-    } else {
-      _mcp4.digitalWrite(led-16, HIGH);  
-    }    
-  } else {
-    if (led <= 15) {
-      _mcp5.digitalWrite(led, LOW);  
-    } else {
-      _mcp4.digitalWrite(led-16, LOW);  
-    }  
-  }
+void Sucofunkey::setLEDState(int led, bool state) {
+  int mcp = led/16;
+
+  switch(mcp) {
+    case 0:
+            _mcp1.digitalWrite(led, state ? HIGH : LOW);
+            break;
+    case 1:
+            _mcp2.digitalWrite(led-16, state ? HIGH : LOW);    
+            break;
+    case 2:
+            _mcp3.digitalWrite(led-32, state ? HIGH : LOW);    
+            break;
+    case 3:
+            _mcp4.digitalWrite(led-48, state ? HIGH : LOW);    
+            break;
+    case 4:
+            _mcp5.digitalWrite(led-64, state ? HIGH : LOW);    
+            break;
+  }   
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -543,7 +564,6 @@ int Sucofunkey::getFaderValue(uint8_t pin, int scaleMin, int scaleMax) {
 };
 
 
-
 void Sucofunkey::switchLEDsOff() {
     for (int i=0; i<32; i++) {
       setLEDState(i, false);
@@ -551,30 +571,38 @@ void Sucofunkey::switchLEDsOff() {
 }
 
 byte Sucofunkey::getSampleIdByEventKey(byte eventKey) {
-  if (eventKey > 50) {
-    return _eventKeyToSampleId[eventKey-50];
+  if (eventKey > 100) {
+    return _noteKeysLookUpTable[_eventKeyToLookUpTable[eventKey-100]].sampleId;
   }
-  return _eventKeyToSampleId[eventKey];
+  return _noteKeysLookUpTable[_eventKeyToLookUpTable[eventKey]].sampleId;
 };
 
 byte Sucofunkey::getLEDPinBySampleId(byte sampleId1) {
-  return _sampleIdToLEDPIN[sampleId1];
+  return _noteKeysLookUpTable[sampleId1-1].LED_PIN;
 }
 
 byte Sucofunkey::getLEDPinByEventKey(byte eventKey) {
-  return _sampleIdToLEDPIN[_eventKeyToSampleId[eventKey]];
+  return _noteKeysLookUpTable[_eventKeyToLookUpTable[eventKey]].LED_PIN;
 }
 
 char Sucofunkey::getCharByEventKey(byte eventKey, byte index) {
-  if (eventKey > 50) {
-    return _eventKeyToChar[eventKey-50][index];
+  if (eventKey > 100) {
+    return _noteKeysLookUpTable[_eventKeyToLookUpTable[eventKey-100]].character[index];
   }
-  return _eventKeyToChar[eventKey][index];
+  return _noteKeysLookUpTable[_eventKeyToLookUpTable[eventKey]].character[index];
 };
 
 char Sucofunkey::getFilenameCharByEventKey(byte eventKey, byte index) {
-  if (eventKey > 50) {
-    return _eventKeyToCharFilename[eventKey-50][index];
-  }
-  return _eventKeyToCharFilename[eventKey][index];
+  if (eventKey > 100) {
+    return _noteKeysLookUpTable[_eventKeyToLookUpTable[eventKey-100]].filenameCharacter[index];
+  }  return _noteKeysLookUpTable[_eventKeyToLookUpTable[eventKey]].filenameCharacter[index];
+
 };
+
+
+// reads one bit from an 16 Bit unsigned integer and returns its boolean value
+bool Sucofunkey::getBooleanValueFrom16BitInt(uint16_t values, int pos) {
+    uint16_t v;
+    v = (values & ( 1 << pos )) >> pos;
+    return v == 1 ? true : false;
+}

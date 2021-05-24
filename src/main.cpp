@@ -1,3 +1,16 @@
+/* ------------------------------------------------------------------------------------
+
+    SUCOFUNKey v3
+
+    This project is the firmware for the SUCOFUNKey sample sequencer.
+    For more information, check out www.sucofunkey.com
+
+    created by Marc Berendes (marc @ sucofunk.com)
+    
+    Last update: 22.05.2021
+
+   ------------------------------------------------------------------------------------ */
+
 #include <SPI.h>
 #include <SD.h>
 
@@ -18,19 +31,26 @@
 
 #include <Adafruit_ST7789.h>
 
-int PIN_SUCOKEY_INT_1 = 40; // MCP 1
-int PIN_SUCOKEY_INT_2 = 41; // ENCODERS (MCP 3)
-int PIN_SUCOKEY_INT_3 = 33; // MCP 2
-int PIN_SUCOKEY_INT_4 = 32; // MCP 3 KEYS
+// PINs on the Teensy 4.1 to receive Interrupts from the 5 MCP23017 chips used as port expanders to receive updated from the 36 Buttons and 4 rotary encoders
+// The MCP23017s control the 32 LEDs in the SUCOFUNKey, too
 
+int PIN_SUCOKEY_INT_1 = 28; 
+int PIN_SUCOKEY_INT_2 = 29; 
+int PIN_SUCOKEY_INT_3 = 30; 
+int PIN_SUCOKEY_INT_4 = 31; 
+int PIN_SUCOKEY_INT_5 = 32; 
+
+// PINs for the display 
 int PIN_SCREEN_SCK = 27;
-int PIN_SCREEN_MOSI = 26; // DIN
+int PIN_SCREEN_MOSI = 26; // labeled as DIN on the Waveshare display
 int PIN_SCREEN_CS = 38;
 int PIN_SCREEN_DC = 39;
-int PIN_SCREEN_RST = 35;
-int PIN_SCREEN_BL = 34;
+int PIN_SCREEN_RST = 37;
+int PIN_SCREEN_BL = 36;
 
-int faderValue = 0;
+// Analog PIN where volume potentiometer is connected to
+int PIN_VOLUME = 22;
+float volumeValue = 0;
 
 // Function definitions
 void handleKeyboardEventQueue(void);
@@ -46,7 +66,7 @@ char songsBasePath[8] = "/SONGS/";
 char activeSongName[9];
 char activeSongPath[21];
 
-// Sample Memory initialization one psram chip with 8mb added to teensy board
+// Sample Memory initialization - one psram chip with 8mb added to teensy board
 // ToDo: Add line for 16 mb / 2 chips
 EXTMEM unsigned int extmemArray[2097152]; 
 
@@ -64,14 +84,14 @@ long globalTickIntervalRec = 1000000; // intervall in microseconds -> starts at 
 long globalTickIntervalRecNew;
 void globalTickRec();
 
-
 AudioResources audioResources;
 
 // Hardware SPI for LCD Screen
 Adafruit_ST7789 tft(&SPI1, PIN_SCREEN_CS, PIN_SCREEN_DC, PIN_SCREEN_RST);
 
 // Initializing the "keyboard"
-Sucofunkey keyboard(PIN_SUCOKEY_INT_1, PIN_SUCOKEY_INT_2, PIN_SUCOKEY_INT_3, PIN_SUCOKEY_INT_4);
+Sucofunkey keyboard(PIN_SUCOKEY_INT_1, PIN_SUCOKEY_INT_2, PIN_SUCOKEY_INT_3, PIN_SUCOKEY_INT_4, PIN_SUCOKEY_INT_5);
+
 // Initializing GUI System
 Screen screen(&tft, PIN_SCREEN_BL);
 
@@ -160,23 +180,21 @@ AudioConnection          patchCord62(audioResources.mixerOutR, 0, audioResources
 
 void setup() {
   Serial.begin(9600);
-
   boolean ok = true;
   //strcpy(activeSongPath, songsBasePath); // init main path.. song directory will be concatenated, when available  
 
   tft.init(240, 320, SPI_MODE0);
-  tft.setRotation(1);
+  tft.setRotation(3);
   tft.fillScreen(screen.C_STARTUP_BG);
 
   // Screeen Backlight regulator
-  // needs to be connected to a PWM PIN!!! 34 is NOT!!!
   //pinMode(PIN_SCREEN_BL, OUTPUT);
   //analogWrite(PIN_SCREEN_BL, 100); 
+
   currentAppContext = AppContext::STARTUP;
   startupContext.showLogo();
 
-  keyboard.switchLEDsOff();
-  keyboard.setBank(1);
+  keyboard.setBank(0);
 
   AudioMemory(50);
 
@@ -186,14 +204,14 @@ void setup() {
   keyboard.setInput(Sucofunkey::INPUT_NONE);
   audioResources.muteInput();
   audioResources.muteResampling();
-  audioResources.audioShield.volume(0.6);  //0.0-1.0
+  audioResources.audioShield.volume(volumeValue);  //0.0-1.0
 
   // erase psram (sample memory)
   for (unsigned long i=0; i<sizeof(extmemArray)/4; i++) {
     extmemArray[i] = 0;
   }
 
-  delay(200);
+  delay(200); // small delay for better readability on screen
 
   // enable SD card
   if (!(SD.begin(BUILTIN_SDCARD))) {    
@@ -207,12 +225,11 @@ void setup() {
   globalTickTimer.begin(globalTick, globalTickInterval);
   globalTickTimerRec.begin(globalTickRec, globalTickIntervalRec);
 
-  delay(500);
+  delay(500); // small delay for better readability on screen
   
   if (ok) {
     startupContext.transitionToSelection();
   }
-
 }
 
 
@@ -284,20 +301,30 @@ void sendTickToActiveContext() {
 // --- END Timing ---
 
 int z = 0;
+int zz = 0;
 
 void loop() {
   // recording? -> has highest priority -> store record buffer to sd..
   if (recorderContext.currentState == recorderContext.RECORDER_RECORDING) recorderContext.continueRecording();
   z++;
+  zz++;
 
-  // handle encoder and keyboard events.. but divide into three loops to not disrupt recording
-  if (z == 1) keyboard.hasEncoderChange();
-  if (z == 2) keyboard.hasKeyPressed();
-  if (z == 3) {
+  // handle encoder and keyboard events.. but divide reading PIN changes and handling the events into two loops to not disrupt recording
+  // 1. Checks if a PIN changed (Key pressed, released or encoder state change) and adds it to the event queue
+  if (z == 1) keyboard.hasKeyPressed();
+  // 2. Reads the event queue and handles the occured event -> propagating to the right context
+  if (z == 2) { 
     handleKeyboardEventQueue();
-    z = 0;
+    z = 0;  
+  }
+  // On every 10th loop, check if the volume potentiometer was changed and adjust the volume.
+  if (zz == 10) {    
+    volumeValue = 1.0-(analogRead(PIN_VOLUME)/1023.0);
+    audioResources.audioShield.volume(volumeValue);
+    zz = 0;
   }
 
+  // timer handling while recording to update the peak meter of the input
   if (tickedRec) {
     tickedRec = false;
     globalTickIntervalRecNew = recorderContext.receiveTimerTick();
@@ -308,7 +335,7 @@ void loop() {
     }  
   }
 
-  // handle timer
+  // handle timer and delegate it to the current active context (e.g. sampler, sequencer, ...)
   if (ticked) {
     ticked=false;
     sendTickToActiveContext();
@@ -404,25 +431,25 @@ void handleKeyboardEventQueue() {
     }
 
     // Encoder pushed -> with FN in every context: change context .. in home screen the same without FN OR Main menu OR Settings
-    if (currentAppContext!=STARTUP && event.pressed && (event.type == Sucofunkey::KEY_FN_OPERATION || (currentAppContext == AppContext::HOME && event.type == Sucofunkey::KEY_OPERATION) || event.index == Sucofunkey::FN_FUNCTION || event.index == Sucofunkey::MENU_MENU)) {
+    if (currentAppContext!=STARTUP && event.pressed && (event.type == Sucofunkey::KEY_MENU_OPERATION || (currentAppContext == AppContext::HOME && event.type == Sucofunkey::KEY_OPERATION) || event.index == Sucofunkey::FN_FUNCTION || event.index == Sucofunkey::MENU_MENU)) {
       switch (event.index) {
         case Sucofunkey::ENCODER_1_PUSH:  
-        case Sucofunkey::FN_ENCODER_1_PUSH:  
+        case Sucofunkey::MENU_ENCODER_1_PUSH:  
               changeContext(SAMPLER);
               preCheck = true;
               break;
         case Sucofunkey::ENCODER_2_PUSH:
-        case Sucofunkey::FN_ENCODER_2_PUSH:          
+        case Sucofunkey::MENU_ENCODER_2_PUSH:          
               changeContext(SEQUENCER);
               preCheck = true;
               break;             
         case Sucofunkey::ENCODER_3_PUSH:  
-        case Sucofunkey::FN_ENCODER_3_PUSH:        
+        case Sucofunkey::MENU_ENCODER_3_PUSH:        
               changeContext(SYNTH);
               preCheck = true;
               break; 
         case Sucofunkey::ENCODER_4_PUSH:
-        case Sucofunkey::FN_ENCODER_4_PUSH:          
+        case Sucofunkey::MENU_ENCODER_4_PUSH:          
               changeContext(LIVE);
               preCheck = true;
               break;

@@ -3,7 +3,6 @@
 #include "../../gui/Screen.h"
 #include "Sampler.h"
 
-
 Sampler::Sampler(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *sfsio, AudioResources *audioResources) {
     _keyboard = keyboard;    
     _screen = screen;
@@ -350,12 +349,9 @@ void Sampler::editActiveSample() {
     _bottomMenu.showMenu(true);
     _trimMarkerEndPosition = _sfsio->waveFormBufferLength[sample72]-1;
     _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, sample72, _volumeScaleFactor);
-    Serial.print("editActiveSample::endmarker::");
-    Serial.println(_trimMarkerEndPosition-1);
 }
 
 void Sampler::deleteActiveSample() {
-  Serial.println("deleteActiveSample");
   byte sample72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
 
   _sfsio->deleteFile( _activeSampleSlot == 0 ? _sfsio->recorderFilename : _sfsio->sampleFilename[_tempBank-1][_activeSampleSlot-1]);
@@ -406,7 +402,6 @@ void Sampler::saveActiveSample() {
 }
 
 void Sampler::saveActiveSampleAs() {
-  Serial.println("saveActiveSampleAs");
   currentState = SAMPLE_WAIT_SAVE_SLOT;
   _bottomMenu.showMenu(false);
   _samplerScreen.showSlotSelectionHint();
@@ -414,7 +409,6 @@ void Sampler::saveActiveSampleAs() {
 }
 
 void Sampler::cancel() {
-  Serial.println("cancel");
   currentState = SAMPLE_SELECTED;
 
   if (_activeSampleSlot == 0) {
@@ -434,8 +428,7 @@ void Sampler::indicatePlayerPosition() {
   int sampleId72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
   
   uint32_t pixelMs = _sfsio->sampleLengthMS[sampleId72] / 319;
-  //Serial.print("pixelMs::");
-  //Serial.println(pixelMs);
+
   if (_audioResources->playSdRaw.isPlaying()) {
     _samplerScreen.drawPlayerPosition(_audioResources->playSdRaw.positionMillis() / pixelMs, (currentState == SAMPLE_EDIT_TRIM ? _trimMarkerStartPosition : 0), (currentState == SAMPLE_EDIT_TRIM ? _trimMarkerEndPosition : 319));
   }
