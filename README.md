@@ -10,6 +10,8 @@ The PCB is designed without any SMD components and can be soldered with a standa
 
 Check out [@sucofunkey on Instagram](https://www.instagram.com/sucofunkey/) for a visual impression of the device and progress.
 
+If you are interested in participating, a PCB or in the project in general, just send me a message.
+
 
 ## Hardware
 SUCOFUNKey houses:
@@ -34,6 +36,7 @@ The circuit diagram will be published soon.
 ## Firmware
 The firmware is a VSCode project, using the [PlatformIO](https://platformio.org/) extension.
 
+
 ## Status
 This project is work in progress and still far from a complete solution.
 - Hardware works properly
@@ -43,4 +46,3 @@ This project is work in progress and still far from a complete solution.
 - Synthesizer firmware is not implemented yet
 - Documentation and instructions on how to build will follow
 
-If you are interested in participating, a PCB or in the project in general, just send me a message.
