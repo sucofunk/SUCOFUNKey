@@ -20,7 +20,7 @@ SUCOFUNKey houses:
 - 12 functional keys (play, stop, record, ...)
 - 4 endless rotary encoders
 - 10mm fader
-- 2 inch LCD display
+- [2 inch LCD display](https://www.waveshare.com/product/displays/lcd-oled/lcd-oled-3/2inch-lcd-module.htm)
 - 32 LEDs
 - built in microphone 
 - built in stereo speakers, driven by a small [amplifier](https://www.adafruit.com/product/987)
