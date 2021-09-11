@@ -104,7 +104,8 @@ Recorder recorderContext(&keyboard, &screen, &fsio, &sfsio, &audioResources);
 Sequencer sequencerContext(&keyboard, &screen, &sfsio, extmemArray, &audioResources);
 
 Synth synthContext(&keyboard, &screen);
-Live liveContext(&keyboard, &screen);
+Live liveContext(&keyboard, &screen, &fsio, &sfsio, extmemArray, &audioResources);
+
 Settings settingsContext(&keyboard, &screen);
 StartupScreen startupContext(&keyboard, &screen, &fsio, activeSongName);
 
