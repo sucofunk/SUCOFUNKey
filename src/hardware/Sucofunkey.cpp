@@ -51,8 +51,7 @@ Sucofunkey::Sucofunkey(int intPinMCP1, int intPinMCP2, int intPinMCP3, int intPi
   _mcp3.begin(2, &Wire2);
   _mcp4.begin(3, &Wire2);
   _mcp5.begin(4, &Wire2);
-
-
+  
   _mcp1.setupInterrupts(true,false,LOW);
   
   for (int i=0; i<16; i++) {
@@ -155,30 +154,24 @@ void Sucofunkey::_setupInterrupts() {
    attachInterrupt(digitalPinToInterrupt(_intKeyPin5), _intCallBack5, FALLING);
 }
 
-
 void Sucofunkey::_intCallBack1() {
   _keyPressedInterrupt1=true;
-  Serial.println("IRQ 1");
 } 
 
 void Sucofunkey::_intCallBack2() {
   _keyPressedInterrupt2=true;
-  Serial.println("IRQ 2");
 }
 
 void Sucofunkey::_intCallBack3() {
   _keyPressedInterrupt3=true;
-  Serial.println("IRQ 3");
 }
 
 void Sucofunkey::_intCallBack4() {
   _keyPressedInterrupt4=true;
-  Serial.println("IRQ 4");
 }
 
 void Sucofunkey::_intCallBack5() {
   _keyPressedInterrupt5=true;
-  Serial.println("IRQ 5");
 }
 
 

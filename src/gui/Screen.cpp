@@ -4,27 +4,37 @@
 //#include "../context/sampler/Sampler.h"
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
-#include "fonts/OxygenMono_Regular8pt7b.h" // https://fonts.google.com/specimen/Oxygen+Mono
+//#include "fonts/OxygenMono_Regular8pt7b.h" // https://fonts.google.com/specimen/Oxygen+Mono
+#include "fonts/BaiJamjureeRegularMonoDigits8pt7b.h"
 
-Screen::Screen(Adafruit_ST7789 *tft, int BL) {
+Screen::Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness) {
   _tft = tft;
+  _BL_PIN = BL_PIN;
+  _BL_brightness = BL_brightness;
 }
 
 void Screen::testBild(const char* text) {
     fillArea(AREA_SCREEN, C_BLACK);    
     drawTextInArea(AREA_SCREEN, TEXTPOSITION_HCENTER_VCENTER, false, TEXTSIZE_MEDIUM, C_WHITE, text);
+}
 
-/*    drawTextInArea(AREA_SCREEN, TEXTPOSITION_LEFT_VCENTER, false, TEXTSIZE_MEDIUM, C_WHITE, "left");    
-    drawTextInArea(AREA_SCREEN, TEXTPOSITION_RIGHT_VCENTER, false, TEXTSIZE_MEDIUM, C_WHITE, "right");    
+void Screen::setBacklightBrightness(int brightness) {
+  _BL_brightness = brightness;
+  analogWrite(_BL_PIN, _BL_brightness); 
+}
 
-    drawTextInArea(AREA_SCREEN, TEXTPOSITION_HCENTER_TOP, false, TEXTSIZE_MEDIUM, C_WHITE, "center");    
-    drawTextInArea(AREA_SCREEN, TEXTPOSITION_LEFT_TOP, false, TEXTSIZE_MEDIUM, C_WHITE, "left");    
-    drawTextInArea(AREA_SCREEN, TEXTPOSITION_RIGHT_TOP, false, TEXTSIZE_MEDIUM, C_WHITE, "right");    
+void Screen::fadeBacklightOut(int delayTime) {
+  for (int b=_BL_brightness; b>0; b--) {
+    analogWrite(_BL_PIN, b);
+    delay(delayTime);
+  } 
+}
 
-    drawTextInArea(AREA_SCREEN, TEXTPOSITION_HCENTER_BOTTOM, false, TEXTSIZE_MEDIUM, C_WHITE, "center");    
-    drawTextInArea(AREA_SCREEN, TEXTPOSITION_LEFT_BOTTOM, false, TEXTSIZE_MEDIUM, C_WHITE, "left");    
-    drawTextInArea(AREA_SCREEN, TEXTPOSITION_RIGHT_BOTTOM, false, TEXTSIZE_MEDIUM, C_WHITE, "right");
-*/
+void Screen::fadeBacklightIn(int delayTime) {
+  for (int b=0; b<=_BL_brightness; b++) {
+    analogWrite(_BL_PIN, b);
+    delay(delayTime);
+  } 
 }
 
 void Screen::fillArea(Area area, uint16_t color) {
@@ -74,16 +84,20 @@ void Screen::drawTextInArea(Area area, TextPosition textPosition, boolean eraseF
   // - generate fonts for SMALL and LARGE and include them
   switch (textSize) {
     case TEXTSIZE_SMALL:
-      _tft->setFont(&OxygenMono_Regular8pt7b);
+      //_tft->setFont(&OxygenMono_Regular8pt7b);
+      _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
       break;
     case TEXTSIZE_MEDIUM:
-      _tft->setFont(&OxygenMono_Regular8pt7b);
+      //_tft->setFont(&OxygenMono_Regular8pt7b);
+      _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
       break;
     case TEXTSIZE_LARGE:
-      _tft->setFont(&OxygenMono_Regular8pt7b);
+      //_tft->setFont(&OxygenMono_Regular8pt7b);
+      _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
       break;
     default:
-      _tft->setFont(&OxygenMono_Regular8pt7b);
+      //_tft->setFont(&OxygenMono_Regular8pt7b);
+      _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
       break;    
   }
 

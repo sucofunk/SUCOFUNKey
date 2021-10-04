@@ -15,8 +15,8 @@ RecorderScreen::RecorderScreen(Sucofunkey *keyboard, Screen *screen, FSIO *fsio,
 void RecorderScreen::showRecorderScreen() {
     _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);
 
-    _screen->drawTextInArea(_textArea, Screen::TEXTPOSITION_HCENTER_TOP, false, Screen::TEXTSIZE_MEDIUM, _screen->C_WHITE,     "ready to        ");
-    _screen->drawTextInArea(_textArea, Screen::TEXTPOSITION_HCENTER_TOP, false, Screen::TEXTSIZE_MEDIUM, _screen->C_RECORDING, "         record");
+    _screen->drawTextInArea(_textArea, Screen::TEXTPOSITION_HCENTER_TOP, false, Screen::TEXTSIZE_MEDIUM, _screen->C_WHITE,     "ready to               ");
+    _screen->drawTextInArea(_textArea, Screen::TEXTPOSITION_HCENTER_TOP, false, Screen::TEXTSIZE_MEDIUM, _screen->C_RECORDING, "                 record");
 
     _screen->vr(_peakArea, 0.0, _screen->C_WHITE); // peak meter left border
     _screen->vr(_peakArea, 1.0, _screen->C_WHITE); // peak meter right border
@@ -25,7 +25,7 @@ void RecorderScreen::showRecorderScreen() {
 void RecorderScreen::showRecorderScreenRecording() {
     _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);
 
-    _screen->drawTextInArea(_textArea, Screen::TEXTPOSITION_HCENTER_TOP, false, Screen::TEXTSIZE_MEDIUM, _screen->C_WHITE,     "recording..");
+    _screen->drawTextInArea(_textArea, Screen::TEXTPOSITION_HCENTER_TOP, false, Screen::TEXTSIZE_MEDIUM, _screen->C_WHITE,     "recording...");
 
     _screen->vr(_peakArea, 0.0, _screen->C_WHITE); // peak meter left border
     _screen->vr(_peakArea, 1.0, _screen->C_WHITE); // peak meter right border

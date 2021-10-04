@@ -231,6 +231,7 @@ class Sucofunkey {
         static const int BOTTOM_NAV_ITEM2 = 314;
         static const int BOTTOM_NAV_ITEM3 = 315;
         static const int RECORDED = 316;
+        static const int RECORDER_CANCEL = 317;
 
         // just for debugging to Serial
         void printQueue();

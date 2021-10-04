@@ -13,6 +13,7 @@ class StartupScreen {
         void handleEvent(Sucofunkey::keyQueueStruct event);
         long receiveTimerTick();
         void showLogo();
+        void hideLogo();
         void showMessage(const char* message, boolean warning);
         void transitionToSelection();
     private:
@@ -21,7 +22,6 @@ class StartupScreen {
         FSIO *_fsio;
         char *_activeSongName;
         char *_songsBasePath;
-        Screen::Area _logoArea;
         Screen::Area _messageArea;
         SongSelector _songSelector;
         void _drawSongSelector();
