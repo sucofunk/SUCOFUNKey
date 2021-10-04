@@ -11,6 +11,7 @@ class Sucofunkey {
     public:
         // PIN number on Teensy 4.1 where the fader is connected to
         static const uint8_t faderPin = 40;
+        static const uint8_t faderLEDPin = 35;
 
         static const byte KEY_NOTE = 1;
         static const byte KEY_OPERATION = 2;
@@ -56,7 +57,9 @@ class Sucofunkey {
         void toggleInput();
         byte getInput();
 
+        int getContinuousFaderValue(uint8_t pin, int scaleMin, int scaleMax);
         int getFaderValue(uint8_t pin, int scaleMin, int scaleMax);
+        void switchFaderLED(bool on);
 
         // The following values for keys/leds correspond to the MCP PINs.
         // 0..79
@@ -228,6 +231,7 @@ class Sucofunkey {
         static const int BOTTOM_NAV_ITEM2 = 314;
         static const int BOTTOM_NAV_ITEM3 = 315;
         static const int RECORDED = 316;
+        static const int RECORDER_CANCEL = 317;
 
         // just for debugging to Serial
         void printQueue();

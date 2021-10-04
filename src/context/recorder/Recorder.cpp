@@ -25,6 +25,22 @@ void Recorder::handleEvent(Sucofunkey::keyQueueStruct event) {
               _recorderScreen.showRecorderScreenRecording();
             }
             break;
+        case Sucofunkey::FN_RECORD:
+            if (currentState == RECORDER_NOTHING) {
+              cancelRecording();
+            }
+            break;
+        case Sucofunkey::PAUSE:
+            if (currentState == RECORDER_RECORDING) {
+              _recorderScreen.showRecorderScreen();
+              stopRecording();
+            } else {
+              if (currentState == RECORDER_NOTHING) {
+                cancelRecording();
+              }
+            }
+
+            break;
         case Sucofunkey::INPUTSELECTOR:
             _lastInput = _keyboard->getInput();
             _keyboard->toggleInput();
@@ -90,6 +106,14 @@ void Recorder::setActive(boolean active) {
     }
 
   }
+}
+
+void Recorder::cancelRecording() {
+  currentState == RECORDER_NOTHING;
+  _keyboard->setInput(Sucofunkey::INPUT_NONE);
+  _audioResources->muteInput();
+  _audioResources->muteResampling();
+  _keyboard->addApplicationEventToQueue(_keyboard->RECORDER_CANCEL);  
 }
 
 void Recorder::startRecording() {

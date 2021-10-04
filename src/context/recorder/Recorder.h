@@ -25,6 +25,7 @@ class Recorder {
 
         RecorderState currentState = RECORDER_NOTHING;
 
+        void cancelRecording();
         void startRecording();
         void continueRecording();
         void stopRecording();

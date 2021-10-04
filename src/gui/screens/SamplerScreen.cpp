@@ -21,8 +21,8 @@ void SamplerScreen::showEmptyScreen() {
     Screen::Area text2 = {text1.x1, text1.y2+1, text1.x2, text1.y2+21, false, _screen->C_BLACK};    
 
     _screen->drawTextInArea(text1, Screen::TEXTPOSITION_HCENTER_VCENTER, false, Screen::TEXTSIZE_MEDIUM, _screen->C_WHITE,     "Select a sample");
-    _screen->drawTextInArea(text2, Screen::TEXTPOSITION_HCENTER_VCENTER, false, Screen::TEXTSIZE_MEDIUM, _screen->C_WHITE,     "or hit       ");
-    _screen->drawTextInArea(text2, Screen::TEXTPOSITION_HCENTER_VCENTER, false, Screen::TEXTSIZE_MEDIUM, _screen->C_RECORDING, "       Record");
+    _screen->drawTextInArea(text2, Screen::TEXTPOSITION_HCENTER_VCENTER, false, Screen::TEXTSIZE_MEDIUM, _screen->C_WHITE,     "or hit                ");
+    _screen->drawTextInArea(text2, Screen::TEXTPOSITION_HCENTER_VCENTER, false, Screen::TEXTSIZE_MEDIUM, _screen->C_RECORDING, "           Record");
 };
 
 

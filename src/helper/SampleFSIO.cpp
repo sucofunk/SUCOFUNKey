@@ -496,7 +496,9 @@ void SampleFSIO::generateInstrument(byte sampleNumber, int baseNote) {
   _instrumentData[sampleNumber-1].samples = _sampleData[sampleNumber-1];
 };
 
-// sampleNumber 1..32
+// sampleNumber 1..72
 AudioSynthWavetable::instrument_data SampleFSIO::getInstrumentDataBySample(byte sampleNumber) {
+  // ToDo: check if instrumentData is available. if not, create it with standard parameters
+  
   return _instrumentData[sampleNumber-1];
 };

@@ -23,6 +23,9 @@ Sucofunkey::Sucofunkey(int intPinMCP1, int intPinMCP2, int intPinMCP3, int intPi
   _intKeyPin4 = intPinMCP4;
   _intKeyPin5 = intPinMCP5;
 
+  // set Fader LED PIN
+  pinMode(faderLEDPin, OUTPUT);
+
   // Is the Function Key held for a key combination?
   _fnKeyHold = false;
   _fnKeyInterrupted = false;
@@ -48,8 +51,7 @@ Sucofunkey::Sucofunkey(int intPinMCP1, int intPinMCP2, int intPinMCP3, int intPi
   _mcp3.begin(2, &Wire2);
   _mcp4.begin(3, &Wire2);
   _mcp5.begin(4, &Wire2);
-
-
+  
   _mcp1.setupInterrupts(true,false,LOW);
   
   for (int i=0; i<16; i++) {
@@ -152,7 +154,6 @@ void Sucofunkey::_setupInterrupts() {
    attachInterrupt(digitalPinToInterrupt(_intKeyPin5), _intCallBack5, FALLING);
 }
 
-
 void Sucofunkey::_intCallBack1() {
   _keyPressedInterrupt1=true;
 } 
@@ -201,10 +202,10 @@ void Sucofunkey::_handleKeyPressed() {
         _keyPressedInterrupt4 = false;
         _values_mcp4_last = _values_mcp4_current;
         _values_mcp4_current = _mcp4.readGPIOAB();
-        _mcpKeysPressedToQueueEvents(_values_mcp4_current, _values_mcp4_last, 48, _input_mcp4, _input_type_mcp4);        
+        _mcpKeysPressedToQueueEvents(_values_mcp4_current, _values_mcp4_last, 48, _input_mcp4, _input_type_mcp4);
   }
 
-  if (_keyPressedInterrupt5) {        
+  if (_keyPressedInterrupt5) {
         _keyPressedInterrupt5 = false;
         _values_mcp5_last = _values_mcp5_current;
         _values_mcp5_current = _mcp5.readGPIOAB();
@@ -553,15 +554,38 @@ byte Sucofunkey::getInput() {
 
 // returns the value from an analog input (fader) and scales it to the defined min max range
 // e.g. range is from 100 to 200, input (0..1023) is 512 --> 150
-int Sucofunkey::getFaderValue(uint8_t pin, int scaleMin, int scaleMax) {
+int Sucofunkey::getContinuousFaderValue(uint8_t pin, int scaleMin, int scaleMax) {
   int faderIn = analogRead(pin);
 
+/*  Serial.print(faderIn);
+  Serial.print("::<fadeIn | last>::");
+  Serial.println(_lastFaderReading);
+*/
   if (abs(faderIn - _lastFaderReading) > 3) {
     _lastFaderReading = faderIn;
   }
   
   return static_cast<int>(floor(scaleMin+(((scaleMax-scaleMin)/1023.0)*_lastFaderReading)));
 };
+
+
+int Sucofunkey::getFaderValue(uint8_t pin, int scaleMin, int scaleMax) {
+  int faderIn = analogRead(pin);
+
+  Serial.print("Fade::");
+  Serial.println(faderIn);
+  _lastFaderReading = faderIn;
+  
+  return static_cast<int>(floor(scaleMin+(((scaleMax-scaleMin)/1023.0)*_lastFaderReading)));
+};
+
+
+
+void Sucofunkey::switchFaderLED(bool on) {
+  digitalWrite(faderLEDPin, on ? HIGH : LOW);
+  Serial.print("faderLED::");
+  Serial.println(on);
+}
 
 
 void Sucofunkey::switchLEDsOff() {

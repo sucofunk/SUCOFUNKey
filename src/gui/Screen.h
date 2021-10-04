@@ -6,7 +6,7 @@
 
 class Screen {
     public:
-        Screen(Adafruit_ST7789 *tft, int BL);  
+        Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness);  
 
         typedef struct area {
                 int x1;
@@ -40,6 +40,11 @@ class Screen {
         }; 
 
         void testBild(const char* text);
+
+        void setBacklightBrightness(int brightness);
+        void fadeBacklightOut(int delayTime);
+        void fadeBacklightIn(int delayTime);
+
 
         void fillArea(Area area, uint16_t color);
         void clearAreaLTR(Area area, uint16_t color, int delayTime);
@@ -123,6 +128,9 @@ class Screen {
         uint16_t _dh = 0;
 
         uint16_t _x, _y = 0;
+
+        int _BL_PIN;
+        int _BL_brightness = 110;
 
         void _setColor(const int *colorArr);
 };
