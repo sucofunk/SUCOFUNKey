@@ -14,16 +14,27 @@
 class Sequencer {
     public:
         Sequencer(Sucofunkey *keyboard, Screen *screen, SampleFSIO *sfsio, unsigned int *extmemArray, AudioResources *audioResources);
+
+        enum Direction {
+                UP = 1,
+                RIGHT = 2,
+                DOWN = 3,
+                LEFT = 4
+        };
+
         long receiveTimerTick();
-        long bpmToMicroseconds(float bpm, int quant);
+
+        void moveCursor(Direction direction);
+
+        long bpmToMicroseconds(float bpm, int res);
         void setActive(boolean active);
         void handleEvent(Sucofunkey::keyQueueStruct event);
-        void loadSetPlay(byte bank, byte sample, byte column, int row);
-        void moveRow(int count);
-        void moveColumn(byte count);
+        void loadSetPlay(byte bank, byte sample, byte channel, int position);
         void playPattern();
+        void playMixedSample(byte channel, uint16_t position);
         void pausePattern();
         void stopAllChannels();
+
         boolean isPlaying();
     private:
         Sucofunkey *_keyboard;
@@ -35,22 +46,33 @@ class Sequencer {
 
         SequencerScreen _sequencerScreen;
 
+        AudioPlayMemory *_playMemory;
+        AudioMixer4 *_playMemoryMixerL;
+        AudioMixer4 *_playMemoryMixerR;
+        int _playMemoryMixerGain;
+
         boolean _isActive = false;
         byte _activeBank = 1;
-        byte _highlightEvery = 4;
-        float _bpm = 80.0;
-        long _playbackTickSpeed = bpmToMicroseconds(_bpm, _highlightEvery); // microseconds interval to receive Ticks
+
+        long _calculatePlaybackTickSpeed();
+
+        long _playbackTickSpeed = _calculatePlaybackTickSpeed(); // microseconds interval to receive Ticks
         
-        Pattern _pattern = Pattern(64, _sfsio, _audioResources);
+        Pattern _pattern = Pattern(16, _sfsio, _audioResources);
         volatile boolean _isPlaying = false;
-        boolean _playedFirstRow = false;
-        volatile int16_t _cursorRow = 0;        
-        byte _cursorColumn = 1;
-        
+
+        int _playerPosition = 0;
+        volatile int _blinkPosition = 0;
+
         void _playNext();
         byte _activeNoteLEDPin = 0;
 
+        byte _cursorChannel = 0;
+        uint16_t _cursorPosition = 0;
+
         boolean _playLEDon = false;
+        
+        void _printPatternData();
 };
 
 #endif

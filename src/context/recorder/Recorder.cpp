@@ -51,19 +51,24 @@ void Recorder::handleEvent(Sucofunkey::keyQueueStruct event) {
 
     if (event.type == Sucofunkey::ENCODER) {
         switch (event.index) {
-          case Sucofunkey::ENCODER_1:
-                if (event.pressed) {
-                  _audioResources->increaseMicGain();
-                } else {
-                  _audioResources->decreaseMicGain();
+          case Sucofunkey::ENCODER_1:          
+                if (_audioResources->activeInput == AUDIO_INPUT_MIC) {
+                  if (event.pressed) {
+                    _audioResources->increaseMicGain();
+                  } else {
+                    _audioResources->decreaseMicGain();
+                  }
                 }
                 break;
           case Sucofunkey::ENCODER_2:
-                if (event.pressed) {
-                  _audioResources->increaseLineInVolume();
-                } else {
-                  _audioResources->decreaseLineInVolume();
-                }
+                // changing the line in input level/sensitivity is not a good idea?!?          
+/*                if (_audioResources->activeInput == AUDIO_INPUT_LINEIN) {              
+                  if (event.pressed) {
+                    _audioResources->increaseLineInVolume();
+                  } else {
+                    _audioResources->decreaseLineInVolume();
+                  }                 
+                } */
                 break;
           case Sucofunkey::ENCODER_3:
                 break;

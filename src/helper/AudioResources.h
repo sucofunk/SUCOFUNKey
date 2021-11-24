@@ -17,9 +17,9 @@ class AudioResources {
         const int maxMicGain = 64;
         const byte maxLineInLevel = 15; 
         
-        float currentVolume = 0.6;
-        int currentMicGain = 12;
-        byte currentLineInLevel = 11;
+        float currentVolume = 0.5;
+        int currentMicGain = 20;
+        byte currentLineInLevel = 1;
 
         void increaseMicGain();
         void decreaseMicGain();

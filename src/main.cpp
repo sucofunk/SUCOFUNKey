@@ -379,13 +379,14 @@ void setup() {
   delay(200);
   // draw orange subline "beatmaker's sketchbook"
   tft.drawBitmap(0, 155, startup_logo_subline, 320, 11, screen.C_ORANGE);
-  delay(1000);
+  delay(750);
 
   currentAppContext = AppContext::STARTUP;
   startupContext.showMessage("system health check", false);
 
   keyboard.setBank(0);
 
+  AudioMemoryUsageMaxReset();
   AudioMemory(50);
 
   // Enable the audio shield, select input and enable output
@@ -394,7 +395,7 @@ void setup() {
   keyboard.setInput(Sucofunkey::INPUT_NONE);
   audioResources.muteInput();
   audioResources.muteResampling();
-  audioResources.audioShield.volume(volumeValue);  //0.0-1.0
+  audioResources.audioShield.volume(volumeValue);  //0.0-1.0 0.8=max without distortion
 
   // erase psram (sample memory)
   for (unsigned long i=0; i<sizeof(extmemArray)/4; i++) {
@@ -415,7 +416,7 @@ void setup() {
   globalTickTimer.begin(globalTick, globalTickInterval);
   globalTickTimerRec.begin(globalTickRec, globalTickIntervalRec);
 
-  delay(500); // small delay for better readability on screen
+  delay(400); // small delay for better readability on screen
   
   if (ok) {
     startupContext.transitionToSelection();
@@ -471,7 +472,7 @@ void sendTickToActiveContext() {
            globalTickIntervalNew = samplerContext.receiveTimerTick();
           break;
     case  AppContext::SEQUENCER:
-           //globalTickIntervalNew = sequencerContext.receiveTimerTick();
+           globalTickIntervalNew = sequencerContext.receiveTimerTick();
           break;
     case  AppContext::STARTUP:
            globalTickIntervalNew = startupContext.receiveTimerTick();
@@ -480,7 +481,7 @@ void sendTickToActiveContext() {
           break;
   }    
 
-  globalTickIntervalNew = sequencerContext.receiveTimerTick();
+//  globalTickIntervalNew = sequencerContext.receiveTimerTick();
 
   if (globalTickIntervalNew != globalTickInterval) {
     globalTickInterval = globalTickIntervalNew;
@@ -510,10 +511,12 @@ void loop() {
   }
   // On every 200th loop, check if the volume potentiometer was changed and adjust the volume.
   if (zz == 20) {    
-    volumeTempValue = 1.0-(analogRead(PIN_VOLUME)/1023.0);
+    volumeTempValue = 0.8-((analogRead(PIN_VOLUME)/1023.0)*0.8);
     
     if (abs(volumeValue-volumeTempValue) > 0.05) {
       volumeValue = volumeTempValue;
+      Serial.print("Volume::");
+      Serial.println(volumeValue);
       audioResources.audioShield.volume(volumeValue);
     }    
     
@@ -601,12 +604,15 @@ void handleKeyboardEventQueue() {
   while(keyboard.hasEvents()) {
     Sucofunkey::keyQueueStruct event = keyboard.getNextEvent();
 
-/*    Serial.print(event.index);
+    Serial.print(event.index);
     Serial.print("::");
     Serial.print(event.pressed);
     Serial.print("::");
     Serial.println(event.type);
-*/
+
+
+    Serial.print("MaxAudioMemoryUsed:: ");
+    Serial.println(AudioMemoryUsageMax());
 
     if (event.type == Sucofunkey::EVENT_APPLICATION) {
       switch(event.index) {

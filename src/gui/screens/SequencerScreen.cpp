@@ -9,154 +9,235 @@ SequencerScreen::SequencerScreen(Sucofunkey *keyboard, Screen *screen, SampleFSI
     _audioResources = audioResources;
 }
 
+
+
 void SequencerScreen::initializeGrid(Pattern *pattern) {
   _pattern = pattern;
-
   _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);
-
-  _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_LEFT_TOP, true, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, "Tracker");  
-
-  _screen->drawFastHLine(0, 20, _screen->AREA_SCREEN.x2, _screen->C_GRID_DARK);
-  _screen->drawFastHLine(0, 45, _screen->AREA_SCREEN.x2, _screen->C_GRID_DARK);
-  _screen->drawFastHLine(0, 70, _screen->AREA_SCREEN.x2, _screen->C_GRID_DARK);
-
-  _screen->drawFastHLine(0, 145, _screen->AREA_SCREEN.x2, _screen->C_GRID_DARK);
-  _screen->drawFastHLine(0, 170, _screen->AREA_SCREEN.x2, _screen->C_GRID_DARK);
-  _screen->drawFastHLine(0, 195, _screen->AREA_SCREEN.x2, _screen->C_GRID_DARK);
-  _screen->drawFastHLine(0, 220, _screen->AREA_SCREEN.x2, _screen->C_GRID_DARK);
-
-  _screen->drawFastVLine( 0, 20, _screen->AREA_SCREEN.y2-40, _screen->C_GRID_DARK);
-  _screen->drawFastVLine(39, 20, _screen->AREA_SCREEN.y2-39, _screen->C_GRID_BRIGHT);
-  _screen->drawFastVLine(109, 20, _screen->AREA_SCREEN.y2-40, _screen->C_GRID_DARK);
-  _screen->drawFastVLine(179, 20, _screen->AREA_SCREEN.y2-40, _screen->C_GRID_DARK);
-  _screen->drawFastVLine(249, 20, _screen->AREA_SCREEN.y2-40, _screen->C_GRID_DARK);  
-  _screen->drawFastVLine(319, 20, _screen->AREA_SCREEN.y2-40, _screen->C_GRID_DARK);   
-
-  _screen->drawFastHLine(0, 95, _screen->AREA_SCREEN.x2, _screen->C_GRID_BRIGHT);
-  _screen->drawFastHLine(0, 120, _screen->AREA_SCREEN.x2, _screen->C_GRID_BRIGHT);
+  // draw initial sequencer grid
+  drawBPM(_pattern->getPatternSpeed());
+  drawGrid(INIT);
 }
 
-// position = current position on highlighted row
-void SequencerScreen::drawTrackerAtPosition(uint16_t position, Pattern *p, bool editMode, byte highlightEvery) {
-  boolean highlight = false;
-  for (int r = 0; r<8; r++) {
-    if (position-3+r >= 0 && position-3+r < p->getPatternLength()){
-      sprintf(_cBuff3, "%03d", position-3+r);
-      
-      highlight = (((position-3+r)%highlightEvery)==0);
 
-      _drawGridCell(0, r, true, _cBuff3, 0, 0, highlight ? _screen->C_GRID_DARK : _screen->C_BLACK);
-      
-      for (int c=1; c<5; c++) {
-        _drawGridCell(c, r, p->getSampleAt(c, position-3+r).sampleNumber == 255 ? false : true, p->getSampleAt(c, position-3+r).displayText, p->getSampleAt(c, position-3+r).stereoPosition, p->getSampleAt(c, position-3+r).velocity,  highlight ? _screen->C_GRID_DARK : _screen->C_BLACK);
-      }
-      
-    } else {
-      if (editMode && position-3+r < 0) {
-        _drawEmptyRow(r);
-      }
-      if (editMode && position-3+r >= p->getPatternLength()) {
-        _drawEmptyRow(r);
-      }      
-    }
+void SequencerScreen::drawGrid(LastAction action) {
+
+  uint16_t maxWidth = _screen->AREA_SCREEN.x2-2;
+
+  if (_pattern->getPatternLength() < _xPositionCapacity) maxWidth = _pattern->getPatternLength()*15+1; 
+
+  // horizontal lines
+  for (int i=0; i<=_pattern->channels; i++) {
+    _screen->drawFastHLine(0, i*15+_screen->AREA_CONTENT.y1+1, maxWidth, _screen->C_GRID_BRIGHT);
   }
+
+  // showTail -> draw the end of the pattern (scrolled to the end)
+  if (action == APPEND || action == SHORTEN) {
+    _xPositionOffset = _pattern->getPatternLength() > _xPositionCapacity ? _pattern->getPatternLength() - _xPositionCapacity : 0;
+  }
+
+  // vertical lines
+  uint8_t lc = (_xPositionOffset%_pattern->getPatternResolution())+1;
+
+  int amountOfGridcellsToDraw = _amountOfGridCellsToDraw();
+
+  for (int i=0; i<=amountOfGridcellsToDraw; i++) {
+    _screen->drawFastVLine(i*15, _screen->AREA_CONTENT.y1+1, _pattern->channels*15, lc == 1 ?_screen->C_WHITE : _screen->C_GRID_BRIGHT);
+    lc = lc == _pattern->getPatternResolution() ? 1 : lc+1;
+  }
+
+  if ((action == SHORTEN || action == SCALE)  && (amountOfGridcellsToDraw < _xPositionCapacity)) {
+    _screen->fillRect((amountOfGridcellsToDraw)*15+1, _screen->AREA_CONTENT.y1+1, _screen->AREA_SCREEN.x2-(amountOfGridcellsToDraw*15)+2, _pattern->channels*15+1, _screen->C_BLACK);
+  }
+
+  drawSamples();
 }
 
 
-void SequencerScreen::drawCursorAtColumn(byte column) {
-  _screen->drawFastHLine(0, 95, _screen->AREA_SCREEN.x2, _screen->C_GRID_BRIGHT);
-  _screen->drawFastHLine(0, 120, _screen->AREA_SCREEN.x2, _screen->C_GRID_BRIGHT);
-  
-  _screen->drawFastHLine(39+((column-1)*70), 95, 70, _screen->C_WHITE);
-  _screen->drawFastHLine(39+((column-1)*70), 120, 70, _screen->C_WHITE);
+void SequencerScreen::drawCursorAt(byte channel, uint16_t position, boolean draw) {
+  // draw cursor if it is within the viewport and displayed range
+  if ((position >= _xPositionOffset && position < _xPositionOffset+_xPositionCapacity) && position < _pattern->getPatternLength()) {
+    _screen->fillRect((position-_xPositionOffset)*15+1, channel*15+_screen->AREA_CONTENT.y1+2, 14, 14, draw ? _screen->C_TRIM_START : _screen->C_BLACK);
+  }  
+
+  drawSample(channel, position, false);
 };
 
 
-void SequencerScreen::_drawEmptyRow(uint16_t row) {
-  _drawGridCell(0, row, false, "", 0, 0, _screen->C_BLACK);
-  _drawGridCell(1, row, false, "", 0, 0, _screen->C_BLACK);
-  _drawGridCell(2, row, false, "", 0, 0, _screen->C_BLACK);
-  _drawGridCell(3, row, false, "", 0, 0, _screen->C_BLACK);
-  _drawGridCell(4, row, false, "", 0, 0, _screen->C_BLACK);
+void SequencerScreen::drawSample(byte channel, uint16_t position, boolean drawBackground) {
+  _tempSample = _pattern->getSampleAt(channel, position);
+  
+  if (_tempSample.sampleNumber < 254) {
+      _screen->fillRect((position-_xPositionOffset)*15+3, channel*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_WHITE); 
+      showSampleInfos(channel, position);       
+  } else {
+    if (_tempSample.sampleNumber == 255 && drawBackground) {
+      _screen->fillRect((position-_xPositionOffset)*15+3, channel*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_BLACK);
+    }
+    if (_tempSample.sampleNumber == 254) {
+      _screen->fillRect((position-_xPositionOffset)*15+3, channel*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_GRID_DARK);
+    }
+    hideSampleInfos();
+  }
 }
 
 
-void SequencerScreen::_drawGridCell(int col, int row, boolean hasContent, const char *text, byte stereoPosition, byte velocity, uint16_t bgColor) {
-  _y = 21 + (row*25);
 
-  int panOffset = 0;
-  //int hideOffset = 2;
-  //int radius = static_cast<int>(floor(velocity/13)+1);
-
-  if (col == 0) {
-    _x = 0;  
-    _screen->fillRect(_x, _y, 39, 24, bgColor);
-    _screen->drawText(text, 4, _y+18);
-  } else {
-    _x = 40+(col-1)*70;
-    _screen->fillRect(_x, _y, 69, 24, bgColor);
-    if (hasContent) {
-      _screen->drawText(text, _x+2, _y+18);
-//    _screen->drawText(text, _x+15, _y+18);
-
-      // draw panning
-      // pan   0 = -25 px  // 100% left
-      // pan  64 =   0 px  // center
-      // pan 127 = +25 px  // 100% right
-
-      if (stereoPosition < 64) {
-        panOffset = static_cast<int>(-10 + floor(stereoPosition / 6));
-        //hideOffset = 2;
-      }
+void SequencerScreen::drawSamples() {
+  for (int c = 0; c < _pattern->channels; c++) {
+    for (int p = 0; p < _amountOfGridCellsToDraw(); p++) {
+      _tempSample = _pattern->getSampleAt(c, _xPositionOffset + p);
       
-      if (stereoPosition > 64) {
-        panOffset = static_cast<int>(floor((stereoPosition-64) / 6));
-        //hideOffset = -2;
-      }
-
-      // draw center crosshair
-      _screen->drawLine(_x+48, _y+12, _x+52, _y+12, _screen->C_WHITE);
-      _screen->drawLine(_x+50, _y+10, _x+50, _y+14, _screen->C_WHITE);
-
-      // draw velocity circle at panning position
-      _screen->drawCircle(_x+50+panOffset, _y+12, static_cast<int>(floor(velocity/13)), false, _screen->C_ORANGE);
-
-
-/*      if (abs(panOffset) > radius) {
-        // draw center marker circle when velocity bubble is right or left of marker
-        //_screen->drawCircle(_x+50, _y+12, 1, true, _screen->C_WHITE);
-//        _screen->drawPixel(_x+50, _y+12, _screen->C_WHITE);
-          _screen->drawLine(_x+48, _y+12, _x+52, _y+12, _screen->C_WHITE);
-          _screen->drawLine(_x+50, _y+10, _x+50, _y+14, _screen->C_WHITE);
-
+      if (_tempSample.sampleNumber < 254) {
+          _screen->fillRect(p*15+3, c*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_WHITE);        
       } else {
-        if (radius > 1) {
-          _screen->drawLine(_x+48, _y+12, _x+52, _y+12, _screen->C_WHITE);
-          _screen->drawLine(_x+50, _y+10, _x+50, _y+14, _screen->C_WHITE);
-
-          //_screen->drawPixel(_x+50, _y+12, _screen->C_WHITE);
-          //_screen->drawCircle(_x+50, _y+12, 1, true, bgColor);
-        }        
+        if (_tempSample.sampleNumber == 255) {
+          _screen->fillRect(p*15+3, c*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_BLACK);
+        }
+        if (_tempSample.sampleNumber == 254) {
+          _screen->fillRect(p*15+3, c*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_GRID_DARK);
+        }
       }
-*/
     }
+  }  
+}
+
+uint8_t SequencerScreen::_amountOfGridCellsToDraw() {
+  return (_pattern->getPatternLength() - _xPositionOffset) <= _xPositionCapacity ? _pattern->getPatternLength() - _xPositionOffset : _xPositionCapacity;
+}
+
+
+
+// returns true, if the grid needs to be repainted
+boolean SequencerScreen::viewportCheckUpdate(byte channel, uint16_t position, LastAction action) {
+  switch(action) {
+    case LEFT:          
+          if (position > 0 && position == _xPositionOffset-1) {
+            _xPositionOffset--;            
+            return true;            
+          } else {
+            if (position == 0 && _xPositionOffset == 1) {
+              _xPositionOffset--;
+              return true;            
+            }
+          }          
+          break;
+    case RIGHT:
+          if (position < _pattern->getPatternLength() && position - _xPositionOffset == _xPositionCapacity) { 
+            _xPositionOffset++;
+            return true;
+          }
+          break;
+    case SCROLL_LEFT:
+          if (_xPositionOffset > 0) {      
+            _xPositionOffset--;
+            return true;
+          }
+          break;
+    case SCROLL_RIGHT:
+          if (_pattern->getPatternLength() > _xPositionOffset + _xPositionCapacity) {
+            _xPositionOffset++;
+            return true;
+          }
+          break;          
+    default:
+          break;
   }
-} 
+
+  return false;
+}
+
+void SequencerScreen::drawPlayStepIndicator(uint16_t position, boolean draw) {
+  // delete old indicator.. to save calculation time and plane scrolling bux, just draw a black line over it ;)
+  _screen->drawFastHLine(_screen->AREA_SCREEN.x1, 23, _screen->AREA_SCREEN.x2, _screen->C_BLACK);
+
+  // is current position in viewport?
+  if (draw && position >= _xPositionOffset && position < _xPositionOffset + _xPositionCapacity) {    
+    _screen->drawFastHLine((position - _xPositionOffset) * 15, 23, 15, _screen->C_ORANGE);
+  }
+}
+
+void SequencerScreen::showSampleInfos(byte channel, uint16_t position) {
+  _sampleInfosVisible = true;
+
+  _screen->hr(_screen->AREA_SEQUENCER_OPTIONS_SAMPLENAME, 1, _screen->C_GRID_DARK);
+  _screen->vr(_screen->AREA_SEQUENCER_OPTION1, 1, _screen->C_GRID_DARK);  
+  _screen->vr(_screen->AREA_SEQUENCER_OPTION2, 1, _screen->C_GRID_DARK);  
+  _screen->vr(_screen->AREA_SEQUENCER_OPTION3, 1, _screen->C_GRID_DARK);  
+   
+  sprintf(_cBuff3, "%d", _pattern->getSampleAt(channel, position).sampleNumber );
+
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTIONS_SAMPLENAME, _screen->TEXTPOSITION_LEFT_VCENTER, true, _screen->TEXTSIZE_SMALL, _screen->C_WHITE, _cBuff3);
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION1, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_SMALL, _screen->C_LIGHTGREY, "vol");
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION2, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_SMALL, _screen->C_LIGHTGREY, "pan");
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_SMALL, _screen->C_LIGHTGREY, "pitch");
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION4, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_SMALL, _screen->C_LIGHTGREY, "prob");
+
+  // draw frame for volume bar
+  _screen->vr(_screen->AREA_SEQUENCER_OPTION1_VOLUME, 0.0, _screen->C_WHITE);
+  _screen->vr(_screen->AREA_SEQUENCER_OPTION1_VOLUME, 1.0, _screen->C_WHITE);
+  _screen->hr(_screen->AREA_SEQUENCER_OPTION1_VOLUME, 0.0, _screen->C_WHITE);
+  _screen->hr(_screen->AREA_SEQUENCER_OPTION1_VOLUME, 1.0, _screen->C_WHITE);
+
+  updateSampleInfoVolume(channel, position);
+  updateSampleInfoPanning(channel, position);
+  updateSampleInfoPitch(channel, position);  
+  updateSampleInfoProbability(channel, position);
+}
+
+
+void SequencerScreen::updateSampleInfoVolume(byte channel, uint16_t position) {
+    // draw volume/velocity bar
+    _tempInt = static_cast<int>(_pattern->getSampleAt(channel, position).velocity/2);
+    _screen->fillRect(_screen->AREA_SEQUENCER_OPTION1_VOLUME.x1+1+_tempInt, _screen->AREA_SEQUENCER_OPTION1_VOLUME.y1+1, 63-_tempInt, 7, _screen->C_BLACK);
+    _screen->fillRect(_screen->AREA_SEQUENCER_OPTION1_VOLUME.x1+1, _screen->AREA_SEQUENCER_OPTION1_VOLUME.y1+1, _tempInt, 7, _screen->C_TRIM_START);
+    
+//  sprintf(_cBuff5_1, "%d", _pattern->getSampleAt(channel, position).velocity );
+//  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION1_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, _cBuff5_1);
+};
+
+void SequencerScreen::updateSampleInfoPanning(byte channel, uint16_t position) {
+
+  _tempInt = static_cast<int>(_pattern->getSampleAt(channel, position).stereoPosition/2);
+  _screen->fillArea(_screen->AREA_SEQUENCER_OPTION2_PANNING, _screen->C_BLACK);
+  _screen->hr(_screen->AREA_SEQUENCER_OPTION2_PANNING, 0.5, _screen->C_GRID_BRIGHT);
+  _screen->vr(_screen->AREA_SEQUENCER_OPTION2_PANNING, 0.5, _screen->C_GRID_BRIGHT);
+  _screen->drawFastVLine(_screen->AREA_SEQUENCER_OPTION2_PANNING.x1+_tempInt, _screen->AREA_SEQUENCER_OPTION2_PANNING.y1, 8, _screen->C_WHITE);
+
+//  sprintf(_cBuff5_2, "%d", _pattern->getSampleAt(channel, position).stereoPosition );  
+//  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION2_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, _cBuff5_2);
+};
+
+void SequencerScreen::updateSampleInfoPitch(byte channel, uint16_t position) {
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, "100%");
+};
+
+void SequencerScreen::updateSampleInfoProbability(byte channel, uint16_t position) {
+  sprintf(_cBuff5_4, "%d%%", _pattern->getSampleAt(channel, position).probability );      
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION4_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, _cBuff5_4);
+};
+
+
+void SequencerScreen::hideSampleInfos() {
+  if (_sampleInfosVisible) _screen->fillArea(_screen->AREA_SEQUENCER_OPTIONS, _screen->C_BLACK);
+}
+
+void SequencerScreen::drawExtMemPercentage(byte percent) {
+  //_screen->fillRect(219, 1, 100, 1, _screen->C_MEMORY_FREE);
+  //_screen->fillRect(219, 1, percent, 1, _screen->C_MEMORY_USED);
+}
 
 
 void SequencerScreen::drawBPM(float bpm) {
-  /*_screen->setTextColor(_screen->C_WHITE);
-  _screen->setFont(&OxygenMono_Regular8pt7b);
-  _screen->fillRect(0, 221, 160, 19, _screen->C_BLACK);
-
-  sprintf(_cBuff10, "BPM: %g", bpm);
-  _screen->setCursor(4, 239);
-  _screen->print(_cBuff10);
-  */
+  sprintf(_cBuff10, "%g BPM", bpm);
+  _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_RIGHT_TOP, true, _screen->TEXTSIZE_SMALL, _screen->C_WHITE, _cBuff10);
 }
 
 
+
+/*
 void SequencerScreen::drawExtMemPercentage(byte percent) {
   _screen->fillRect(219, 1, 100, 1, _screen->C_MEMORY_FREE);
   _screen->fillRect(219, 1, percent, 1, _screen->C_MEMORY_USED);
 };
+*/

@@ -41,6 +41,7 @@ class SampleFSIO {
                                             {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false}};
         
         char sampleFilename[3][24][40];
+        char sampleDisplayTitle[3][24][40];
         char recorderFilename[40]; // waveformbuffer is saved at position 72 (--> bank0=3, sample0=0)
 
         void setSongPath(char *songPath);

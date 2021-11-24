@@ -364,7 +364,9 @@ void Sampler::deleteActiveSample() {
   _sfsio->clearWaveFormBufferById(sample72);
   _sfsio->waveFormBufferLength[sample72] = 0;
   _bottomMenu.showMenu(false);
-  _samplerScreen.showEmptyScreen();  
+  _samplerScreen.showEmptyScreen();
+
+  // ToDo: update EXTMEM, if sample was in memory
 }
 
 void Sampler::saveActiveSample() {

@@ -241,22 +241,22 @@ void Sucofunkey::_mcpKeysPressedToQueueEvents(uint16_t mcpValuesCurrent, uint16_
           switch(i+offset) {
             case ENCODER_4_2:
             case ENCODER_4_1:
-              if (!enc4Handled) _readRotaryEncoder(3, getBooleanValueFrom16BitInt(mcpValuesCurrent, 1), getBooleanValueFrom16BitInt(mcpValuesCurrent, 2),  ENCODER_4);            
+              if (!enc4Handled) _readRotaryEncoder(3, getBooleanValueFrom16BitInt(mcpValuesCurrent, 1), getBooleanValueFrom16BitInt(mcpValuesCurrent, 2),  _fnKeyHold ? FN_ENCODER_4 : ENCODER_4);            
               enc4Handled = true;
               break;
             case ENCODER_3_2:
             case ENCODER_3_1:
-              if (!enc3Handled) _readRotaryEncoder(2, getBooleanValueFrom16BitInt(mcpValuesCurrent, 4), getBooleanValueFrom16BitInt(mcpValuesCurrent, 5),  ENCODER_3);
+              if (!enc3Handled) _readRotaryEncoder(2, getBooleanValueFrom16BitInt(mcpValuesCurrent, 4), getBooleanValueFrom16BitInt(mcpValuesCurrent, 5),  _fnKeyHold ? FN_ENCODER_3 : ENCODER_3);
               enc3Handled = true;
               break;
             case ENCODER_2_2:
             case ENCODER_2_1:
-              if (!enc2Handled) _readRotaryEncoder(1, getBooleanValueFrom16BitInt(mcpValuesCurrent, 8), getBooleanValueFrom16BitInt(mcpValuesCurrent, 9),  ENCODER_2);
+              if (!enc2Handled) _readRotaryEncoder(1, getBooleanValueFrom16BitInt(mcpValuesCurrent, 8), getBooleanValueFrom16BitInt(mcpValuesCurrent, 9),  _fnKeyHold ? FN_ENCODER_2 : ENCODER_2);
               enc2Handled = true;            
               break;
             case ENCODER_1_2:
             case ENCODER_1_1:
-              if (!enc1Handled) _readRotaryEncoder(0, getBooleanValueFrom16BitInt(mcpValuesCurrent, 11), getBooleanValueFrom16BitInt(mcpValuesCurrent, 12),  ENCODER_1);
+              if (!enc1Handled) _readRotaryEncoder(0, getBooleanValueFrom16BitInt(mcpValuesCurrent, 11), getBooleanValueFrom16BitInt(mcpValuesCurrent, 12),  _fnKeyHold ? FN_ENCODER_1 : ENCODER_1);
               enc1Handled = true;            
               break;
             default:

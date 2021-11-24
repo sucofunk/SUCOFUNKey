@@ -105,13 +105,11 @@ class Sucofunkey {
         static const int ENCODER_2_PUSH = 6; // 44;
         static const int ENCODER_3_PUSH = 3; // 45;
         static const int ENCODER_4_PUSH = 0; // 46;
-        //static const uint8_t GPB7 = 47;
 
         static const int FN_ENCODER_1_PUSH = 110; // 93;
         static const int FN_ENCODER_2_PUSH = 106; // 94;
         static const int FN_ENCODER_3_PUSH = 103; // 95;
         static const int FN_ENCODER_4_PUSH = 100; // 96;
-        //static const uint8_t FN_GPB7 = 97;
 
         static const int MENU_ENCODER_1_PUSH = 210; // 93;
         static const int MENU_ENCODER_2_PUSH = 206; // 94;
@@ -169,6 +167,8 @@ class Sucofunkey {
         static const int FN_DS_2 = 178; // 80;
         static const int FN_E_2 = 177; // 81;
 
+        // --- LED Pins ---
+
         static const int LED_PLAY = 7; // 7;
         static const int LED_RECORD = 52; // 6;
         
@@ -222,6 +222,12 @@ class Sucofunkey {
         static const int ENCODER_2 = 301;
         static const int ENCODER_3 = 302;
         static const int ENCODER_4 = 303;
+
+        static const int FN_ENCODER_1 = 400;
+        static const int FN_ENCODER_2 = 401;
+        static const int FN_ENCODER_3 = 402;
+        static const int FN_ENCODER_4 = 403;
+
 
         // Application specific events (starting at 310)
         static const int SONGSELECTED = 310; // callback for song selector
@@ -309,9 +315,6 @@ class Sucofunkey {
         uint16_t _values_mcp5_current = 0;
        
         // sampleIDs start at 1 -> F1 = 1 ... E2 = 32
-
-
-        // Hier weiter machen!
 
         typedef struct lookUpTableStruct {
             int  sampleId;
