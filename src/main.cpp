@@ -1,15 +1,15 @@
-/* ------------------------------------------------------------------------------------
+/* ----------------------------------------------------------------------------------------------
 
     SUCOFUNKey v3
 
-    This project is the firmware for the SUCOFUNKey sample sequencer.
-    For more information, check out www.sucofunkey.com
+    This project is the firmware for the SUCOFUNKey sample sequencer, aka Beatmaker's Sketchbook
+    For more information, check out www.sucofunk.com
 
     created by Marc Berendes (marc @ sucofunk.com)
     
-    Last update: 04.10.2021
+    Last update: 24.11.2021
 
-   ------------------------------------------------------------------------------------ */
+   ---------------------------------------------------------------------------------------------- */
 
 #include <SPI.h>
 #include <SD.h>
