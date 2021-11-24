@@ -51,7 +51,7 @@ class Screen {
         void clearAreaRTL(Area area, uint16_t color, int delayTime);
         void hr(Area area, float vpos, uint16_t color);
         void vr(Area area, float hpos, uint16_t color);
-        void drawTextInArea(Area area, TextPosition textPosition, boolean eraseFirst, TextSize textSize, uint16_t color, const char *text);
+        void drawTextInArea(Area area, TextPosition textPosition, boolean eraseFirst, TextSize textSize, boolean monoSpaced, uint16_t color, const char *text);
 
         void drawLine(int x1, int y1, int x2, int y2, uint16_t color);
         void drawPixel(int x, int y, uint16_t color);
@@ -80,8 +80,10 @@ class Screen {
         const uint16_t C_PEAK_MUCH = RGBtoColor(245, 150, 5);
         const uint16_t C_PEAK_OK = RGBtoColor(0, 255, 0);
 
-        const uint16_t C_NAV_INACTIVE = RGBtoColor(100, 100, 100);
-        const uint16_t C_NAV_ACTIVE = RGBtoColor(255, 255, 255);        
+        const uint16_t C_NAV_INACTIVE = RGBtoColor(255, 255, 255);
+        const uint16_t C_NAV_ACTIVE = C_ORANGE;        
+        const uint16_t C_NAV_DISABLED = RGBtoColor(100, 100, 100);        
+
 
         const uint16_t C_SB_FREE = RGBtoColor(18, 222, 38);
         const uint16_t C_SB_USED = RGBtoColor(222, 38, 18);

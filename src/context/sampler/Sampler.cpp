@@ -56,19 +56,16 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
               }
               break;         
         case Sucofunkey::MENU:
-              if (_bottomMenu.isVisible()) {
-                _bottomMenu.showMenu(false);
-              } else {
-                if (currentState == SAMPLE_SELECTED) {
-                  _bottomMenu.setupMenu2("Edit", 0, "Delete", 0);
-                  _bottomMenu.selectItem(1);
+                if (_bottomMenu.isVisible() && _submenuState != SUBMENU_SAVE) {
+                  _bottomMenu.showMenu(false);
+                } else {
+                  if (_sfsio->sampleBanksStatus[_activeBank-1][_activeSampleSlot-1] || _activeSampleSlot == 0) {
+                    if (currentState == SAMPLE_SELECTED) {
+                      _setSubmenuState(SUBMENU_NONE);
+                    }
+                    _bottomMenu.showMenu(true);
+                  }
                 }
-                if (currentState == SAMPLE_EDIT_TRIM) {
-                  _bottomMenu.setupMenu3("Save", 0, "Save as", 0, "Cancel", 0);
-                  _bottomMenu.selectItem(1);
-                }
-                _bottomMenu.showMenu(true);
-              }
               break;
         case Sucofunkey::SET:
               if (_bottomMenu.isVisible()) {
@@ -110,17 +107,25 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
       }
     }
 
+    // handle note keys
     if (event.type == Sucofunkey::KEY_NOTE) {
       byte sampleId = _keyboard->getSampleIdByEventKey(event.index);      
       
+      // select a sample and play it
       if (Sampler::currentState == SAMPLE_SELECTED || Sampler::currentState == SAMPLE_NOTHING) {
         _activeSampleSlot = sampleId;
 
         if (event.pressed) {
+
+          // hide the bottom menu if the selected sampleSlot is empty
+          if (_bottomMenu.isVisible() && !_sfsio->sampleBanksStatus[_activeBank-1][_activeSampleSlot-1]) {
+            _bottomMenu.showMenu(false);
+          }
+
           _blinkSampleSlot(sampleId, true);
           _tempBank = _keyboard->getBank();
           currentState = SAMPLE_SELECTED;
-          _bottomMenu.setupMenu2("Edit", 0, "Delete", 0);        
+          _setSubmenuState(SUBMENU_NONE);
           _samplerScreen.showSampleInfo(_keyboard->getBank()-1, sampleId-1, 1.0);
           _audioResources->playSdRaw.play(_sfsio->sampleFilename[_keyboard->getBank()-1][sampleId-1]);
         } else {
@@ -128,6 +133,7 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
         }
       }
 
+      // waiting for a free slot selection (save as)
       if (currentState == SAMPLE_WAIT_SAVE_SLOT) {
         // is selected slot free?
         if (!_sfsio->sampleBanksStatus[_keyboard->getBank()-1][sampleId-1]) {
@@ -156,27 +162,48 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
       }
     }
 
-
+    // handle application events like bottom menu selects
     if (event.type == Sucofunkey::EVENT_APPLICATION) {
       switch(event.index) {
-        case Sucofunkey::BOTTOM_NAV_ITEM1:          
-          // switch to edit mode
-          if (currentState == SAMPLE_SELECTED) {
-            editActiveSample();
-          } else {
-            // save current sample after editing
-            if (currentState == SAMPLE_EDIT_TRIM) saveActiveSample();
+        case Sucofunkey::BOTTOM_NAV_ITEM1:
+          // show edit submenu
+          if (_submenuState == SUBMENU_NONE) {
+            _setSubmenuState(SUBMENU_EDIT);
+            _bottomMenu.showMenu(true);
+            return;
           }
+
+          // switch to trim/edit mode
+          if (_submenuState == SUBMENU_EDIT && currentState == SAMPLE_SELECTED) {
+            editActiveSample();
+            return;
+          } 
+          
+          // save current sample after editing
+          if (_submenuState == SUBMENU_SAVE && currentState == SAMPLE_EDIT_TRIM) {
+            saveActiveSample();
+            return;
+          }
+          
           break;
         case Sucofunkey::BOTTOM_NAV_ITEM2:
           // save current sample after editing
-          if (currentState == SAMPLE_EDIT_TRIM) saveActiveSampleAs();
+          if (_submenuState == SUBMENU_SAVE && currentState == SAMPLE_EDIT_TRIM) {
+            saveActiveSampleAs();
+            return;
+          }
           break;
         case Sucofunkey::BOTTOM_NAV_ITEM3:
           // switch to edit mode
-          if (currentState == SAMPLE_SELECTED) deleteActiveSample();
+          if (_submenuState == SUBMENU_NONE && currentState == SAMPLE_SELECTED) {
+            deleteActiveSample();
+            return;
+          }
+
           // cancel edit operation
-          if (currentState == SAMPLE_EDIT_TRIM) cancel();
+          if (_submenuState == SUBMENU_SAVE && currentState == SAMPLE_EDIT_TRIM) {
+            cancel();
+          }
           break;
       }
     }
@@ -257,7 +284,7 @@ long Sampler::receiveTimerTick() {
       }
     }
 
-    return 100000;
+    return 300000;
 }
 
 void Sampler::setActive(boolean active) {
@@ -348,8 +375,10 @@ void Sampler::_blinkSampleSlot(byte sampleId1, boolean on){
 
 void Sampler::editActiveSample() {
     currentState = SAMPLE_EDIT_TRIM;
-    byte sample72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
-    _bottomMenu.setupMenu3("Save", 0, "Save as", 0, "Cancel", 0);
+    byte sample72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;    
+
+    _setSubmenuState(SUBMENU_SAVE);
+
     _bottomMenu.showMenu(true);
     _trimMarkerEndPosition = _sfsio->waveFormBufferLength[sample72]-1;
     _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, sample72, _volumeScaleFactor);
@@ -366,7 +395,7 @@ void Sampler::deleteActiveSample() {
   _bottomMenu.showMenu(false);
   _samplerScreen.showEmptyScreen();
 
-  // ToDo: update EXTMEM, if sample was in memory
+// ToDo: update EXTMEM, if sample was in memory
 }
 
 void Sampler::saveActiveSample() {
@@ -429,7 +458,6 @@ void Sampler::cancel() {
   _volumeScaleFactor = 1.0;
 }
 
-
 void Sampler::indicatePlayerPosition() {
   int sampleId72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
   
@@ -438,4 +466,42 @@ void Sampler::indicatePlayerPosition() {
   if (_audioResources->playSdRaw.isPlaying()) {
     _samplerScreen.drawPlayerPosition(_audioResources->playSdRaw.positionMillis() / pixelMs, (currentState == SAMPLE_EDIT_TRIM ? _trimMarkerStartPosition : 0), (currentState == SAMPLE_EDIT_TRIM ? _trimMarkerEndPosition : 319));
   }
+}
+
+
+void Sampler::_setSubmenuState(SamplerSubmenuState state) {
+  switch(state) {
+    case SUBMENU_NONE:
+      _bottomMenu.setupMenu2("Edit", 0, "Delete", 0);
+      _bottomMenu.selectItem(1);
+      _submenuState = state;
+      break;
+    
+    case SUBMENU_SAVE:
+      _submenuState = state;
+      _showSaveBottomMenu();
+      break;
+    
+    case SUBMENU_EDIT:
+      _bottomMenu.setupMenu3("Trim", 0, "Fade", 0, "Rename", 0);
+      _bottomMenu.selectItem(1);
+      _submenuState = state;
+      break;
+    
+    default:
+      break;
+  }  
+}
+
+
+void Sampler::_showSaveBottomMenu() {
+    _bottomMenu.setupMenu3("Save", 0, "Save as", 0, "Cancel", 0);
+
+    // hide "save", if we are editing the latest recording
+    if (_activeSampleSlot == 0) {
+      _bottomMenu.disableItem(1);
+      _bottomMenu.selectItem(2);
+    } else {
+      _bottomMenu.selectItem(1);
+    }
 }

@@ -1,11 +1,10 @@
 #include <Arduino.h>
 #include "Screen.h"
 #include <SD.h>
-//#include "../context/sampler/Sampler.h"
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
-//#include "fonts/OxygenMono_Regular8pt7b.h" // https://fonts.google.com/specimen/Oxygen+Mono
-#include "fonts/BaiJamjureeRegularMonoDigits8pt7b.h"
+#include "fonts/OxygenMono_Regular8pt7b.h" // https://fonts.google.com/specimen/Oxygen+Mono
+#include "fonts/BaiJamjureeRegularMonoDigits8pt7b.h" // https://fonts.google.com/specimen/Bai+Jamjuree
 
 Screen::Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness) {
   _tft = tft;
@@ -15,7 +14,7 @@ Screen::Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness) {
 
 void Screen::testBild(const char* text) {
     fillArea(AREA_SCREEN, C_BLACK);    
-    drawTextInArea(AREA_SCREEN, TEXTPOSITION_HCENTER_VCENTER, false, TEXTSIZE_MEDIUM, C_WHITE, text);
+    drawTextInArea(AREA_SCREEN, TEXTPOSITION_HCENTER_VCENTER, false, TEXTSIZE_MEDIUM, false, C_WHITE, text);
 }
 
 void Screen::setBacklightBrightness(int brightness) {
@@ -74,7 +73,7 @@ void Screen::vr(Area area, float hpos, uint16_t color) {
   _tft->drawLine(area.x1 + abs((area.x2-area.x1)*hpos), area.y1, area.x1 + abs((area.x2-area.x1)*hpos), area.y2, color);  
 }
 
-void Screen::drawTextInArea(Area area, TextPosition textPosition, boolean eraseFirst, TextSize textSize, uint16_t color, const char *text) {
+void Screen::drawTextInArea(Area area, TextPosition textPosition, boolean eraseFirst, TextSize textSize, boolean monoSpaced, uint16_t color, const char *text) {
   
   if (eraseFirst && !area.transparent) {
     fillArea(area, area.bgColor);
@@ -84,20 +83,32 @@ void Screen::drawTextInArea(Area area, TextPosition textPosition, boolean eraseF
   // - generate fonts for SMALL and LARGE and include them
   switch (textSize) {
     case TEXTSIZE_SMALL:
-      //_tft->setFont(&OxygenMono_Regular8pt7b);
-      _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
+      if (monoSpaced) {
+        _tft->setFont(&OxygenMono_Regular8pt7b);
+      } else {      
+        _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
+      }
       break;
     case TEXTSIZE_MEDIUM:
-      //_tft->setFont(&OxygenMono_Regular8pt7b);
-      _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
+      if (monoSpaced) {
+        _tft->setFont(&OxygenMono_Regular8pt7b);
+      } else {      
+        _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
+      }
       break;
     case TEXTSIZE_LARGE:
-      //_tft->setFont(&OxygenMono_Regular8pt7b);
-      _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
+      if (monoSpaced) {
+        _tft->setFont(&OxygenMono_Regular8pt7b);
+      } else {      
+        _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
+      }
       break;
     default:
-      //_tft->setFont(&OxygenMono_Regular8pt7b);
-      _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
+      if (monoSpaced) {
+        _tft->setFont(&OxygenMono_Regular8pt7b);
+      } else {      
+        _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
+      }
       break;    
   }
 
@@ -171,7 +182,7 @@ void Screen::drawPixel(int x, int y, uint16_t color) {
 void Screen::loadingScreen(float percent) {
   if (percent == 0.0) {
     fillArea(AREA_SCREEN, C_BLACK);
-    drawTextInArea(AREA_CONTENT, TEXTPOSITION_HCENTER_VCENTER, false, TEXTSIZE_MEDIUM, C_WHITE, "Loading samples");
+    drawTextInArea(AREA_CONTENT, TEXTPOSITION_HCENTER_VCENTER, false, TEXTSIZE_MEDIUM, false, C_WHITE, "Loading samples");
     vr(AREA_LOADING_BAR, 0.0, C_WHITE);
     vr(AREA_LOADING_BAR, 1.0, C_WHITE);
     hr(AREA_LOADING_BAR, 0.0, C_WHITE);

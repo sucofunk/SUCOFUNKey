@@ -35,7 +35,7 @@ long StartupScreen::receiveTimerTick() {
 }
 
 void StartupScreen::showMessage(const char* message, boolean warning) {
-    _screen->drawTextInArea(_messageArea, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, (warning ? _screen->C_WARNING : _screen->C_LIGHTGREY), message);
+    _screen->drawTextInArea(_messageArea, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, (warning ? _screen->C_WARNING : _screen->C_LIGHTGREY), message);
 }
 
 void StartupScreen::transitionToSelection() {

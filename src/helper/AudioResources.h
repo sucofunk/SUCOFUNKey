@@ -18,7 +18,28 @@ class AudioResources {
         const byte maxLineInLevel = 15; 
         
         float currentVolume = 0.5;
-        int currentMicGain = 20;
+        int currentMicGain = 20; // 0..63
+
+        /*
+            0: 3.12 Volts p-p
+            1: 2.63 Volts p-p
+            2: 2.22 Volts p-p
+            3: 1.87 Volts p-p
+            4: 1.58 Volts p-p
+            5: 1.33 Volts p-p  (default)
+            6: 1.11 Volts p-p
+            7: 0.94 Volts p-p
+            8: 0.79 Volts p-p
+            9: 0.67 Volts p-p
+            10: 0.56 Volts p-p
+            11: 0.48 Volts p-p
+            12: 0.40 Volts p-p
+            13: 0.34 Volts p-p
+            14: 0.29 Volts p-p
+            15: 0.24 Volts p-p
+            
+            Source: Teensy Documentation
+        */
         byte currentLineInLevel = 1;
 
         void increaseMicGain();

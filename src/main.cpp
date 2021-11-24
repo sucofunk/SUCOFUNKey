@@ -515,8 +515,8 @@ void loop() {
     
     if (abs(volumeValue-volumeTempValue) > 0.05) {
       volumeValue = volumeTempValue;
-      Serial.print("Volume::");
-      Serial.println(volumeValue);
+//      Serial.print("Volume::");
+//      Serial.println(volumeValue);
       audioResources.audioShield.volume(volumeValue);
     }    
     
@@ -604,15 +604,15 @@ void handleKeyboardEventQueue() {
   while(keyboard.hasEvents()) {
     Sucofunkey::keyQueueStruct event = keyboard.getNextEvent();
 
-    Serial.print(event.index);
+/*    Serial.print(event.index);
     Serial.print("::");
     Serial.print(event.pressed);
     Serial.print("::");
     Serial.println(event.type);
 
-
     Serial.print("MaxAudioMemoryUsed:: ");
     Serial.println(AudioMemoryUsageMax());
+*/
 
     if (event.type == Sucofunkey::EVENT_APPLICATION) {
       switch(event.index) {

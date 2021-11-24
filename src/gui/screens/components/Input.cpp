@@ -69,7 +69,7 @@ char *Input::getInputValue() {
 }
 
 void Input::_redrawInput() {
-    _screen->drawTextInArea(_inputArea, Screen::TEXTPOSITION_LEFT_VCENTER, true, Screen::TEXTSIZE_MEDIUM, _screen->C_WHITE, _inputValue);
+    _screen->drawTextInArea(_inputArea, Screen::TEXTPOSITION_LEFT_VCENTER, true, Screen::TEXTSIZE_MEDIUM, true, _screen->C_WHITE, _inputValue);
     _redrawCursor();
 }
 
@@ -78,22 +78,22 @@ void Input::_redrawCursor() {
 
     if (_cursorON) {
         _cursorString[_lastCursorPosition] = '_';
-        _screen->drawTextInArea(_cursorArea, Screen::TEXTPOSITION_LEFT_VCENTER, false, Screen::TEXTSIZE_MEDIUM, _screen->C_STARTUP_BG, _cursorString);        
+        _screen->drawTextInArea(_cursorArea, Screen::TEXTPOSITION_LEFT_VCENTER, false, Screen::TEXTSIZE_MEDIUM, true, _screen->C_STARTUP_BG, _cursorString);        
         _cursorString[_lastCursorPosition] = ' ';
 
         _cursorString[_cursorPosition] = '_';
-        _screen->drawTextInArea(_cursorArea, Screen::TEXTPOSITION_LEFT_VCENTER, false, Screen::TEXTSIZE_MEDIUM, _screen->C_ORANGE, _cursorString);
+        _screen->drawTextInArea(_cursorArea, Screen::TEXTPOSITION_LEFT_VCENTER, false, Screen::TEXTSIZE_MEDIUM, true, _screen->C_ORANGE, _cursorString);
         _lastCursorPosition = _cursorPosition;        
     } else {
         _cursorString[_lastCursorPosition] = '_';
-        _screen->drawTextInArea(_cursorArea, Screen::TEXTPOSITION_LEFT_VCENTER, false, Screen::TEXTSIZE_MEDIUM, _screen->C_STARTUP_BG, _cursorString);
+        _screen->drawTextInArea(_cursorArea, Screen::TEXTPOSITION_LEFT_VCENTER, false, Screen::TEXTSIZE_MEDIUM, true, _screen->C_STARTUP_BG, _cursorString);
         _cursorString[_lastCursorPosition] = ' ';
     }
 }
 
 void Input::showErrorMessage(char const * errorMessage, int showForMs) {
-    _screen->drawTextInArea(_inputArea, Screen::TEXTPOSITION_LEFT_VCENTER, true, Screen::TEXTSIZE_MEDIUM, _screen->C_GREY, _inputValue);
-    _screen->drawTextInArea(_inputArea, Screen::TEXTPOSITION_LEFT_VCENTER, true, Screen::TEXTSIZE_MEDIUM, _screen->C_WARNING, errorMessage);
+    _screen->drawTextInArea(_inputArea, Screen::TEXTPOSITION_LEFT_VCENTER, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_GREY, _inputValue);
+    _screen->drawTextInArea(_inputArea, Screen::TEXTPOSITION_LEFT_VCENTER, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WARNING, errorMessage);
     delay(showForMs);
     _redrawInput();
 };

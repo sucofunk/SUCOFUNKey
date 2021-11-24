@@ -37,6 +37,8 @@ class SamplerScreen {
         AudioResources *_audioResources;
         BottomMenu _bottomMenu;
 
+        char _cBuff20[20];
+
         int zeroAxisY;
         boolean isPlayerPositionVisible = false;        
 };

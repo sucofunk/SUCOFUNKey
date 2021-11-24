@@ -8,6 +8,7 @@
 #include "../../helper/FSIO.h"
 #include "../../gui/screens/SamplerScreen.h"
 #include "../../gui/screens/components/BottomMenu.h"
+#include "../../gui/screens/components/Input.h"
 
 class Sampler {
     public:
@@ -22,8 +23,17 @@ class Sampler {
             SAMPLE_NOTHING = 0,
             SAMPLE_SELECTED = 1,
             SAMPLE_EDIT_TRIM = 2,
-            SAMPLE_WAIT_SAVE_SLOT = 3
+            SAMPLE_WAIT_SAVE_SLOT = 3,
+            SAMPLE_RENAME = 4,
+            SAMPLER_EDIT_SUBMENU = 5
         };        
+
+        enum SamplerSubmenuState
+        {
+            SUBMENU_NONE = 0,
+            SUBMENU_EDIT = 1,
+            SUBMENU_SAVE = 2
+        };
 
         enum FaderState
         {
@@ -51,10 +61,12 @@ class Sampler {
         boolean _isActive = false;
         byte _activeBank = 1;
 
-        int currentState = SAMPLE_NOTHING;
+        SamplerState currentState = SAMPLE_NOTHING;
+        SamplerSubmenuState _submenuState = SUBMENU_NONE;
         int _faderState = FaderState::IDLE;
 
         SamplerScreen _samplerScreen;
+        Input _input;
 
         byte _blinkActiveSample = false;
         byte _blinkActiveSampleStatus = false;
@@ -73,6 +85,9 @@ class Sampler {
         void _play();
 
         int _timerCounter = 0;
+
+        void _setSubmenuState(SamplerSubmenuState state);
+        void _showSaveBottomMenu();
 };
 
 #endif

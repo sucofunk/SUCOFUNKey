@@ -20,9 +20,9 @@ void SamplerScreen::showEmptyScreen() {
     Screen::Area text1 = {_screen->AREA_SCREEN.x1, static_cast<int>(_screen->AREA_SCREEN.y2*0.5-20), _screen->AREA_SCREEN.x2, static_cast<int>(_screen->AREA_SCREEN.y2*0.5), false, _screen->C_BLACK};
     Screen::Area text2 = {text1.x1, text1.y2+1, text1.x2, text1.y2+21, false, _screen->C_BLACK};    
 
-    _screen->drawTextInArea(text1, Screen::TEXTPOSITION_HCENTER_VCENTER, false, Screen::TEXTSIZE_MEDIUM, _screen->C_WHITE,     "Select a sample");
-    _screen->drawTextInArea(text2, Screen::TEXTPOSITION_HCENTER_VCENTER, false, Screen::TEXTSIZE_MEDIUM, _screen->C_WHITE,     "or hit                ");
-    _screen->drawTextInArea(text2, Screen::TEXTPOSITION_HCENTER_VCENTER, false, Screen::TEXTSIZE_MEDIUM, _screen->C_RECORDING, "           Record");
+    _screen->drawTextInArea(text1, Screen::TEXTPOSITION_HCENTER_VCENTER, false, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE,     "Select a sample");
+    _screen->drawTextInArea(text2, Screen::TEXTPOSITION_HCENTER_VCENTER, false, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE,     "or hit                ");
+    _screen->drawTextInArea(text2, Screen::TEXTPOSITION_HCENTER_VCENTER, false, Screen::TEXTSIZE_MEDIUM, false, _screen->C_RECORDING, "           Record");
 };
 
 
@@ -33,7 +33,11 @@ void SamplerScreen::showSampleInfo(byte sampleId72, float volumeScaleFactor) {
     _screen->fillArea(_screen->AREA_CONTENT, _screen->C_BLACK);
 
     if (sampleId72 == 72) {
-        _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_TOP, false, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, "Latest Recording");
+        _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_TOP, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "Latest Recording");
+    } else {
+// ToDo: change to sample name
+        sprintf(_cBuff20, "Sample %d", sampleId72);
+        _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_TOP, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff20);
     }
 
     // draw zero line
@@ -94,11 +98,11 @@ void SamplerScreen::removeTrimMarker(int position, byte sampleId72, float volume
 }
 
 void SamplerScreen::showSlotSelectionHint() {
-    _screen->drawTextInArea(_screen->AREA_BOTTOM_MENU, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, _screen->C_WARNING, "Select a free slot");
+    _screen->drawTextInArea(_screen->AREA_BOTTOM_MENU, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WARNING, "Select a free slot");
 };
 
 void SamplerScreen::showSavingMessage() {
-    _screen->drawTextInArea(_screen->AREA_BOTTOM_MENU, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, _screen->C_WARNING, "Saving sample..");
+    _screen->drawTextInArea(_screen->AREA_BOTTOM_MENU, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WARNING, "Saving sample..");
 };
 
 void SamplerScreen::drawPlayerPosition(int x, int start, int end) {

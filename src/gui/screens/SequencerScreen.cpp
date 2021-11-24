@@ -167,11 +167,11 @@ void SequencerScreen::showSampleInfos(byte channel, uint16_t position) {
    
   sprintf(_cBuff3, "%d", _pattern->getSampleAt(channel, position).sampleNumber );
 
-  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTIONS_SAMPLENAME, _screen->TEXTPOSITION_LEFT_VCENTER, true, _screen->TEXTSIZE_SMALL, _screen->C_WHITE, _cBuff3);
-  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION1, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_SMALL, _screen->C_LIGHTGREY, "vol");
-  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION2, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_SMALL, _screen->C_LIGHTGREY, "pan");
-  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_SMALL, _screen->C_LIGHTGREY, "pitch");
-  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION4, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_SMALL, _screen->C_LIGHTGREY, "prob");
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTIONS_SAMPLENAME, _screen->TEXTPOSITION_LEFT_VCENTER, true, _screen->TEXTSIZE_SMALL, false, _screen->C_WHITE, _cBuff3);
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION1, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_SMALL, false, _screen->C_LIGHTGREY, "vol");
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION2, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_SMALL, false, _screen->C_LIGHTGREY, "pan");
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_SMALL, false, _screen->C_LIGHTGREY, "pitch");
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION4, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_SMALL, false, _screen->C_LIGHTGREY, "prob");
 
   // draw frame for volume bar
   _screen->vr(_screen->AREA_SEQUENCER_OPTION1_VOLUME, 0.0, _screen->C_WHITE);
@@ -193,7 +193,7 @@ void SequencerScreen::updateSampleInfoVolume(byte channel, uint16_t position) {
     _screen->fillRect(_screen->AREA_SEQUENCER_OPTION1_VOLUME.x1+1, _screen->AREA_SEQUENCER_OPTION1_VOLUME.y1+1, _tempInt, 7, _screen->C_TRIM_START);
     
 //  sprintf(_cBuff5_1, "%d", _pattern->getSampleAt(channel, position).velocity );
-//  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION1_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, _cBuff5_1);
+//  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION1_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff5_1);
 };
 
 void SequencerScreen::updateSampleInfoPanning(byte channel, uint16_t position) {
@@ -205,16 +205,16 @@ void SequencerScreen::updateSampleInfoPanning(byte channel, uint16_t position) {
   _screen->drawFastVLine(_screen->AREA_SEQUENCER_OPTION2_PANNING.x1+_tempInt, _screen->AREA_SEQUENCER_OPTION2_PANNING.y1, 8, _screen->C_WHITE);
 
 //  sprintf(_cBuff5_2, "%d", _pattern->getSampleAt(channel, position).stereoPosition );  
-//  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION2_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, _cBuff5_2);
+//  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION2_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff5_2);
 };
 
 void SequencerScreen::updateSampleInfoPitch(byte channel, uint16_t position) {
-  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, "100%");
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "100%");
 };
 
 void SequencerScreen::updateSampleInfoProbability(byte channel, uint16_t position) {
   sprintf(_cBuff5_4, "%d%%", _pattern->getSampleAt(channel, position).probability );      
-  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION4_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, _cBuff5_4);
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION4_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff5_4);
 };
 
 
@@ -230,7 +230,7 @@ void SequencerScreen::drawExtMemPercentage(byte percent) {
 
 void SequencerScreen::drawBPM(float bpm) {
   sprintf(_cBuff10, "%g BPM", bpm);
-  _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_RIGHT_TOP, true, _screen->TEXTSIZE_SMALL, _screen->C_WHITE, _cBuff10);
+  _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_RIGHT_TOP, true, _screen->TEXTSIZE_SMALL, false, _screen->C_WHITE, _cBuff10);
 }
 
 

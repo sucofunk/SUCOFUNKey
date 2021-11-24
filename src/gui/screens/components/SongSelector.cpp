@@ -81,7 +81,7 @@ void SongSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
                 if (_activeItem == 0 && _offset == -1) {
                     _activeComponent = 1; // activate input field
                     _screen->clearAreaLTR(_screen->AREA_SCREEN, _screen->C_STARTUP_BG, 1);                
-                    _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, "Record title");
+                    _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "Record title");
                     _input.activateInput();
                 } else {
                     int sel = _offset+_activeItem;                    
@@ -132,7 +132,7 @@ void SongSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
                     case Sucofunkey::INPUT_CANCEL:
                         // back to song collection
                         _screen->clearAreaRTL(_screen->AREA_SCREEN, _screen->C_STARTUP_BG, 1);                        
-                        _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, "Record collection");
+                        _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "Record collection");
 
                         _activeComponent = 0;
                         drawSongSelector();
@@ -150,34 +150,34 @@ void SongSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
 void SongSelector::drawSongSelector() {    
     _songCount = _fsio->getSongCount();
 
-    _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, "Record collection");
+    _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "Record collection");
         
     _screen->fillArea(_AREA_SONGSELECTOR_LINE_1, _activeItem == 0 ? _screen->C_SELECTOR_SELECTED_BG : _AREA_SONGSELECTOR.bgColor);    
     getLineDescription(_offset, _line1);
-    _screen->drawTextInArea(_AREA_SONGSELECTOR_LINE_1, _screen->TEXTPOSITION_LEFT_VCENTER, false, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, _line1);
+    _screen->drawTextInArea(_AREA_SONGSELECTOR_LINE_1, _screen->TEXTPOSITION_LEFT_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _line1);
 
     _screen->fillArea(_AREA_SONGSELECTOR_LINE_2, _activeItem == 1 ? _screen->C_SELECTOR_SELECTED_BG : _AREA_SONGSELECTOR.bgColor);
     if (_offset+1 <= _songCount-1) {
         getLineDescription(_offset+1, _line2);
-        _screen->drawTextInArea(_AREA_SONGSELECTOR_LINE_2, _screen->TEXTPOSITION_LEFT_VCENTER, false, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, _line2);
+        _screen->drawTextInArea(_AREA_SONGSELECTOR_LINE_2, _screen->TEXTPOSITION_LEFT_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _line2);
     }
 
     _screen->fillArea(_AREA_SONGSELECTOR_LINE_3, _activeItem == 2 ? _screen->C_SELECTOR_SELECTED_BG : _AREA_SONGSELECTOR.bgColor);
     if (_offset+2 <= _songCount-2) {
         getLineDescription(_offset+2, _line3);
-        _screen->drawTextInArea(_AREA_SONGSELECTOR_LINE_3, _screen->TEXTPOSITION_LEFT_VCENTER, false, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, _line3);
+        _screen->drawTextInArea(_AREA_SONGSELECTOR_LINE_3, _screen->TEXTPOSITION_LEFT_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _line3);
     }
 
     _screen->fillArea(_AREA_SONGSELECTOR_LINE_4, _activeItem == 3 ? _screen->C_SELECTOR_SELECTED_BG : _AREA_SONGSELECTOR.bgColor);
     if (_offset+3 <= _songCount-1) {
         getLineDescription(_offset+3, _line4);
-        _screen->drawTextInArea(_AREA_SONGSELECTOR_LINE_4, _screen->TEXTPOSITION_LEFT_VCENTER, false, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, _line4);
+        _screen->drawTextInArea(_AREA_SONGSELECTOR_LINE_4, _screen->TEXTPOSITION_LEFT_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _line4);
     }
 
     _screen->fillArea(_AREA_SONGSELECTOR_LINE_5, _activeItem == 4 ? _screen->C_SELECTOR_SELECTED_BG : _AREA_SONGSELECTOR.bgColor);
     if (_offset+4 <= _songCount-1) {
         getLineDescription(_offset+4, _line5);
-        _screen->drawTextInArea(_AREA_SONGSELECTOR_LINE_5, _screen->TEXTPOSITION_LEFT_VCENTER, false, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE, _line5);
+        _screen->drawTextInArea(_AREA_SONGSELECTOR_LINE_5, _screen->TEXTPOSITION_LEFT_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _line5);
     }
 
     _screen->hr(_AREA_SONGSELECTOR, 0.0, _screen->C_STARTUP_HR);
