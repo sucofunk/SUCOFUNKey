@@ -555,28 +555,50 @@ byte Sucofunkey::getInput() {
 // returns the value from an analog input (fader) and scales it to the defined min max range
 // e.g. range is from 100 to 200, input (0..1023) is 512 --> 150
 int Sucofunkey::getContinuousFaderValue(uint8_t pin, int scaleMin, int scaleMax) {
-  int faderIn = analogRead(pin);
-
-/*  Serial.print(faderIn);
-  Serial.print("::<fadeIn | last>::");
-  Serial.println(_lastFaderReading);
-*/
-  if (abs(faderIn - _lastFaderReading) > 3) {
-    _lastFaderReading = faderIn;
+  // ignore small steps, as potentiometers tend to jump a bit.
+  if (abs(_faderReading - _lastFaderReading) > 3) {
+    _lastFaderReading = _faderReading;
   }
   
-  return static_cast<int>(floor(scaleMin+(((scaleMax-scaleMin)/1023.0)*_lastFaderReading)));
+  // the "jumping point seems fo be at the middle -> 1024/2 = 512 -> difference seems to be about 75 -> e.g. 486 --> 561
+  int retVal = static_cast<int>(floor(scaleMin+(((scaleMax-scaleMin)/948.0)*(_lastFaderReading > 512 ? _lastFaderReading-75 : _lastFaderReading))))-1;
+  return retVal >= 0 ? retVal : 0;
 };
+
+// will be called from the main loop, adds the current reading to the readings queue and calculates the average value of the queue
+void Sucofunkey::updateContinuousFaderValue() {
+  _lastFaderReadings[_faderReadingPosition] = analogRead(faderPin);
+  _faderReading = 0;
+
+  for (int i=0; i<5; i++) {
+    _faderReading = _faderReading + _lastFaderReadings[i];
+  }
+
+  _faderReading = static_cast<int>(floor(_faderReading/5.0));
+
+  if (_faderReadingPosition >= 5) {
+    _faderReadingPosition = 0;
+  } else {
+    _faderReadingPosition++;
+  }
+
+  // ToDo: build a settings option to find the weak spot of a fader and save the configuration
+
+/*  if (_tempInt-_faderReading > 50) {
+    Serial.print(_faderReading);
+    Serial.print(";");
+    Serial.print(_tempInt);
+    Serial.print(";");
+    Serial.println(abs(_tempInt-_faderReading));
+  }
+*/
+}
 
 
 int Sucofunkey::getFaderValue(uint8_t pin, int scaleMin, int scaleMax) {
-  int faderIn = analogRead(pin);
-
-  Serial.print("Fade::");
-  Serial.println(faderIn);
-  _lastFaderReading = faderIn;
-  
-  return static_cast<int>(floor(scaleMin+(((scaleMax-scaleMin)/1023.0)*_lastFaderReading)));
+  // subtract one, as the left side of the fader very often is not 0, but a little up
+  int retVal = static_cast<int>(floor(scaleMin+(((scaleMax-scaleMin)/948.0)*(_faderReading > 512 ? _faderReading-75 : _faderReading))))-1;
+  return retVal >= 0 ? retVal : 0;
 };
 
 

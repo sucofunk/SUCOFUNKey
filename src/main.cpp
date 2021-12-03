@@ -539,6 +539,9 @@ void loop() {
     ticked=false;
     sendTickToActiveContext();
   }
+
+  // update fader reading queue
+  keyboard.updateContinuousFaderValue();
 }
 
 

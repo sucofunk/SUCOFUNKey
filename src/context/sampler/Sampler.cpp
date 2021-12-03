@@ -251,12 +251,12 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
 long Sampler::receiveTimerTick() {
     _timerCounter++;
 
-    if (_timerCounter == 3 && _blinkActiveSample && _activeSampleLEDPin != 0) {
+    if (_timerCounter == 5 && _blinkActiveSample && _activeSampleLEDPin != 0) {
       _blinkActiveSampleStatus = !_blinkActiveSampleStatus;
       _keyboard->setLEDState(_activeSampleLEDPin, _blinkActiveSampleStatus);      
     }
 
-    if (_timerCounter == 3) {
+    if (_timerCounter == 5) {
       _timerCounter = 0;
     }
 
@@ -284,7 +284,7 @@ long Sampler::receiveTimerTick() {
       }
     }
 
-    return 300000;
+    return 150000;
 }
 
 void Sampler::setActive(boolean active) {

@@ -58,6 +58,7 @@ class Sucofunkey {
         byte getInput();
 
         int getContinuousFaderValue(uint8_t pin, int scaleMin, int scaleMax);
+        void updateContinuousFaderValue();
         int getFaderValue(uint8_t pin, int scaleMin, int scaleMax);
         void switchFaderLED(bool on);
 
@@ -261,6 +262,9 @@ class Sucofunkey {
         int _intEncPin; // todo: remove
        
         int _lastFaderReading = 0;
+        int _lastFaderReadings[5] = {0, 0, 0, 0, 0};
+        int _faderReadingPosition = 0;
+        int _faderReading = 0;
 
         Adafruit_MCP23017 _mcp1;
         Adafruit_MCP23017 _mcp2;
