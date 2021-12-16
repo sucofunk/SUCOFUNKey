@@ -96,8 +96,6 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
                 _sequencerScreen.drawGrid(_sequencerScreen.SCALE);             
               }
               break;
-
-
         case Sucofunkey::PLAY:
               _calculatePlaybackTickSpeed();
               playPattern();
@@ -106,32 +104,59 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               pausePattern();
               break;
         case Sucofunkey::FN_PLAY:
-                if (!_isPlaying) {
-                  Serial.println("Loading Samples to Extmem");
-                  _sfsio->loadSamplesToMemory(_pattern.getSamplesUsed());
-                  Serial.println("done");
-                }
-                break;   
+                // play current sample, if one is selected
+              if (!_isPlaying) { playMixedSample(_cursorChannel, _cursorPosition); }                
+              break;   
         case Sucofunkey::FN_SET:
-                _pattern.unsetSampleAt(_cursorChannel, _cursorPosition);
-                _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
-                break;                                                                       
+              _pattern.unsetSampleAt(_cursorChannel, _cursorPosition);
+              _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+              break;                  
+        case Sucofunkey::ZOOM:
+              _keyboardMode = !_keyboardMode;
+              break;    
+        // set velocity from fader
+        case Sucofunkey::ENCODER_1_PUSH:
+          if (_pattern.getSampleAt(_cursorChannel, _cursorPosition).sampleNumber <= 253) {
+            if (event.pressed) {              
+              _pattern.setVelocity(_cursorChannel, _cursorPosition, static_cast<byte>(_keyboard->getFaderValue(1, 127)));
+              _sequencerScreen.updateSampleInfoVolume(_cursorChannel, _cursorPosition);              
+            }
+          }
+          break;
+        // set panning from fader          
+        case Sucofunkey::ENCODER_2_PUSH:
+          if (_pattern.getSampleAt(_cursorChannel, _cursorPosition).sampleNumber <= 253) {
+            if (event.pressed) {              
+              _pattern.setStereoPosition(_cursorChannel, _cursorPosition, static_cast<byte>(_keyboard->getFaderValue(1, 127)));
+              _sequencerScreen.updateSampleInfoPanning(_cursorChannel, _cursorPosition);
+            }
+          }              
+          break;
       }    
     }
 
-
     if (event.type == Sucofunkey::KEY_NOTE && event.pressed) {
-      byte sampleId1 = _keyboard->getSampleIdByEventKey(event.index);  
-      loadSetPlay(_keyboard->getBank(), sampleId1, _cursorChannel, _cursorPosition);
-/*      Serial.print("Setting Sample at channel ");
-      Serial.print(_cursorChannel);
-      Serial.print(", Position ");
-      Serial.println(_cursorPosition);
-*/      
+
+      byte sampleId1 = _keyboard->getSampleIdByEventKey(event.index);
+
+      if (_keyboardMode && _pattern.getSampleAt(_cursorChannel, _cursorPosition).sampleNumber < 253 ) {
+        // play pitched note: bankstart(1:29|2:63|3:77)+sampleId1-1 if in keyboard mode
+        _pattern.setPitchByMidiNote(_cursorChannel, _cursorPosition, 52+sampleId1);
+        if (!_isPlaying) { 
+          stopAllChannels();
+          _sequencerScreen.updateSampleInfoPitch(_cursorChannel, _cursorPosition);
+          playMixedSample(_cursorChannel, _cursorPosition); 
+        }
+      } else {
+        // set sample at cursor position
+        loadSetPlay(_keyboard->getBank(), sampleId1, _cursorChannel, _cursorPosition);
+      }     
     }
 
     // pre-listen samples
     if (event.type == Sucofunkey::KEY_FN_NOTE) {      
+
+// ToDo: check, if not in pitch mode -> FN+NOTE -> set base note
       if (event.pressed) {
         byte sampleId0 = _keyboard->getSampleIdByEventKey(event.index)-1;  
         if (_sfsio->sampleBanksStatus[_keyboard->getBank()-1][sampleId0]) {
@@ -144,7 +169,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
 
     if (event.type == Sucofunkey::ENCODER) {
       switch (event.index) {
-        case Sucofunkey::ENCODER_1:
+        case Sucofunkey::FN_ENCODER_1:
             if (_isPlaying) {
               _pattern.setPatternSpeed(_pattern.getPatternSpeed() + (event.pressed ? 0.5 : -0.5));
               _calculatePlaybackTickSpeed();
@@ -154,7 +179,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
             }
           break;
         
-        case Sucofunkey::ENCODER_2:
+        case Sucofunkey::FN_ENCODER_2:
             if (_isPlaying) {
               // what will be the function?
             } else {
@@ -162,7 +187,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
             }
           break;
 
-        case Sucofunkey::ENCODER_3:
+        case Sucofunkey::FN_ENCODER_3:
             _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, false);
             
             if (event.pressed && _sequencerScreen.viewportCheckUpdate(_cursorChannel, _cursorPosition, _sequencerScreen.SCROLL_RIGHT)) _sequencerScreen.drawGrid(_sequencerScreen.SCROLL_RIGHT);
@@ -171,7 +196,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
             _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);            
           break;
 
-        case Sucofunkey::ENCODER_4:
+        case Sucofunkey::FN_ENCODER_4:
             if (!_isPlaying) {
               _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, false);
               _pattern.changePatternLengthByTick(event.pressed);
@@ -183,8 +208,8 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
             }
           break;
 
-          case Sucofunkey::FN_ENCODER_1: 
-            if (!_isPlaying) {
+          case Sucofunkey::ENCODER_1: 
+            if (_pattern.getSampleAt(_cursorChannel, _cursorPosition).sampleNumber <= 253) {
               if (event.pressed) {
                 _pattern.increaseVelocity(_cursorChannel, _cursorPosition);
               } else {
@@ -193,8 +218,8 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
                 _sequencerScreen.updateSampleInfoVolume(_cursorChannel, _cursorPosition);              
             }
             break;
-          case Sucofunkey::FN_ENCODER_2:
-            if (!_isPlaying) {
+          case Sucofunkey::ENCODER_2:
+            if (_pattern.getSampleAt(_cursorChannel, _cursorPosition).sampleNumber <= 253) {
               if (event.pressed) {
                 _pattern.stereoPositionTickRight(_cursorChannel, _cursorPosition);
               } else {
@@ -203,12 +228,18 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
                 _sequencerScreen.updateSampleInfoPanning(_cursorChannel, _cursorPosition);              
             }
             break;
-          case Sucofunkey::FN_ENCODER_3:
-            Serial.print("FN ENCODER 3::");
-            Serial.println(event.pressed);
+          case Sucofunkey::ENCODER_3:
+            if (_pattern.getSampleAt(_cursorChannel, _cursorPosition).sampleNumber <= 72) {
+              if (event.pressed) {
+                _pattern.increasePitchByOne(_cursorChannel, _cursorPosition);
+              } else {
+                _pattern.decreasePitchByOne(_cursorChannel, _cursorPosition);
+              }
+                _sequencerScreen.updateSampleInfoPitch(_cursorChannel, _cursorPosition);              
+            }
             break;
-          case Sucofunkey::FN_ENCODER_4:
-            if (!_isPlaying) {
+          case Sucofunkey::ENCODER_4:
+            if (_pattern.getSampleAt(_cursorChannel, _cursorPosition).sampleNumber <= 72) {
               if (event.pressed) {
                 _pattern.increaseProbability(_cursorChannel, _cursorPosition);
               } else {
@@ -224,6 +255,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
 
 void Sequencer::moveCursor(Direction direction) {
   _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, false);
+  _keyboardMode = false;
 
   switch(direction) {
     case UP:  _cursorChannel = _cursorChannel > 0 ? _cursorChannel-1 : 0;
@@ -245,8 +277,6 @@ void Sequencer::moveCursor(Direction direction) {
 
   _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
 };
-
-
 
 
 void Sequencer::loadSetPlay(byte bank1, byte sample1, byte channel, int position) {
@@ -305,7 +335,6 @@ void Sequencer::playPattern() {
 }
 
 void Sequencer::pausePattern() {
-  Serial.println("PAUSE");
   if (_isPlaying) {
     _isPlaying = false;
     stopAllChannels();
@@ -313,6 +342,7 @@ void Sequencer::pausePattern() {
     _keyboard->setLEDState(Sucofunkey::LED_PLAY, false);
   } else {
     // ToDo: draw cursor somewhere ;)
+    stopAllChannels();
   }
 }
 
@@ -331,84 +361,102 @@ void Sequencer::_playNext() {
     } else {
       _playerPosition++;
     }
-//    Serial.print("PlayerPosition::");
-//    Serial.println(_playerPosition);
 }
 
 
 void Sequencer::playMixedSample(byte channel, uint16_t position) {
+  if (channel <= 3) {
+      _playMemoryMixerL = &_audioResources->mixerMem1L;
+      _playMemoryMixerR = &_audioResources->mixerMem1R;
+      _playWavetableMixerL = &_audioResources->mixerWav1L;
+      _playWavetableMixerR = &_audioResources->mixerWav1R;
+      _playMemoryMixerGain = channel;
+      _playWavetableMixerGain = channel;      
+  } else {
+      _playMemoryMixerL = &_audioResources->mixerMem2L;
+      _playMemoryMixerR = &_audioResources->mixerMem2R;
+      _playWavetableMixerL = &_audioResources->mixerWav2L;
+      _playWavetableMixerR = &_audioResources->mixerWav2R;
+      _playMemoryMixerGain = channel-4;
+      _playWavetableMixerGain = channel-4;
+  }
+
   switch (channel) {
     case 0:
       _playMemory = &_audioResources->playMem1;
-      _playMemoryMixerL = &_audioResources->mixerMem1L;
-      _playMemoryMixerR = &_audioResources->mixerMem1R;
-      _playMemoryMixerGain = 0;
+      _playWavetable = &_audioResources->wavetable1;
       break;
     case 1:
       _playMemory = &_audioResources->playMem2;
-      _playMemoryMixerL = &_audioResources->mixerMem1L;
-      _playMemoryMixerR = &_audioResources->mixerMem1R;
-      _playMemoryMixerGain = 1;    
+      _playWavetable = &_audioResources->wavetable2;
       break;
     case 2:
       _playMemory = &_audioResources->playMem3;
-      _playMemoryMixerL = &_audioResources->mixerMem1L;
-      _playMemoryMixerR = &_audioResources->mixerMem1R;
-      _playMemoryMixerGain = 2;    
+      _playWavetable = &_audioResources->wavetable3;
       break;
     case 3:
       _playMemory = &_audioResources->playMem4;
-      _playMemoryMixerL = &_audioResources->mixerMem1L;
-      _playMemoryMixerR = &_audioResources->mixerMem1R;
-      _playMemoryMixerGain = 3;    
+      _playWavetable = &_audioResources->wavetable4;
       break;
     case 4:
       _playMemory = &_audioResources->playMem5;
-      _playMemoryMixerL = &_audioResources->mixerMem2L;
-      _playMemoryMixerR = &_audioResources->mixerMem2R;
-      _playMemoryMixerGain = 0;
+      _playWavetable = &_audioResources->wavetable5;
       break;
     case 5:
       _playMemory = &_audioResources->playMem6;
-      _playMemoryMixerL = &_audioResources->mixerMem2L;
-      _playMemoryMixerR = &_audioResources->mixerMem2R;
-      _playMemoryMixerGain = 1;
+      _playWavetable = &_audioResources->wavetable6;
       break;
     case 6:
       _playMemory = &_audioResources->playMem7;
-      _playMemoryMixerL = &_audioResources->mixerMem2L;
-      _playMemoryMixerR = &_audioResources->mixerMem2R;
-      _playMemoryMixerGain = 2;
+      _playWavetable = &_audioResources->wavetable7;
       break;
     case 7:
       _playMemory = &_audioResources->playMem8;
-      _playMemoryMixerL = &_audioResources->mixerMem2L;
-      _playMemoryMixerR = &_audioResources->mixerMem2R;
-      _playMemoryMixerGain = 3;
+      _playWavetable = &_audioResources->wavetable8;
       break;
   }
 
-  if (_pattern.getSampleAt(channel, _playerPosition).sampleNumber == 254) {
+  if (_pattern.getSampleAt(channel, position).sampleNumber == 254) {
     _playMemory->stop();
   } else {
-    if (_pattern.getSampleAt(channel, _playerPosition).probability == 100 || random(100) <= _pattern.getSampleAt(channel, _playerPosition).probability) {
-      if (_pattern.getSampleAt(channel, _playerPosition).stereoPosition < 64) {
-        _playMemoryMixerL->gain(_playMemoryMixerGain, (_pattern.getSampleAt(channel, _playerPosition).velocity/127.0)*1.0 );
-        _playMemoryMixerR->gain(_playMemoryMixerGain, (_pattern.getSampleAt(channel, _playerPosition).velocity/127.0)*(_pattern.getSampleAt(channel, _playerPosition).stereoPosition/64.0));
+    if (_pattern.getSampleAt(channel, position).probability == 100 || random(100) <= _pattern.getSampleAt(channel, _playerPosition).probability) {
+      if (_pattern.getSampleAt(channel, position).stereoPosition < 64) {
+        _playMemoryMixerL->gain(_playMemoryMixerGain, (_pattern.getSampleAt(channel, position).velocity/127.0)*1.0 );
+        _playMemoryMixerR->gain(_playMemoryMixerGain, (_pattern.getSampleAt(channel, position).velocity/127.0)*(_pattern.getSampleAt(channel, position).stereoPosition/64.0));
+
+        _playWavetableMixerL->gain(_playWavetableMixerGain, (_pattern.getSampleAt(channel, position).velocity/127.0)*1.0 );
+        _playWavetableMixerR->gain(_playWavetableMixerGain, (_pattern.getSampleAt(channel, position).velocity/127.0)*(_pattern.getSampleAt(channel, position).stereoPosition/64.0));
       } else {
-        _playMemoryMixerL->gain(_playMemoryMixerGain, (_pattern.getSampleAt(channel, _playerPosition).velocity/127.0)*((127-_pattern.getSampleAt(channel, _playerPosition).stereoPosition)/64.0));
-        _playMemoryMixerR->gain(_playMemoryMixerGain, (_pattern.getSampleAt(channel, _playerPosition).velocity/127.0)*1.0);
+        _playMemoryMixerL->gain(_playMemoryMixerGain, (_pattern.getSampleAt(channel, position).velocity/127.0)*((127-_pattern.getSampleAt(channel, position).stereoPosition)/64.0));
+        _playMemoryMixerR->gain(_playMemoryMixerGain, (_pattern.getSampleAt(channel, position).velocity/127.0)*1.0);
+
+        _playWavetableMixerL->gain(_playWavetableMixerGain, (_pattern.getSampleAt(channel, position).velocity/127.0)*((127-_pattern.getSampleAt(channel, position).stereoPosition)/64.0));
+        _playWavetableMixerR->gain(_playWavetableMixerGain, (_pattern.getSampleAt(channel, position).velocity/127.0)*1.0);
       }
   
-      _playMemory->play(_extmemArray + _sfsio->getExtmemOffset(_pattern.getSampleAt(channel, _playerPosition).sampleNumber));
+      // do not play a sample, if "edit" mode is active (changing velocity and panning -> hit FN+SET twice on a sample)
+      if (_pattern.getSampleAt(channel, position).sampleNumber != 253)  {
+        int pitch = _pattern.getSampleAt(channel, position).pitchedNote;
+
+        //_sfsio->generateInstrument(_pattern.getSampleAt(channel, position).sampleNumber, 60);
+        if (pitch != _pattern.getSampleAt(channel, position).baseMidiNote) {
+          // only use wavetable, if pitch is set
+          _playWavetable->setInstrument(_sfsio->getInstrumentDataBySample(_pattern.getSampleAt(channel, position).sampleNumber));
+          _playWavetable->playNote(pitch);
+        } else {
+          // no pitch? just play from memory
+          _playMemory->play(_extmemArray + _sfsio->getExtmemOffset(_pattern.getSampleAt(channel, position).sampleNumber));        
+        }        
+      }
     }
   }
 }
 
-
 void Sequencer::stopAllChannels() {
   _playLEDon = false;
   _audioResources->playMem.stop();
+  _audioResources->playSdRaw.stop();
+  
   _audioResources->playMem1.stop();
   _audioResources->playMem2.stop();
   _audioResources->playMem3.stop();
@@ -417,12 +465,20 @@ void Sequencer::stopAllChannels() {
   _audioResources->playMem6.stop();
   _audioResources->playMem7.stop();
   _audioResources->playMem8.stop();
+
+  _audioResources->wavetable1.stop();
+  _audioResources->wavetable2.stop();
+  _audioResources->wavetable3.stop();
+  _audioResources->wavetable4.stop();
+  _audioResources->wavetable5.stop();
+  _audioResources->wavetable6.stop();
+  _audioResources->wavetable7.stop();
+  _audioResources->wavetable8.stop();
 }
 
 boolean Sequencer::isPlaying() {
   return _isPlaying;
 }
-
 
 
 long Sequencer::_calculatePlaybackTickSpeed() {

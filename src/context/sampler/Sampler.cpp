@@ -271,13 +271,13 @@ long Sampler::receiveTimerTick() {
       switch(_faderState) {
         case FaderState::TRIM_START:
           _samplerScreen.removeTrimMarker(_trimMarkerStartPosition, sample72, _volumeScaleFactor);
-          _trimMarkerStartPosition = _keyboard->getContinuousFaderValue(_keyboard->faderPin, 0, _trimMarkerEndPosition-1);
+          _trimMarkerStartPosition = _keyboard->getContinuousFaderValue(0, _trimMarkerEndPosition-1);
           _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, sample72, _volumeScaleFactor);
         break;
         case FaderState::TRIM_END:
           _samplerScreen.removeTrimMarker(_trimMarkerEndPosition, sample72, _volumeScaleFactor);
           // ToDo: Endposition might be smaller that screen width!!!
-          _trimMarkerEndPosition = _keyboard->getContinuousFaderValue(_keyboard->faderPin, _trimMarkerStartPosition+1, 320);
+          _trimMarkerEndPosition = _keyboard->getContinuousFaderValue(_trimMarkerStartPosition+1, 320);
           _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, sample72, _volumeScaleFactor);
         break;
 

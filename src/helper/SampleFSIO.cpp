@@ -164,8 +164,6 @@ void SampleFSIO::generateWaveFormBufferForSample(byte bank0, byte sampleId0) {
 }
 
 
-
-
 boolean SampleFSIO::copyFile(const char *f1, const char *f2) {     
   if (SD.exists(f2)) {
     Serial.println("removing destination file");
@@ -276,7 +274,6 @@ boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart,
     } else {
       bufferCount += 2;
     }
-
     offset += 2;
   }
 
@@ -312,7 +309,8 @@ long SampleFSIO::copyRawFromSdToMemory(const char *filename, long startOffset) {
 
   uint32_t fs = f.size() >> 1; // same as divided by 2
   long c = f.size()/4;
-  uint16_t buff[2];
+  //uint16_t buff[2];
+  int16_t buff[2];
 
   long maxLength = _extmemSize/sizeof(buff);
 
@@ -322,7 +320,6 @@ long SampleFSIO::copyRawFromSdToMemory(const char *filename, long startOffset) {
   }
   
   header = header + fs;
-  
   _extmemArray[startOffset] = header;
 
   for (long i=1; i<c+1; i++) {
@@ -355,11 +352,10 @@ boolean SampleFSIO::addSampleToMemory(byte bank1, byte sampleId1, boolean forceR
         _sampleOffsets[sample72] = offset;
 
         // generate wavetable
-        //generateInstrument(sample72+1, 60);
+        generateInstrument(sample72+1, 60);
 
         return true;
       }
-
   } 
   return true;   
 }
@@ -448,28 +444,27 @@ void SampleFSIO::generateInstrument(byte sampleNumber, int baseNote) {
   unsigned int header = getExtmemAddress(sampleNumber)[0];
   uint32_t s = getExtmemAddress(sampleNumber)[1];
   uint32_t header_format = 0x8100 << 16;
-  uint32_t sample_length = header - header_format; // length in samples (16 bit) --> file size in byte would be double
+  
+  //was: uint32_t sample_length = header - header_format; // length in samples (16 bit) --> file size in byte would be double
+  uint32_t sample_length = header - header_format;
 
   int16_t *sampleData16 = (int16_t*) getExtmemAddressData(sampleNumber);
 
   int LENGTH_BITS = 0;
+  // was: int LENGTH = sample_length*2;
   int LENGTH = sample_length*2;
 
   // "calculate" LENGHT_BITS from LENGTH
   // source: http://graphics.stanford.edu/~seander/bithacks.html#IntegerLogObvious
   while (LENGTH >>= 1) { LENGTH_BITS++; }
 
-  Serial.print("LENGTH_BITS::");
-  Serial.println(LENGTH_BITS);
-  Serial.println(LENGTH_BITS, BIN);
-
-  int LOOPEND = LENGTH - 1;
+  int LOOPEND = (LENGTH/2) -1;
   int LOOPSTART = 0;
 
   _sampleData[sampleNumber-1][0].sample = (int16_t*)sampleData16;
   _sampleData[sampleNumber-1][0].LOOP = false;
   _sampleData[sampleNumber-1][0].INDEX_BITS = LENGTH_BITS;
-  _sampleData[sampleNumber-1][0].PER_HERTZ_PHASE_INCREMENT = ((0x80000000 >> (LENGTH_BITS - 1)) * 1.0 * (44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / WAVETABLE_NOTE_TO_FREQUENCY(baseNote) + 0.5;
+  _sampleData[sampleNumber-1][0].PER_HERTZ_PHASE_INCREMENT = ((0x80000000 >> (LENGTH_BITS-1)) * 1.0 * (44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / WAVETABLE_NOTE_TO_FREQUENCY(baseNote) + 0.5;
   _sampleData[sampleNumber-1][0].MAX_PHASE = ((uint32_t)LENGTH - 1) << (32 - LENGTH_BITS);
   _sampleData[sampleNumber-1][0].LOOP_PHASE_END = ((uint32_t)LOOPEND - 1) << (32 - LENGTH_BITS);
   _sampleData[sampleNumber-1][0].LOOP_PHASE_LENGTH = (((uint32_t)LOOPEND - 1) << (32 - LENGTH_BITS)) - (((uint32_t)LOOPSTART - 1) << (32 - LENGTH_BITS));
@@ -499,6 +494,5 @@ void SampleFSIO::generateInstrument(byte sampleNumber, int baseNote) {
 // sampleNumber 1..72
 AudioSynthWavetable::instrument_data SampleFSIO::getInstrumentDataBySample(byte sampleNumber) {
   // ToDo: check if instrumentData is available. if not, create it with standard parameters
-  
   return _instrumentData[sampleNumber-1];
 };

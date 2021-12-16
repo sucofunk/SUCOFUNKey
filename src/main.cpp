@@ -70,7 +70,7 @@ char activeSongPath[21];
 
 // Sample Memory initialization - one psram chip with 8mb added to teensy board
 // ToDo: Add line for 16 mb / 2 chips
-EXTMEM unsigned int extmemArray[2097152]; 
+EXTMEM unsigned int extmemArray[2097152]; // 4194304 = 16mb
 
 // Interval Timer for playback pattern, metronome, etc..
 IntervalTimer globalTickTimer;

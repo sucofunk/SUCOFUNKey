@@ -57,9 +57,9 @@ class Sucofunkey {
         void toggleInput();
         byte getInput();
 
-        int getContinuousFaderValue(uint8_t pin, int scaleMin, int scaleMax);
+        int getContinuousFaderValue(int scaleMin, int scaleMax);
         void updateContinuousFaderValue();
-        int getFaderValue(uint8_t pin, int scaleMin, int scaleMax);
+        int getFaderValue(int scaleMin, int scaleMax);
         void switchFaderLED(bool on);
 
         // The following values for keys/leds correspond to the MCP PINs.
@@ -68,6 +68,7 @@ class Sucofunkey {
         static const int FUNCTION = 18; //40;
         static const int MENU = 17; //41;
         static const int SET = 16; //42;
+        static const int ZOOM = 34;
         static const int PLAY = 33; //16;
         static const int PAUSE = 32; //17;
         static const int RECORD = 53; //18;
@@ -81,6 +82,7 @@ class Sucofunkey {
         static const int FN_FUNCTION = 118; // 90; // 3 Seconds FN to go to settings
         static const int FN_MENU = 117; // 91;
         static const int FN_SET = 116; // 92;
+        static const int FN_ZOOM = 134;
         static const int FN_PLAY = 133; // 66;
         static const int FN_PAUSE = 132; // 67;
         static const int FN_RECORD = 153; // 68;
@@ -93,6 +95,7 @@ class Sucofunkey {
         // Menu + Key -> Offset 200 + key
         static const int MENU_MENU = 217; // 141; // 3 Seconds MENU to go to home screen
         static const int MENU_SET = 216; // 142;
+        static const int MENU_ZOOM = 234;
         static const int MENU_PLAY = 233; // 116;
         static const int MENU_PAUSE = 232; // 117;
         static const int MENU_RECORD = 253; // 118;
@@ -249,7 +252,7 @@ class Sucofunkey {
         byte getLEDPinBySampleId(byte sampleId1);
         byte getLEDPinByEventKey(byte eventKey);
         char getCharByEventKey(byte eventKey, byte index);        
-        char getFilenameCharByEventKey(byte eventKey, byte index);        
+        char getFilenameCharByEventKey(byte eventKey, byte index);    
 
     private:
         // Interrupt Pins on Teensy from Sucokey

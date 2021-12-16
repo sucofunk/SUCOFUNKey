@@ -37,7 +37,7 @@ class SequencerScreen {
         boolean viewportCheckUpdate(byte channel, uint16_t position, LastAction action);
         void drawPlayStepIndicator(uint16_t position, boolean draw);
 
-        void showSampleInfos(byte channel, uint16_t position);
+        void showSampleInfos(byte channel, uint16_t position, boolean fullInfo);
         void updateSampleInfoVolume(byte channel, uint16_t position);
         void updateSampleInfoPanning(byte channel, uint16_t position);
         void updateSampleInfoPitch(byte channel, uint16_t position);

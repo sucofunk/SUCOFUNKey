@@ -67,17 +67,22 @@ void SequencerScreen::drawCursorAt(byte channel, uint16_t position, boolean draw
 void SequencerScreen::drawSample(byte channel, uint16_t position, boolean drawBackground) {
   _tempSample = _pattern->getSampleAt(channel, position);
   
-  if (_tempSample.sampleNumber < 254) {
+  if (_tempSample.sampleNumber < 253) {
       _screen->fillRect((position-_xPositionOffset)*15+3, channel*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_WHITE); 
-      showSampleInfos(channel, position);       
+      showSampleInfos(channel, position, true);       
   } else {
+    hideSampleInfos();
+    
     if (_tempSample.sampleNumber == 255 && drawBackground) {
       _screen->fillRect((position-_xPositionOffset)*15+3, channel*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_BLACK);
     }
     if (_tempSample.sampleNumber == 254) {
       _screen->fillRect((position-_xPositionOffset)*15+3, channel*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_GRID_DARK);
     }
-    hideSampleInfos();
+    if (_tempSample.sampleNumber == 253) {
+      _screen->fillRect((position-_xPositionOffset)*15+3, channel*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_GRID_BRIGHT);
+      showSampleInfos(channel, position, false);
+    }        
   }
 }
 
@@ -88,7 +93,7 @@ void SequencerScreen::drawSamples() {
     for (int p = 0; p < _amountOfGridCellsToDraw(); p++) {
       _tempSample = _pattern->getSampleAt(c, _xPositionOffset + p);
       
-      if (_tempSample.sampleNumber < 254) {
+      if (_tempSample.sampleNumber < 253) {
           _screen->fillRect(p*15+3, c*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_WHITE);        
       } else {
         if (_tempSample.sampleNumber == 255) {
@@ -97,6 +102,9 @@ void SequencerScreen::drawSamples() {
         if (_tempSample.sampleNumber == 254) {
           _screen->fillRect(p*15+3, c*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_GRID_DARK);
         }
+        if (_tempSample.sampleNumber == 253) {
+          _screen->fillRect(p*15+3, c*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_GRID_BRIGHT);
+        }        
       }
     }
   }  
@@ -157,7 +165,9 @@ void SequencerScreen::drawPlayStepIndicator(uint16_t position, boolean draw) {
   }
 }
 
-void SequencerScreen::showSampleInfos(byte channel, uint16_t position) {
+// fullInfo = velocity, panning, pitch, probability
+// !fullInfo = velocity, panning
+void SequencerScreen::showSampleInfos(byte channel, uint16_t position, boolean fullInfo) {
   _sampleInfosVisible = true;
 
   _screen->hr(_screen->AREA_SEQUENCER_OPTIONS_SAMPLENAME, 1, _screen->C_GRID_DARK);
@@ -165,13 +175,18 @@ void SequencerScreen::showSampleInfos(byte channel, uint16_t position) {
   _screen->vr(_screen->AREA_SEQUENCER_OPTION2, 1, _screen->C_GRID_DARK);  
   _screen->vr(_screen->AREA_SEQUENCER_OPTION3, 1, _screen->C_GRID_DARK);  
    
-  sprintf(_cBuff3, "%d", _pattern->getSampleAt(channel, position).sampleNumber );
+  if (fullInfo) {
+    sprintf(_cBuff3, "%d", _pattern->getSampleAt(channel, position).sampleNumber );
+    _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTIONS_SAMPLENAME, _screen->TEXTPOSITION_LEFT_VCENTER, true, _screen->TEXTSIZE_SMALL, false, _screen->C_WHITE, _cBuff3);
+  }
 
-  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTIONS_SAMPLENAME, _screen->TEXTPOSITION_LEFT_VCENTER, true, _screen->TEXTSIZE_SMALL, false, _screen->C_WHITE, _cBuff3);
   _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION1, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_SMALL, false, _screen->C_LIGHTGREY, "vol");
   _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION2, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_SMALL, false, _screen->C_LIGHTGREY, "pan");
-  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_SMALL, false, _screen->C_LIGHTGREY, "pitch");
-  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION4, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_SMALL, false, _screen->C_LIGHTGREY, "prob");
+
+  if (fullInfo) {
+    _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_SMALL, false, _screen->C_LIGHTGREY, "pitch");
+    _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION4, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_SMALL, false, _screen->C_LIGHTGREY, "prob");
+  }
 
   // draw frame for volume bar
   _screen->vr(_screen->AREA_SEQUENCER_OPTION1_VOLUME, 0.0, _screen->C_WHITE);
@@ -181,8 +196,11 @@ void SequencerScreen::showSampleInfos(byte channel, uint16_t position) {
 
   updateSampleInfoVolume(channel, position);
   updateSampleInfoPanning(channel, position);
-  updateSampleInfoPitch(channel, position);  
-  updateSampleInfoProbability(channel, position);
+
+  if (fullInfo) {
+    updateSampleInfoPitch(channel, position);  
+    updateSampleInfoProbability(channel, position);
+  }
 }
 
 
@@ -209,7 +227,8 @@ void SequencerScreen::updateSampleInfoPanning(byte channel, uint16_t position) {
 };
 
 void SequencerScreen::updateSampleInfoPitch(byte channel, uint16_t position) {
-  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "100%");
+  sprintf(_cBuff5_3, "%d", _pattern->getSampleAt(channel, position).pitchedNote);
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff5_3);
 };
 
 void SequencerScreen::updateSampleInfoProbability(byte channel, uint16_t position) {

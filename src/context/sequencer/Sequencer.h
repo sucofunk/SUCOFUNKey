@@ -49,10 +49,16 @@ class Sequencer {
         AudioPlayMemory *_playMemory;
         AudioMixer4 *_playMemoryMixerL;
         AudioMixer4 *_playMemoryMixerR;
+        AudioSynthWavetable *_playWavetable;
+        AudioMixer4 *_playWavetableMixerL;
+        AudioMixer4 *_playWavetableMixerR;
+
         int _playMemoryMixerGain;
+        int _playWavetableMixerGain;
 
         boolean _isActive = false;
         byte _activeBank = 1;
+        boolean _keyboardMode = false;
 
         long _calculatePlaybackTickSpeed();
 

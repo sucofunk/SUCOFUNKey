@@ -51,7 +51,7 @@ void Live::_test() {
 
   _audioResources->wavetable1.setInstrument(_sfsio->getInstrumentDataBySample(1));
   _audioResources->wavetable1.amplitude(0.3);
-  int note = _keyboard->getFaderValue(_keyboard->faderPin, 0, 127);
+  int note = _keyboard->getFaderValue(0, 127);
   Serial.print("note::");
   Serial.println(note);
   _audioResources->wavetable1.playNote(note);

@@ -554,7 +554,7 @@ byte Sucofunkey::getInput() {
 
 // returns the value from an analog input (fader) and scales it to the defined min max range
 // e.g. range is from 100 to 200, input (0..1023) is 512 --> 150
-int Sucofunkey::getContinuousFaderValue(uint8_t pin, int scaleMin, int scaleMax) {
+int Sucofunkey::getContinuousFaderValue(int scaleMin, int scaleMax) {
   // ignore small steps, as potentiometers tend to jump a bit.
   if (abs(_faderReading - _lastFaderReading) > 3) {
     _lastFaderReading = _faderReading;
@@ -595,7 +595,7 @@ void Sucofunkey::updateContinuousFaderValue() {
 }
 
 
-int Sucofunkey::getFaderValue(uint8_t pin, int scaleMin, int scaleMax) {
+int Sucofunkey::getFaderValue(int scaleMin, int scaleMax) {
   // subtract one, as the left side of the fader very often is not 0, but a little up
   int retVal = static_cast<int>(floor(scaleMin+(((scaleMax-scaleMin)/948.0)*(_faderReading > 512 ? _faderReading-75 : _faderReading))))-1;
   return retVal >= 0 ? retVal : 0;
@@ -644,7 +644,6 @@ char Sucofunkey::getFilenameCharByEventKey(byte eventKey, byte index) {
   }  return _noteKeysLookUpTable[_eventKeyToLookUpTable[eventKey]].filenameCharacter[index];
 
 };
-
 
 // reads one bit from an 16 Bit unsigned integer and returns its boolean value
 bool Sucofunkey::getBooleanValueFrom16BitInt(uint16_t values, int pos) {

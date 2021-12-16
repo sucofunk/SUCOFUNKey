@@ -3,6 +3,10 @@
 #include "../../helper/SampleFSIO.h"
 #include "../../helper/AudioResources.h"
 
+// ToDo: - pitched note und midi note in instrument data übernehmen
+//       - pitch bei sample entfernen oder move übernehmen / mit kopieren
+
+
 Pattern::Pattern(uint16_t patternLength, SampleFSIO *sfsio, AudioResources *audioResources)
 {
     _patternLength = patternLength;
@@ -111,13 +115,17 @@ void Pattern::moveSample(byte fromChannel, uint16_t fromPosition, byte toChannel
     _channelData[toChannel][toPosition].velocity = _channelData[fromChannel][fromPosition].velocity;
     _channelData[toChannel][toPosition].pixelWidth = _channelData[fromChannel][fromPosition].pixelWidth;
     _channelData[toChannel][toPosition].probability = _channelData[fromChannel][fromPosition].probability;
-    
+    _channelData[toChannel][toPosition].baseMidiNote = _channelData[fromChannel][fromPosition].baseMidiNote;
+    _channelData[toChannel][toPosition].pitchedNote = _channelData[fromChannel][fromPosition].pitchedNote;
+
     // reset from to standard values
     _channelData[fromChannel][fromPosition].sampleNumber = 255;
     _channelData[fromChannel][fromPosition].stereoPosition = 64;
     _channelData[fromChannel][fromPosition].velocity = 64;
     _channelData[fromChannel][fromPosition].pixelWidth = 15;
     _channelData[fromChannel][fromPosition].probability = 100;
+    _channelData[fromChannel][fromPosition].baseMidiNote = 60;
+    _channelData[fromChannel][fromPosition].pitchedNote = 60;
 }
 
 
@@ -135,15 +143,18 @@ void Pattern::unsetSampleAt(byte channel, uint16_t position) {
     // if no sample is set, set the stop sample flag (SampleNumber 254)
     if (_channelData[channel][position].sampleNumber == 255) {
         _channelData[channel][position].sampleNumber = 254;
-//        sprintf(_channelData[column - 1][row].displayText, " ~");
         _channelData[channel][position].stereoPosition = 64;
         _channelData[channel][position].velocity = 64;
     } else {
-        // just remove the sample
-        _channelData[channel][position].sampleNumber = 255;
-//        sprintf(_channelData[column - 1][row].displayText, " ");
-        _channelData[channel][position].stereoPosition = 64;
-        _channelData[channel][position].velocity = 64;
+        if (_channelData[channel][position].sampleNumber == 254) {
+            // set the sample in edit mode for velocity and panning
+            _channelData[channel][position].sampleNumber = 253;
+        } else {
+            // just remove the sample
+            _channelData[channel][position].sampleNumber = 255;
+            _channelData[channel][position].stereoPosition = 64;
+            _channelData[channel][position].velocity = 64;
+        }
     } 
 };
 
@@ -173,7 +184,7 @@ boolean * Pattern::getSamplesUsed()
 };
 
 
-void Pattern::increaseVelocity(byte channel, uint16_t position) {
+void Pattern::increaseVelocity(byte channel, uint16_t position) {    
     if (_channelData[channel][position].velocity < 126) {
         _channelData[channel][position].velocity += 2;
     }
@@ -184,6 +195,11 @@ void Pattern::decreaseVelocity(byte channel, uint16_t position) {
         _channelData[channel][position].velocity -= 2;
     }
 };        
+
+void Pattern::setVelocity(byte channel, uint16_t position, byte velocity) {
+    _channelData[channel][position].velocity = velocity;
+};
+
 
 void Pattern::stereoPositionTickLeft(byte channel, uint16_t position) {
     if (_channelData[channel][position].stereoPosition > 1) {
@@ -196,6 +212,34 @@ void Pattern::stereoPositionTickRight(byte channel, uint16_t position) {
         _channelData[channel][position].stereoPosition += 2;
     }
 };
+
+void Pattern::setStereoPosition(byte channel, uint16_t position, byte stereoPosition) {
+    _channelData[channel][position].stereoPosition = stereoPosition;
+}
+
+
+void Pattern::increasePitchByOne(byte channel, uint16_t position) {
+    if (_channelData[channel][position].pitchedNote < 126) {
+        _channelData[channel][position].pitchedNote += 1;
+    }
+}
+
+void Pattern::decreasePitchByOne(byte channel, uint16_t position) {
+    if (_channelData[channel][position].pitchedNote > 1) {
+        _channelData[channel][position].pitchedNote -= 2;
+    }
+}
+
+void Pattern::setPitchByMidiNote(byte channel, uint16_t position, byte note) {
+    _channelData[channel][position].pitchedNote = note;
+}
+
+void Pattern::setBaseMidiNote(byte channel, uint16_t position, byte note) {
+    _channelData[channel][position].baseMidiNote = note;
+    _channelData[channel][position].pitchedNote = note;
+}
+
+
 
 void Pattern::increaseProbability(byte channel, uint16_t position) {
     if (_channelData[channel][position].probability < 100) {

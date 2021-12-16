@@ -12,11 +12,14 @@ class Pattern {
         static const uint8_t channels = 8;
 
         typedef struct sampleStruct {
-            byte sampleNumber = 255; // sample, 255 == nothing, 254 == stop sample playback
+            byte sampleNumber = 255; // sample, 255 == nothing, 254 == stop sample playback, 253 = change velocity/panning
             //char displayText[4] = "---";
             byte stereoPosition = 64; // 0 = 100% left | 64 = center | 127 = 100% right 
             byte velocity = 64;      // 0..127 -> standard: 64, as defined in midi standard for keyboards without velocity
             
+            byte baseMidiNote = 60;
+            byte pitchedNote = 60;
+
             byte pixelWidth = 15; // calculate display width of sample length and zoom level
             byte probability = 100; // probability of sample to play 0..100
         } Sample;
@@ -41,9 +44,17 @@ class Pattern {
 
         void increaseVelocity(byte channel, uint16_t position);
         void decreaseVelocity(byte channel, uint16_t position);
+        void setVelocity(byte channel, uint16_t position, byte velocity);
 
         void stereoPositionTickLeft(byte channel, uint16_t position);
         void stereoPositionTickRight(byte channel, uint16_t position);
+        void setStereoPosition(byte channel, uint16_t position, byte stereoPosition); // 0 = left .. 64 = center .. 127=right
+
+        void increasePitchByOne(byte channel, uint16_t position);
+        void decreasePitchByOne(byte channel, uint16_t position);
+        void setPitchByMidiNote(byte channel, uint16_t position, byte note);
+
+        void setBaseMidiNote(byte channel, uint16_t position, byte note);
 
         void increaseProbability(byte channel, uint16_t position);
         void decreaseProbability(byte channel, uint16_t position);
