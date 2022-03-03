@@ -11,7 +11,7 @@ The PCB is designed without any SMD components and can be soldered with a standa
 Check out [@sucofunkey on Instagram](https://www.instagram.com/sucofunkey/) for a visual impression of the device and progress.
 You can sign up to the newsletter on [www.sucofunk.com](https://sucofunk.com), check some background infos, contact me and stay up to date.
 
-If you are interested in participating, a PCB or in the project in general, just send me a message. I spend a lot of time into the project without any return yet. Due to this I am working besides the project. If you want to support the project and help to keep the costs (office/workshop rent, hosting, etc.) as low as possible and speed the project up, feel free to donate.
+If you are interested in participating, a PCB or in the project in general, just send me a message. I spend a lot of time into the project without any return yet. Due to this I am working besides the project. If you want to support the project and help to keep the costs (office/workshop rent, hosting, etc.) as low as possible and speed the project up, feel free to donate at sucofunk.com.
 
 
 ## Hardware
@@ -65,7 +65,7 @@ So far the firmware is in a state where you can sample and use the samples withi
   - adjust sample volume
   
 ### Sequencer
-  - Samples can be set on a 8 x (2..256) grid, one track is not limited to one sampler
+  - Samples can be set on a 8 x (2..256) grid, one track is not limited to one sample
   - chromatic pitching
   - volume adjustment per note (changeable while sample is playing)
   - panning per note (changeable while sample is playing)
@@ -79,11 +79,11 @@ So far the firmware is in a state where you can sample and use the samples withi
 Currently I am creating almost everything by myself. So the next steps might take a while, hopefully not too long.
 
 ### Off device & Hardware
-- Publish circuit diagram
-- Create DIY tutorial with pictures for soldering parts
+- <del>Publish circuit diagram</del>
+- <del>Create DIY tutorial with pictures for soldering parts</del>
 - Publish files to print your own case
 - Create user manual/video tutorial
-- Improve the website
+- <del>Improve the website</del>
 
 ### On device / Firmware
 - Option to give samples a name instead of the standard numbers (1..72)
