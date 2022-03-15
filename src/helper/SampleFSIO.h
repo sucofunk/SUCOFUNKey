@@ -6,6 +6,7 @@
 #include <SD.h>
 #include <Audio.h>
 #include "../gui/Screen.h"
+#include "audio-extensions/synth_wavetable_suco.h"
 
 class SampleFSIO {
 
@@ -34,7 +35,7 @@ class SampleFSIO {
         byte getExtmemUsagePercent();
 
         void generateInstrument(byte sampleNumber, int baseNote);
-        AudioSynthWavetable::instrument_data getInstrumentDataBySample(byte sampleNumber);
+        AudioSynthWavetableSUCO::instrument_data getInstrumentDataBySample(byte sampleNumber);
 
         boolean sampleBanksStatus[3][24] = {{false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
                                             {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
@@ -111,8 +112,8 @@ class SampleFSIO {
         long _sampleOffsets[72] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
         uint8_t _completeRange[1] = {127};
-        AudioSynthWavetable::sample_data _sampleData[72][1]{};
-        AudioSynthWavetable::instrument_data _instrumentData[72]{};
+        AudioSynthWavetableSUCO::sample_data _sampleData[72][1]{};
+        AudioSynthWavetableSUCO::instrument_data _instrumentData[72]{};
 };
 
 #endif

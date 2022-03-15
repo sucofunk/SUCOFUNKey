@@ -4,6 +4,8 @@
 #include <Arduino.h>
 #include <Audio.h>
 #include "audio-extensions/play_sd_raw_suco.h"
+#include "audio-extensions/synth_wavetable_suco.h"
+
 
 class AudioResources {
 
@@ -53,17 +55,17 @@ class AudioResources {
         void setInputMic();
         void setInputLine();
 
-        AudioSynthWavetable      wavetable1;
-        AudioSynthWavetable      wavetable2;
-        AudioSynthWavetable      wavetable3;
-        AudioSynthWavetable      wavetable6;
-        AudioSynthWavetable      wavetable7;
-        AudioSynthWavetable      wavetable8;
+        AudioSynthWavetableSUCO      wavetable1;
+        AudioSynthWavetableSUCO      wavetable2;
+        AudioSynthWavetableSUCO      wavetable3;
+        AudioSynthWavetableSUCO      wavetable6;
+        AudioSynthWavetableSUCO      wavetable7;
+        AudioSynthWavetableSUCO      wavetable8;
         AudioPlayMemory          playMem7;
-        AudioSynthWavetable      wavetable4;
+        AudioSynthWavetableSUCO      wavetable4;
         AudioPlayMemory          playMem1;
         AudioPlayMemory          playMem8;
-        AudioSynthWavetable      wavetable5;
+        AudioSynthWavetableSUCO      wavetable5;
         AudioPlayMemory          playMem2;
         AudioPlayMemory          playMem3;
         AudioPlayMemory          playMem4;

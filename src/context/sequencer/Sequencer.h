@@ -49,7 +49,7 @@ class Sequencer {
         AudioPlayMemory *_playMemory;
         AudioMixer4 *_playMemoryMixerL;
         AudioMixer4 *_playMemoryMixerR;
-        AudioSynthWavetable *_playWavetable;
+        AudioSynthWavetableSUCO *_playWavetable;
         AudioMixer4 *_playWavetableMixerL;
         AudioMixer4 *_playWavetableMixerR;
 

@@ -1,4 +1,5 @@
 #include "SampleFSIO.h"
+#include "audio-extensions/synth_wavetable_suco.h"
 
 SampleFSIO::SampleFSIO(unsigned int *extmemArray, long extmemSize, Screen *screen) {
   _extmemArray = extmemArray;
@@ -469,18 +470,18 @@ void SampleFSIO::generateInstrument(byte sampleNumber, int baseNote) {
   _sampleData[sampleNumber-1][0].LOOP_PHASE_END = ((uint32_t)LOOPEND - 1) << (32 - LENGTH_BITS);
   _sampleData[sampleNumber-1][0].LOOP_PHASE_LENGTH = (((uint32_t)LOOPEND - 1) << (32 - LENGTH_BITS)) - (((uint32_t)LOOPSTART - 1) << (32 - LENGTH_BITS));
   _sampleData[sampleNumber-1][0].INITIAL_ATTENUATION_SCALAR = uint16_t(UINT16_MAX * WAVETABLE_DECIBEL_SHIFT(-0 / 100.0));
-  _sampleData[sampleNumber-1][0].DELAY_COUNT = uint32_t(0 * AudioSynthWavetable::SAMPLES_PER_MSEC / 8.0 + 0.5);
-  _sampleData[sampleNumber-1][0].ATTACK_COUNT = uint32_t(0 * AudioSynthWavetable::SAMPLES_PER_MSEC / 8.0 + 0.5);
-  _sampleData[sampleNumber-1][0].HOLD_COUNT = uint32_t(0 * AudioSynthWavetable::SAMPLES_PER_MSEC / 8.0 + 0.5);
-  _sampleData[sampleNumber-1][0].DECAY_COUNT = uint32_t(0 * AudioSynthWavetable::SAMPLES_PER_MSEC / 8.0 + 0.5);
-  _sampleData[sampleNumber-1][0].RELEASE_COUNT = uint32_t(0 * AudioSynthWavetable::SAMPLES_PER_MSEC / 8.0 + 0.5);
-  _sampleData[sampleNumber-1][0].SUSTAIN_MULT = int32_t(0 * AudioSynthWavetable::UNITY_GAIN);
-  _sampleData[sampleNumber-1][0].VIBRATO_DELAY = uint32_t(0 * AudioSynthWavetable::SAMPLES_PER_MSEC / (2 * AudioSynthWavetable::LFO_PERIOD));
-  _sampleData[sampleNumber-1][0].VIBRATO_INCREMENT = uint32_t(0 / 1000.0 * AudioSynthWavetable::LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT));
+  _sampleData[sampleNumber-1][0].DELAY_COUNT = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / 8.0 + 0.5);
+  _sampleData[sampleNumber-1][0].ATTACK_COUNT = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / 8.0 + 0.5);
+  _sampleData[sampleNumber-1][0].HOLD_COUNT = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / 8.0 + 0.5);
+  _sampleData[sampleNumber-1][0].DECAY_COUNT = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / 8.0 + 0.5);
+  _sampleData[sampleNumber-1][0].RELEASE_COUNT = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / 8.0 + 0.5);
+  _sampleData[sampleNumber-1][0].SUSTAIN_MULT = int32_t(0 * AudioSynthWavetableSUCO::UNITY_GAIN);
+  _sampleData[sampleNumber-1][0].VIBRATO_DELAY = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / (2 * AudioSynthWavetableSUCO::LFO_PERIOD));
+  _sampleData[sampleNumber-1][0].VIBRATO_INCREMENT = uint32_t(0 / 1000.0 * AudioSynthWavetableSUCO::LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT));
   _sampleData[sampleNumber-1][0].VIBRATO_PITCH_COEFFICIENT_INITIAL = (WAVETABLE_CENTS_SHIFT(-0 / 1000.0) - 1.0) * 4;
   _sampleData[sampleNumber-1][0].VIBRATO_PITCH_COEFFICIENT_SECOND = (1.0 - WAVETABLE_CENTS_SHIFT(0 / 1000.0)) * 4;
-  _sampleData[sampleNumber-1][0].MODULATION_DELAY = uint32_t(0 * AudioSynthWavetable::SAMPLES_PER_MSEC / (2 * AudioSynthWavetable::LFO_PERIOD));
-  _sampleData[sampleNumber-1][0].MODULATION_INCREMENT = uint32_t(0 / 1000.0 * AudioSynthWavetable::LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT));
+  _sampleData[sampleNumber-1][0].MODULATION_DELAY = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / (2 * AudioSynthWavetableSUCO::LFO_PERIOD));
+  _sampleData[sampleNumber-1][0].MODULATION_INCREMENT = uint32_t(0 / 1000.0 * AudioSynthWavetableSUCO::LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT));
   _sampleData[sampleNumber-1][0].MODULATION_PITCH_COEFFICIENT_INITIAL = (WAVETABLE_CENTS_SHIFT(-0 / 1000.0) - 1.0) * 4;
   _sampleData[sampleNumber-1][0].MODULATION_PITCH_COEFFICIENT_SECOND = (1.0 - WAVETABLE_CENTS_SHIFT(0 / 1000.0)) * 4;
   _sampleData[sampleNumber-1][0].MODULATION_AMPLITUDE_INITIAL_GAIN = int32_t(UINT16_MAX * (WAVETABLE_DECIBEL_SHIFT(-0.1) - 1.0)) * 4;
@@ -492,7 +493,7 @@ void SampleFSIO::generateInstrument(byte sampleNumber, int baseNote) {
 };
 
 // sampleNumber 1..72
-AudioSynthWavetable::instrument_data SampleFSIO::getInstrumentDataBySample(byte sampleNumber) {
+AudioSynthWavetableSUCO::instrument_data SampleFSIO::getInstrumentDataBySample(byte sampleNumber) {
   // ToDo: check if instrumentData is available. if not, create it with standard parameters
   return _instrumentData[sampleNumber-1];
 };
