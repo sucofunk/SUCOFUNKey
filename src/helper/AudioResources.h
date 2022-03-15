@@ -40,7 +40,7 @@ class AudioResources {
             
             Source: Teensy Documentation
         */
-        byte currentLineInLevel = 1;
+        byte currentLineInLevel = 0;
 
         void increaseMicGain();
         void decreaseMicGain();

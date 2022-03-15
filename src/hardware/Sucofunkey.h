@@ -242,6 +242,7 @@ class Sucofunkey {
         static const int BOTTOM_NAV_ITEM3 = 315;
         static const int RECORDED = 316;
         static const int RECORDER_CANCEL = 317;
+        static const int CHECKREQUEST = 318; // system check for buttons, encoders, fader, led
 
         // just for debugging to Serial
         void printQueue();

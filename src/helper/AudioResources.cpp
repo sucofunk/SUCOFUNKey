@@ -43,10 +43,10 @@ void AudioResources::muteInput() {
 };
 
 void AudioResources::unmuteInput() {
-    recordMixer.gain(0, 1.0);
-    recordMixer.gain(1, 1.0);
-    mixerOutL.gain(0, 1.0);
-    mixerOutR.gain(0, 1.0);
+    recordMixer.gain(0, 0.6);
+    recordMixer.gain(1, 0.6);
+    mixerOutL.gain(0, 0.6);
+    mixerOutR.gain(0, 0.6);
 };
 
 void AudioResources::muteResampling() {
@@ -55,8 +55,8 @@ void AudioResources::muteResampling() {
 };
 
 void AudioResources::unmuteResampling() {
-    recordMixer.gain(2, 1.0);
-    recordMixer.gain(3, 1.0);        
+    recordMixer.gain(2, 0.6);
+    recordMixer.gain(3, 0.6);        
 };
 
 void AudioResources::setInputMic() {

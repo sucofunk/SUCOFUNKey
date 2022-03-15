@@ -15,8 +15,15 @@ StartupScreen::StartupScreen(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, c
 
 void StartupScreen::handleEvent(Sucofunkey::keyQueueStruct event) {
     switch(_activeComponent) {
-        case 1: // send events to songSelector
-            _songSelector.handleEvent(event);
+        case 1: 
+            if (event.index != Sucofunkey::FN_ZOOM) {
+                // send events to songSelector
+                _songSelector.handleEvent(event);
+            } else {
+                // go to check mode by sending a global event to the main loop
+                _keyboard->addApplicationEventToQueue(Sucofunkey::CHECKREQUEST);
+            }
+        
             break;
         default:
             break;

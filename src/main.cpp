@@ -7,7 +7,7 @@
 
     created by Marc Berendes (marc @ sucofunk.com)
     
-    Last update: 24.11.2021
+    Last update: 12.03.2022
 
    ---------------------------------------------------------------------------------------------- */
 
@@ -27,6 +27,7 @@
 #include "context/live/Live.h"
 #include "context/settings/Settings.h"
 #include "context/recorder/Recorder.h"
+#include "context/check/Check.h"
 #include <Audio.h>
 
 #include <Adafruit_ST7789.h>
@@ -58,7 +59,7 @@ void handleKeyboardEventQueue(void);
 void changeContext(byte context);
 
 enum AppContext {
-  HOME = 0, SAMPLER = 1, SEQUENCER = 2, SYNTH = 3, LIVE = 4, SETTINGS = 5, STARTUP = 6, RECORDER = 7
+  HOME = 0, SAMPLER = 1, SEQUENCER = 2, SYNTH = 3, LIVE = 4, SETTINGS = 5, STARTUP = 6, RECORDER = 7, SYSTEMCHECK = 8
 };
 
 AppContext currentAppContext; // stores the current active "module" context (HOME|SAMPLER|...)
@@ -110,6 +111,8 @@ Live liveContext(&keyboard, &screen, &fsio, &sfsio, extmemArray, &audioResources
 
 Settings settingsContext(&keyboard, &screen);
 StartupScreen startupContext(&keyboard, &screen, &fsio, activeSongName);
+
+Check systemCheckContext(&keyboard, &screen);
 
 
 // --- START Audio Connections
@@ -450,6 +453,9 @@ void sendEventToActiveContext(Sucofunkey::keyQueueStruct event) {
     case AppContext::RECORDER:
             recorderContext.handleEvent(event);
             break;
+    case AppContext::SYSTEMCHECK:
+            systemCheckContext.handleEvent(event);
+            break;
     default:
             break;
   }
@@ -476,6 +482,9 @@ void sendTickToActiveContext() {
           break;
     case  AppContext::STARTUP:
            globalTickIntervalNew = startupContext.receiveTimerTick();
+          break;
+    case  AppContext::SYSTEMCHECK:
+           globalTickIntervalNew = systemCheckContext.receiveTimerTick();
           break;
     default:
           break;
@@ -596,6 +605,9 @@ void changeContext(AppContext context) {
                   recorderContext.setActive(true);
                   currentAppContext = RECORDER;
                   break;                  
+      case AppContext::SYSTEMCHECK:
+                  systemCheckContext.setActive(true);
+                  currentAppContext = SYSTEMCHECK;                                    
       default: 
                   break;                  
     }    
@@ -606,13 +618,15 @@ void handleKeyboardEventQueue() {
 
   while(keyboard.hasEvents()) {
     Sucofunkey::keyQueueStruct event = keyboard.getNextEvent();
-
-/*    Serial.print(event.index);
+/*
+    Serial.print(event.index);
     Serial.print("::");
     Serial.print(event.pressed);
     Serial.print("::");
     Serial.println(event.type);
+*/
 
+/*
     Serial.print("MaxAudioMemoryUsed:: ");
     Serial.println(AudioMemoryUsageMax());
 */
@@ -637,13 +651,15 @@ void handleKeyboardEventQueue() {
           changeContext(lastAppContext);
           break;
 
+        case Sucofunkey::CHECKREQUEST:
+          changeContext(AppContext::SYSTEMCHECK);
         default:
           break;
       }      
     }
 
     // Encoder pushed -> with FN in every context: change context .. in home screen the same without FN OR Main menu OR Settings
-    if (currentAppContext!=STARTUP && event.pressed && (event.type == Sucofunkey::KEY_MENU_OPERATION || (currentAppContext == AppContext::HOME && event.type == Sucofunkey::KEY_OPERATION) || event.index == Sucofunkey::FN_FUNCTION || event.index == Sucofunkey::MENU_MENU)) {
+    if (currentAppContext!=STARTUP && currentAppContext!=SYSTEMCHECK && event.pressed && (event.type == Sucofunkey::KEY_MENU_OPERATION || (currentAppContext == AppContext::HOME && event.type == Sucofunkey::KEY_OPERATION) || event.index == Sucofunkey::FN_FUNCTION || event.index == Sucofunkey::MENU_MENU)) {
       switch (event.index) {
         case Sucofunkey::ENCODER_1_PUSH:  
         case Sucofunkey::MENU_ENCODER_1_PUSH:  
@@ -676,7 +692,7 @@ void handleKeyboardEventQueue() {
       }
     }
 
-    if (!preCheck && currentAppContext != STARTUP && event.type == Sucofunkey::KEY_OPERATION) {    
+    if (!preCheck && currentAppContext != STARTUP && currentAppContext != SYSTEMCHECK && event.type == Sucofunkey::KEY_OPERATION) {    
       
       // Intention to start recording..
       if (event.index == Sucofunkey::RECORD && event.pressed) { 

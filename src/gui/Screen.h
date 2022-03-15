@@ -116,6 +116,10 @@ class Screen {
         Area AREA_SCREEN = { 0, 0, 319, 239, false, C_BLACK};  // Fullscreen
         Area AREA_HEADLINE = { 0, 0, 319, 25, false, C_BLACK}; // Headline
         Area AREA_CONTENT = { AREA_SCREEN.x1, AREA_SCREEN.y1+25, AREA_SCREEN.x2, AREA_SCREEN.y2-25, false, C_BLACK}; // like screen, but without headline and bottom navigation
+
+        Area AREA_CENTER_TEXT = { AREA_SCREEN.x1, AREA_SCREEN.y1+100, AREA_SCREEN.x2, AREA_SCREEN.y2-100, false, C_ORANGE}; // content line in the middle of the screen for system check
+
+
         Area AREA_BOTTOM_MENU = {0, AREA_SCREEN.y2-25, AREA_SCREEN.x2, AREA_SCREEN.y2, false, C_BLACK};   
         Area AREA_BOTTOM_MENU_ITEM1 = {0, AREA_BOTTOM_MENU.y1, static_cast<int>(AREA_BOTTOM_MENU.x2*0.33), AREA_BOTTOM_MENU.y2, false, C_BLACK};
         Area AREA_BOTTOM_MENU_ITEM2 = {AREA_BOTTOM_MENU_ITEM1.x2, AREA_BOTTOM_MENU.y1, static_cast<int>(AREA_BOTTOM_MENU.x2*0.66), AREA_BOTTOM_MENU.y2, false, C_BLACK};
@@ -155,6 +159,7 @@ class Screen {
 
         int _BL_PIN;
         int _BL_brightness = 110;
+
 
         void _setColor(const int *colorArr);
 };

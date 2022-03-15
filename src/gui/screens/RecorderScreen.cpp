@@ -33,7 +33,6 @@ void RecorderScreen::showRecorderScreenRecording() {
 
 
 void RecorderScreen::drawInputPeakMeter(float peak) {
-
     for (int i=0; i<peak*200; i=i+2) {        
         if (i < 160) {
             _screen->drawPixel(_peakArea.x1+5+i, _peakArea.y1+4, _screen->C_PEAK_OK);
@@ -45,6 +44,5 @@ void RecorderScreen::drawInputPeakMeter(float peak) {
     for (int i=peak*200; i<=200; i=i+2) {        
         _screen->drawPixel(_peakArea.x1+5+i, _peakArea.y1+4, _screen->C_BLACK);
     }
-
 }
 
