@@ -11,8 +11,7 @@
 
    ---------------------------------------------------------------------------------------------- */
 
-#include <SPI.h>
-#include <SD.h>
+#include <Arduino.h>
 
 #include "helper/AudioResources.h"
 #include "hardware/Sucofunkey.h"
