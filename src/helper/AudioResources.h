@@ -97,6 +97,18 @@ class AudioResources {
         AudioMixer4              mixerOutR;
         AudioOutputI2S           audioOutput;
         AudioControlSGTL5000     audioShield;
+
+
+        // Synth section
+        AudioSynthWavetableSUCO      wavetableSynth5;
+        AudioSynthWavetableSUCO      wavetableSynth6;
+        AudioSynthWavetableSUCO      wavetableSynth4;
+        AudioSynthWavetableSUCO      wavetableSynth2;
+        AudioSynthWavetableSUCO      wavetableSynth3;
+        AudioSynthWavetableSUCO      wavetableSynth1;
+        AudioMixer4              mixerSynth1;    
+        AudioMixer4              mixerSynth2;   
+        AudioMixer4              mixerSynth;    
 };
 
 #endif

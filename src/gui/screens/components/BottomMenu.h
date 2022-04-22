@@ -28,7 +28,7 @@ class BottomMenu {
 
         void showMenu(boolean visible);
         boolean isVisible();
-        void activateMenu(boolean active);
+        //void activateMenu(boolean active);
         void selectItem(byte item);
         void disableItem(byte item);
 

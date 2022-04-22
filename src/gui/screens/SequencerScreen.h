@@ -7,12 +7,13 @@
 #include "../../helper/SampleFSIO.h"
 #include "../../helper/AudioResources.h"
 #include "../Screen.h"
-#include "../../context/sequencer/Pattern.h"
+#include "../../context/sequencer/SongStructure.h"
+#include "../../context/sequencer/Zoom.h"
 
 class SequencerScreen {
     public:
         SequencerScreen();
-        SequencerScreen(Sucofunkey *keyboard, Screen *screen, SampleFSIO *sfsio, AudioResources *audioResources);
+        SequencerScreen(Sucofunkey *keyboard, Screen *screen, SampleFSIO *sfsio, AudioResources *audioResources, Zoom *zoom);
 
         enum LastAction {
                 INIT = 0,
@@ -28,7 +29,7 @@ class SequencerScreen {
                 SCALE = 10
         };
 
-        void initializeGrid(Pattern *pattern); 
+        void initializeGrid(SongStructure *pattern, uint16_t cursorPosition); 
         void drawGrid(LastAction action);
         void drawCursorAt(byte channel, uint16_t position, boolean draw);
         void drawSample(byte channel, uint16_t position, boolean drawBackground);
@@ -54,6 +55,8 @@ class SequencerScreen {
         SampleFSIO *_sfsio;
         AudioResources *_audioResources;
 
+        Zoom *_zoom;
+
         char _cBuff3[3];
         char _cBuff2[2];
         char _cBuff10[10];
@@ -71,8 +74,8 @@ class SequencerScreen {
         uint16_t _xPositionOffset = 0;    // if we move the cursor to the right at the end of the screen, the pattern moves and starts with the offset on the left
         uint16_t _xPositionCapacity = 21; // available columns
 
-        Pattern *_pattern;
-        Pattern::sampleStruct _tempSample;
+        SongStructure *_song;
+        SongStructure::sampleStruct _tempSample;
 
         uint8_t _amountOfGridCellsToDraw();
         boolean _sampleInfosVisible = false;

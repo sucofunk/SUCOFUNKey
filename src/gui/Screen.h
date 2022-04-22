@@ -51,21 +51,28 @@ class Screen {
         void clearAreaRTL(Area area, uint16_t color, int delayTime);
         void hr(Area area, float vpos, uint16_t color);
         void vr(Area area, float hpos, uint16_t color);
-        void drawTextInArea(Area area, TextPosition textPosition, boolean eraseFirst, TextSize textSize, boolean monoSpaced, uint16_t color, const char *text);
 
         void drawLine(int x1, int y1, int x2, int y2, uint16_t color);
         void drawPixel(int x, int y, uint16_t color);
 
         void loadingScreen(float percent);
-      
-        void drawText(const char *text,int x, int y, uint16_t color, const GFXfont *font);
-        void drawText(const char *text,int x, int y);
+        
+        void drawTextInArea(Area area, TextPosition textPosition, boolean eraseFirst, TextSize textSize, boolean monoSpaced, uint16_t color, const char *text);      
+        void drawText(const char *text, int x, int y, uint16_t color, const GFXfont *font);
+        void drawText(const char *text, int x, int y, TextSize textSize, uint16_t color);
+        void drawText(const char *text, int x, int y);
+
+        void setTextSize(TextSize textSize, boolean monoSpaced);
 
         void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
         void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
 
         void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
         void drawCircle(int16_t x, int16_t y, int16_t r, boolean fill, uint16_t color);
+
+        void drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, boolean fill, uint16_t color);
+
+
 
         uint16_t RGBtoColor(byte r, byte g, byte b);
 
@@ -119,13 +126,31 @@ class Screen {
 
         Area AREA_CENTER_TEXT = { AREA_SCREEN.x1, AREA_SCREEN.y1+100, AREA_SCREEN.x2, AREA_SCREEN.y2-100, false, C_ORANGE}; // content line in the middle of the screen for system check
 
+        Area AREA_LOADING_BAR = { 110, AREA_SCREEN.y2/2+20, 210, AREA_SCREEN.y2/2+27, C_BLACK };
 
         Area AREA_BOTTOM_MENU = {0, AREA_SCREEN.y2-25, AREA_SCREEN.x2, AREA_SCREEN.y2, false, C_BLACK};   
         Area AREA_BOTTOM_MENU_ITEM1 = {0, AREA_BOTTOM_MENU.y1, static_cast<int>(AREA_BOTTOM_MENU.x2*0.33), AREA_BOTTOM_MENU.y2, false, C_BLACK};
         Area AREA_BOTTOM_MENU_ITEM2 = {AREA_BOTTOM_MENU_ITEM1.x2, AREA_BOTTOM_MENU.y1, static_cast<int>(AREA_BOTTOM_MENU.x2*0.66), AREA_BOTTOM_MENU.y2, false, C_BLACK};
         Area AREA_BOTTOM_MENU_ITEM3 = {AREA_BOTTOM_MENU_ITEM2.x2, AREA_BOTTOM_MENU.y1, AREA_BOTTOM_MENU.x2, AREA_BOTTOM_MENU.y2, false, C_BLACK};
-        Area AREA_LOADING_BAR = { 110, AREA_SCREEN.y2/2+20, 210, AREA_SCREEN.y2/2+27, C_BLACK };
+
+
+        Area AREA_BLACK_KEY_MENU = {0, AREA_SCREEN.y2-12, AREA_SCREEN.x2, AREA_SCREEN.y2, false, C_BLACK};
         
+        Area AREA_BLACK_KEY_MENU_ITEM1 = {1, AREA_BLACK_KEY_MENU.y1+1, 26, AREA_BLACK_KEY_MENU.y2, false, C_BLACK};
+        Area AREA_BLACK_KEY_MENU_ITEM2 = {27, AREA_BLACK_KEY_MENU.y1+1, 52, AREA_BLACK_KEY_MENU.y2, false, C_BLACK};
+        Area AREA_BLACK_KEY_MENU_ITEM3 = {53, AREA_BLACK_KEY_MENU.y1+1, 78, AREA_BLACK_KEY_MENU.y2, false, C_BLACK};
+        
+        Area AREA_BLACK_KEY_MENU_ITEM4 = {99, AREA_BLACK_KEY_MENU.y1+1, 124, AREA_BLACK_KEY_MENU.y2, false, C_BLACK};
+        Area AREA_BLACK_KEY_MENU_ITEM5 = {125, AREA_BLACK_KEY_MENU.y1+1, 150, AREA_BLACK_KEY_MENU.y2, false, C_BLACK};
+
+        Area AREA_BLACK_KEY_MENU_ITEM6 = {171, AREA_BLACK_KEY_MENU.y1+1, 196, AREA_BLACK_KEY_MENU.y2, false, C_BLACK};
+        Area AREA_BLACK_KEY_MENU_ITEM7 = {197, AREA_BLACK_KEY_MENU.y1+1, 222, AREA_BLACK_KEY_MENU.y2, false, C_BLACK};
+        Area AREA_BLACK_KEY_MENU_ITEM8 = {223, AREA_BLACK_KEY_MENU.y1+1, 248, AREA_BLACK_KEY_MENU.y2, false, C_BLACK};
+
+        Area AREA_BLACK_KEY_MENU_ITEM9 = {268, AREA_BLACK_KEY_MENU.y1+1, 293, AREA_BLACK_KEY_MENU.y2, false, C_BLACK};
+        Area AREA_BLACK_KEY_MENU_ITEM10 = {294, AREA_BLACK_KEY_MENU.y1+1, 319, AREA_BLACK_KEY_MENU.y2, false, C_BLACK};
+
+
         Area AREA_SEQUENCER_OPTIONS = {AREA_SCREEN.x1, AREA_CONTENT.y1+125, AREA_SCREEN.x2, AREA_BOTTOM_MENU.y1, false, C_BLACK}; 
         Area AREA_SEQUENCER_OPTIONS_SAMPLENAME = {AREA_SEQUENCER_OPTIONS.x1, AREA_SEQUENCER_OPTIONS.y1, AREA_SEQUENCER_OPTIONS.x2, AREA_SEQUENCER_OPTIONS.y1+25, false, C_BLACK};
         

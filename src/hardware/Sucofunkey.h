@@ -65,149 +65,150 @@ class Sucofunkey {
         // The following values for keys/leds correspond to the MCP PINs.
         // 0..79
         // 0=MCP1 A0, 1=MCP1 A1, ..., 79=MCP5 B7
-        static const int FUNCTION = 18; //40;
-        static const int MENU = 17; //41;
-        static const int SET = 16; //42;
+        static const int FUNCTION = 18;
+        static const int MENU = 17;
+        static const int SET = 16;
         static const int ZOOM = 34;
-        static const int PLAY = 33; //16;
-        static const int PAUSE = 32; //17;
-        static const int RECORD = 53; //18;
-        static const int INPUTSELECTOR = 51; //19;
-        static const int CURSOR_LEFT = 67; //20;
-        static const int CURSOR_UP = 66; //21;
-        static const int CURSOR_DOWN = 65; //22;
-        static const int CURSOR_RIGHT = 64; //23;
+        static const int PLAY = 33;
+        static const int PAUSE = 32;
+        static const int RECORD = 53;
+        static const int INPUTSELECTOR = 51;
+        static const int CURSOR_LEFT = 67;
+        static const int CURSOR_UP = 66;
+        static const int CURSOR_DOWN = 65;
+        static const int CURSOR_RIGHT = 64;
 
         // FN + Key -> Offset 100 + key
-        static const int FN_FUNCTION = 118; // 90; // 3 Seconds FN to go to settings
-        static const int FN_MENU = 117; // 91;
-        static const int FN_SET = 116; // 92;
+        static const int FN_FUNCTION = 118;// 3 Seconds FN to go to settings
+        static const int FN_MENU = 117;
+        static const int FN_SET = 116;
         static const int FN_ZOOM = 134;
-        static const int FN_PLAY = 133; // 66;
-        static const int FN_PAUSE = 132; // 67;
-        static const int FN_RECORD = 153; // 68;
-        static const int FN_INPUTSELECTOR = 151; // 69;
-        static const int FN_CURSOR_LEFT = 167; // 70;
-        static const int FN_CURSOR_UP = 166; //71;
-        static const int FN_CURSOR_DOWN = 165; //72;
-        static const int FN_CURSOR_RIGHT = 164; //73;
+        static const int FN_PLAY = 133;
+        static const int FN_PAUSE = 132;
+        static const int FN_RECORD = 153;
+        static const int FN_INPUTSELECTOR = 151;
+        static const int FN_CURSOR_LEFT = 167;
+        static const int FN_CURSOR_UP = 166;
+        static const int FN_CURSOR_DOWN = 165;
+        static const int FN_CURSOR_RIGHT = 164;
 
         // Menu + Key -> Offset 200 + key
-        static const int MENU_MENU = 217; // 141; // 3 Seconds MENU to go to home screen
-        static const int MENU_SET = 216; // 142;
+        static const int MENU_MENU = 217;// 3 Seconds MENU to go to home screen
+        static const int MENU_SET = 216;
         static const int MENU_ZOOM = 234;
-        static const int MENU_PLAY = 233; // 116;
-        static const int MENU_PAUSE = 232; // 117;
-        static const int MENU_RECORD = 253; // 118;
-        static const int MENU_INPUTSELECTOR = 251; // 119;
-        static const int MENU_CURSOR_LEFT = 267; // 120;
-        static const int MENU_CURSOR_UP = 266; // 121;
-        static const int MENU_CURSOR_DOWN = 265; // 122;
-        static const int MENU_CURSOR_RIGHT = 264; // 123;
+        static const int MENU_PLAY = 233;
+        static const int MENU_PAUSE = 232;
+        static const int MENU_RECORD = 253;
+        static const int MENU_INPUTSELECTOR = 251;
+        static const int MENU_CURSOR_LEFT = 267;
+        static const int MENU_CURSOR_UP = 266;
+        static const int MENU_CURSOR_DOWN = 265;
+    
+        static const int MENU_CURSOR_RIGHT = 264;
 
-        static const int ENCODER_1_PUSH = 10; // 43;
-        static const int ENCODER_2_PUSH = 6; // 44;
-        static const int ENCODER_3_PUSH = 3; // 45;
-        static const int ENCODER_4_PUSH = 0; // 46;
+        static const int ENCODER_1_PUSH = 10;
+        static const int ENCODER_2_PUSH = 6;
+        static const int ENCODER_3_PUSH = 3;
+        static const int ENCODER_4_PUSH = 0;
 
-        static const int FN_ENCODER_1_PUSH = 110; // 93;
-        static const int FN_ENCODER_2_PUSH = 106; // 94;
-        static const int FN_ENCODER_3_PUSH = 103; // 95;
-        static const int FN_ENCODER_4_PUSH = 100; // 96;
+        static const int FN_ENCODER_1_PUSH = 110;
+        static const int FN_ENCODER_2_PUSH = 106;
+        static const int FN_ENCODER_3_PUSH = 103;
+        static const int FN_ENCODER_4_PUSH = 100;
 
-        static const int MENU_ENCODER_1_PUSH = 210; // 93;
-        static const int MENU_ENCODER_2_PUSH = 206; // 94;
-        static const int MENU_ENCODER_3_PUSH = 203; // 95;
-        static const int MENU_ENCODER_4_PUSH = 200; // 96;
+        static const int MENU_ENCODER_1_PUSH = 210;
+        static const int MENU_ENCODER_2_PUSH = 206;
+        static const int MENU_ENCODER_3_PUSH = 203;
+        static const int MENU_ENCODER_4_PUSH = 200;
 
-        static const int F_1 = 20; // 8;
-        static const int FS_1 = 22; // 9;
-        static const int G_1 = 24; // 10;
-        static const int GS_1 = 28; // 11;
-        static const int A_1 = 26; // 12;
-        static const int AS_1 = 35; // 13;
-        static const int B_1 = 30; // 14;
-        static const int C_1 = 37; // 15;
-        static const int CS_1 = 40; // 0;
-        static const int D_1 = 41; // 1;
-        static const int DS_1 = 45; // 2;
-        static const int E_1 = 43; // 3;
-        static const int F_2 = 46; // 4;
-        static const int FS_2 = 54; // 5;
-        static const int G_2 = 57; // 6;
-        static const int GS_2 = 61; // 7;
-        static const int A_2 = 59; // 24;
-        static const int AS_2 = 62; // 25;
-        static const int B_2 = 69; // 26;
-        static const int C_2 = 70; // 27;
-        static const int CS_2 = 75; // 28;
-        static const int D_2 = 73; // 29;
-        static const int DS_2 = 78; // 30;
-        static const int E_2 = 77; // 31;
+        static const int F_1 = 20;
+        static const int FS_1 = 22;
+        static const int G_1 = 24;
+        static const int GS_1 = 28;
+        static const int A_1 = 26;
+        static const int AS_1 = 35;
+        static const int B_1 = 30;
+        static const int C_1 = 37;
+        static const int CS_1 = 40;
+        static const int D_1 = 41;
+        static const int DS_1 = 45;
+        static const int E_1 = 43;
+        static const int F_2 = 46;
+        static const int FS_2 = 54;
+        static const int G_2 = 57;
+        static const int GS_2 = 61;
+        static const int A_2 = 59;
+        static const int AS_2 = 62;
+        static const int B_2 = 69;
+        static const int C_2 = 70;
+        static const int CS_2 = 75;
+        static const int D_2 = 73;
+        static const int DS_2 = 78;
+        static const int E_2 = 77;
 
         // FN + Key -> Offset 100 + key
-        static const int FN_F_1 = 120; // 58;
-        static const int FN_FS_1 = 122; // 59;
-        static const int FN_G_1 = 124; // 60;
-        static const int FN_GS_1 = 128; // 61;
-        static const int FN_A_1 = 126; // 62;
-        static const int FN_AS_1 = 135; // 63;
-        static const int FN_B_1 = 130; // 64;
-        static const int FN_C_1 = 137; // 65;
-        static const int FN_CS_1 = 140; // 50;
-        static const int FN_D_1 = 141; // 51;
-        static const int FN_DS_1 = 145; // 52;
-        static const int FN_E_1 = 143; // 53;
-        static const int FN_F_2 = 146; // 54;
-        static const int FN_FS_2 = 154; // 55;
-        static const int FN_G_2 = 157; // 56;
-        static const int FN_GS_2 = 161; // 57;
-        static const int FN_A_2 = 159; // 74;
-        static const int FN_AS_2 = 162; // 75;
-        static const int FN_B_2 = 169; // 76;
-        static const int FN_C_2 = 170; // 77;
-        static const int FN_CS_2 = 175; // 78;
-        static const int FN_D_2 = 173; // 79;
-        static const int FN_DS_2 = 178; // 80;
-        static const int FN_E_2 = 177; // 81;
+        static const int FN_F_1 = 120;
+        static const int FN_FS_1 = 122;
+        static const int FN_G_1 = 124;
+        static const int FN_GS_1 = 128;
+        static const int FN_A_1 = 126;
+        static const int FN_AS_1 = 135;
+        static const int FN_B_1 = 130;
+        static const int FN_C_1 = 137;
+        static const int FN_CS_1 = 140;
+        static const int FN_D_1 = 141;
+        static const int FN_DS_1 = 145;
+        static const int FN_E_1 = 143;
+        static const int FN_F_2 = 146;
+        static const int FN_FS_2 = 154;
+        static const int FN_G_2 = 157;
+        static const int FN_GS_2 = 161;
+        static const int FN_A_2 = 159;
+        static const int FN_AS_2 = 162;
+        static const int FN_B_2 = 169;
+        static const int FN_C_2 = 170;
+        static const int FN_CS_2 = 175;
+        static const int FN_D_2 = 173;
+        static const int FN_DS_2 = 178;
+        static const int FN_E_2 = 177;
 
         // --- LED Pins ---
 
-        static const int LED_PLAY = 7; // 7;
-        static const int LED_RECORD = 52; // 6;
+        static const int LED_PLAY = 7;
+        static const int LED_RECORD = 52;
         
-        static const int LED_INPUT_MIC = 50; // 5;
-        static const int LED_INPUT_LINE = 49; // 4;
-        static const int LED_INPUT_RESAMPLE = 48; // 3;
+        static const int LED_INPUT_MIC = 50;
+        static const int LED_INPUT_LINE = 49;
+        static const int LED_INPUT_RESAMPLE = 48;
 
-        static const int LED_BANK_1 = 15; // 2;
-        static const int LED_BANK_2 = 14; // 1;
-        static const int LED_BANK_3 = 13; // 0;
+        static const int LED_BANK_1 = 15;
+        static const int LED_BANK_2 = 14;
+        static const int LED_BANK_3 = 13;
 
-        static const int LED_F_1 = 19; // 24;
-        static const int LED_FS_1 = 21; // 25;
-        static const int LED_G_1 = 23; // 26;
-        static const int LED_GS_1 = 27; // 27;
-        static const int LED_A_1 = 25; // 28;
-        static const int LED_AS_1 = 31; // 29;
-        static const int LED_B_1 = 29; // 30;
-        static const int LED_C_1 = 36; // 31;
-        static const int LED_CS_1 = 39; // 16;
-        static const int LED_D_1 = 38; // 17;
-        static const int LED_DS_1 = 44; // 19;
-        static const int LED_E_1 = 42; // 18;
-        static const int LED_F_2 = 47; // 20;
-        static const int LED_FS_2 = 55; // 21;
-        static const int LED_G_2 = 56; // 22;
-        static const int LED_GS_2 = 60; // 23;
-        static const int LED_A_2 = 58; // 8;
-        static const int LED_AS_2 = 63; // 9;
-        static const int LED_B_2 = 68; // 10;
-        static const int LED_C_2 = 71; // 11;
-        static const int LED_CS_2 = 74; // 12;
-        static const int LED_D_2 = 72; // 13;
-        static const int LED_DS_2 = 79; // 14;
-        static const int LED_E_2 = 76; // 15;
+        static const int LED_F_1 = 19;
+        static const int LED_FS_1 = 21;
+        static const int LED_G_1 = 23;
+        static const int LED_GS_1 = 27;
+        static const int LED_A_1 = 25;
+        static const int LED_AS_1 = 31;
+        static const int LED_B_1 = 29;
+        static const int LED_C_1 = 36;
+        static const int LED_CS_1 = 39;
+        static const int LED_D_1 = 38;
+        static const int LED_DS_1 = 44;
+        static const int LED_E_1 = 42;
+        static const int LED_F_2 = 47;
+        static const int LED_FS_2 = 55;
+        static const int LED_G_2 = 56;
+        static const int LED_GS_2 = 60;
+        static const int LED_A_2 = 58;
+        static const int LED_AS_2 = 63;
+        static const int LED_B_2 = 68;
+        static const int LED_C_2 = 71;
+        static const int LED_CS_2 = 74;
+        static const int LED_D_2 = 72;
+        static const int LED_DS_2 = 79;
+        static const int LED_E_2 = 76;
 
         static const int ENCODER_1_1 = 12;
         static const int ENCODER_1_2 = 11;
@@ -244,6 +245,17 @@ class Sucofunkey {
         static const int RECORDER_CANCEL = 317;
         static const int CHECKREQUEST = 318; // system check for buttons, encoders, fader, led
 
+        static const int BLACKKEY_NAV_ITEM1 = 320;
+        static const int BLACKKEY_NAV_ITEM2 = 321;
+        static const int BLACKKEY_NAV_ITEM3 = 322;                
+        static const int BLACKKEY_NAV_ITEM4 = 323;
+        static const int BLACKKEY_NAV_ITEM5 = 324;
+        static const int BLACKKEY_NAV_ITEM6 = 325;
+        static const int BLACKKEY_NAV_ITEM7 = 326;
+        static const int BLACKKEY_NAV_ITEM8 = 327;        
+        static const int BLACKKEY_NAV_ITEM9 = 328;
+        static const int BLACKKEY_NAV_ITEM10 = 329;
+
         // just for debugging to Serial
         void printQueue();
 
@@ -254,6 +266,7 @@ class Sucofunkey {
         byte getLEDPinByEventKey(byte eventKey);
         char getCharByEventKey(byte eventKey, byte index);        
         char getFilenameCharByEventKey(byte eventKey, byte index);    
+        boolean isEventBlackKey(byte eventKey); // a black key from the piano roll.. false does not mean that it is a white key.. might be anything else
 
     private:
         // Interrupt Pins on Teensy from Sucokey

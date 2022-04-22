@@ -25,8 +25,6 @@ class Live {
 
         BottomMenu _bottomMenu;
 
-        void _test();
-
 };
 
 #endif

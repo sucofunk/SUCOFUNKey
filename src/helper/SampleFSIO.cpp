@@ -295,6 +295,9 @@ boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart,
 long SampleFSIO::copyRawFromSdToMemory(const char *filename, long startOffset) {
   File f;
   
+Serial.print("copyRawFromSdToMemory::");
+Serial.println(filename);
+
   if (SD.exists(filename)) {
     f = SD.open(filename, O_READ);  
   } else {
@@ -470,16 +473,19 @@ void SampleFSIO::generateInstrument(byte sampleNumber, int baseNote) {
   _sampleData[sampleNumber-1][0].LOOP_PHASE_END = ((uint32_t)LOOPEND - 1) << (32 - LENGTH_BITS);
   _sampleData[sampleNumber-1][0].LOOP_PHASE_LENGTH = (((uint32_t)LOOPEND - 1) << (32 - LENGTH_BITS)) - (((uint32_t)LOOPSTART - 1) << (32 - LENGTH_BITS));
   _sampleData[sampleNumber-1][0].INITIAL_ATTENUATION_SCALAR = uint16_t(UINT16_MAX * WAVETABLE_DECIBEL_SHIFT(-0 / 100.0));
+
   _sampleData[sampleNumber-1][0].DELAY_COUNT = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / 8.0 + 0.5);
   _sampleData[sampleNumber-1][0].ATTACK_COUNT = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / 8.0 + 0.5);
   _sampleData[sampleNumber-1][0].HOLD_COUNT = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / 8.0 + 0.5);
   _sampleData[sampleNumber-1][0].DECAY_COUNT = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / 8.0 + 0.5);
   _sampleData[sampleNumber-1][0].RELEASE_COUNT = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / 8.0 + 0.5);
   _sampleData[sampleNumber-1][0].SUSTAIN_MULT = int32_t(0 * AudioSynthWavetableSUCO::UNITY_GAIN);
+
   _sampleData[sampleNumber-1][0].VIBRATO_DELAY = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / (2 * AudioSynthWavetableSUCO::LFO_PERIOD));
   _sampleData[sampleNumber-1][0].VIBRATO_INCREMENT = uint32_t(0 / 1000.0 * AudioSynthWavetableSUCO::LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT));
   _sampleData[sampleNumber-1][0].VIBRATO_PITCH_COEFFICIENT_INITIAL = (WAVETABLE_CENTS_SHIFT(-0 / 1000.0) - 1.0) * 4;
   _sampleData[sampleNumber-1][0].VIBRATO_PITCH_COEFFICIENT_SECOND = (1.0 - WAVETABLE_CENTS_SHIFT(0 / 1000.0)) * 4;
+
   _sampleData[sampleNumber-1][0].MODULATION_DELAY = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / (2 * AudioSynthWavetableSUCO::LFO_PERIOD));
   _sampleData[sampleNumber-1][0].MODULATION_INCREMENT = uint32_t(0 / 1000.0 * AudioSynthWavetableSUCO::LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT));
   _sampleData[sampleNumber-1][0].MODULATION_PITCH_COEFFICIENT_INITIAL = (WAVETABLE_CENTS_SHIFT(-0 / 1000.0) - 1.0) * 4;
@@ -491,6 +497,23 @@ void SampleFSIO::generateInstrument(byte sampleNumber, int baseNote) {
   _instrumentData[sampleNumber-1].sample_note_ranges = _completeRange;
   _instrumentData[sampleNumber-1].samples = _sampleData[sampleNumber-1];
 };
+
+void SampleFSIO::changeInstrumentParameters(byte sampleNumber, boolean loop, uint8_t delay_count, uint8_t attack_count, uint8_t hold_count, uint8_t decay_count, uint8_t release_count, uint8_t sustain_mult, uint8_t vibrato_delay, uint8_t vibrato_increment) {
+  _sampleData[sampleNumber-1][0].LOOP = loop;
+
+  _sampleData[sampleNumber-1][0].DELAY_COUNT = uint32_t(delay_count * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / AudioSynthWavetableSUCO::ENVELOPE_PERIOD + 0.5);
+  _sampleData[sampleNumber-1][0].ATTACK_COUNT = uint32_t(attack_count * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / AudioSynthWavetableSUCO::ENVELOPE_PERIOD + 0.5);
+  _sampleData[sampleNumber-1][0].HOLD_COUNT = uint32_t(hold_count * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / AudioSynthWavetableSUCO::ENVELOPE_PERIOD + 0.5);
+  _sampleData[sampleNumber-1][0].DECAY_COUNT = uint32_t(decay_count * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / AudioSynthWavetableSUCO::ENVELOPE_PERIOD + 0.5);
+  _sampleData[sampleNumber-1][0].RELEASE_COUNT = uint32_t(release_count * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / AudioSynthWavetableSUCO::ENVELOPE_PERIOD + 0.5);
+  _sampleData[sampleNumber-1][0].SUSTAIN_MULT = int32_t(sustain_mult * AudioSynthWavetableSUCO::UNITY_GAIN);
+
+  _sampleData[sampleNumber-1][0].VIBRATO_DELAY = uint32_t(vibrato_delay * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / (2 * AudioSynthWavetableSUCO::LFO_PERIOD));
+  _sampleData[sampleNumber-1][0].VIBRATO_INCREMENT = uint32_t(vibrato_increment / 1000.0 * AudioSynthWavetableSUCO::LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT));
+  _sampleData[sampleNumber-1][0].VIBRATO_PITCH_COEFFICIENT_INITIAL = (WAVETABLE_CENTS_SHIFT(-release_count / 1000.0) - 1.0) * 4;
+  _sampleData[sampleNumber-1][0].VIBRATO_PITCH_COEFFICIENT_SECOND = (1.0 - WAVETABLE_CENTS_SHIFT(sustain_mult / 1000.0)) * 4;
+}
+
 
 // sampleNumber 1..72
 AudioSynthWavetableSUCO::instrument_data SampleFSIO::getInstrumentDataBySample(byte sampleNumber) {

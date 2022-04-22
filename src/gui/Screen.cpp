@@ -5,6 +5,7 @@
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
 #include "fonts/OxygenMono_Regular8pt7b.h" // https://fonts.google.com/specimen/Oxygen+Mono
 #include "fonts/BaiJamjureeRegularMonoDigits8pt7b.h" // https://fonts.google.com/specimen/Bai+Jamjuree
+#include "fonts/BaiJamjuree_Medium5pt7b.h" // https://fonts.google.com/specimen/Bai+Jamjuree
 
 Screen::Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness) {
   _tft = tft;
@@ -79,38 +80,7 @@ void Screen::drawTextInArea(Area area, TextPosition textPosition, boolean eraseF
     fillArea(area, area.bgColor);
   }
 
-  // ToDo: 
-  // - generate fonts for SMALL and LARGE and include them
-  switch (textSize) {
-    case TEXTSIZE_SMALL:
-      if (monoSpaced) {
-        _tft->setFont(&OxygenMono_Regular8pt7b);
-      } else {      
-        _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
-      }
-      break;
-    case TEXTSIZE_MEDIUM:
-      if (monoSpaced) {
-        _tft->setFont(&OxygenMono_Regular8pt7b);
-      } else {      
-        _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
-      }
-      break;
-    case TEXTSIZE_LARGE:
-      if (monoSpaced) {
-        _tft->setFont(&OxygenMono_Regular8pt7b);
-      } else {      
-        _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
-      }
-      break;
-    default:
-      if (monoSpaced) {
-        _tft->setFont(&OxygenMono_Regular8pt7b);
-      } else {      
-        _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
-      }
-      break;    
-  }
+  setTextSize(textSize, monoSpaced);
 
   _tft->getTextBounds(text, 100, 100, &_dx, &_dy, &_dw, &_dh);
 
@@ -210,11 +180,55 @@ void Screen::drawText(const char *text,int x, int y, uint16_t color, const GFXfo
   _tft->print(text);
 }
 
+
+void Screen::drawText(const char *text,int x, int y, TextSize textSize, uint16_t color) {
+  setTextSize(textSize, false);
+  _tft->setTextColor(color);
+  _tft->setCursor(x, y);
+  _tft->print(text);
+};
+
 void Screen::drawText(const char *text,int x, int y) {
   _tft->setTextColor(C_WHITE);
   _tft->setCursor(x, y);
   _tft->print(text);
 }
+
+
+void Screen::setTextSize(TextSize textSize, boolean monoSpaced) {
+  switch (textSize) {
+    case TEXTSIZE_SMALL:
+      if (monoSpaced) {
+        // ToDo: create small font
+        _tft->setFont(&OxygenMono_Regular8pt7b);
+      } else {      
+        _tft->setFont(&BaiJamjuree_Medium5pt7b);
+      }
+      break;
+    case TEXTSIZE_MEDIUM:
+      if (monoSpaced) {
+        _tft->setFont(&OxygenMono_Regular8pt7b);
+      } else {      
+        _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
+      }
+      break;
+    case TEXTSIZE_LARGE:
+      // ToDo: create large font
+      if (monoSpaced) {        
+        _tft->setFont(&OxygenMono_Regular8pt7b);
+      } else {      
+        _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
+      }
+      break;
+    default:
+      if (monoSpaced) {
+        _tft->setFont(&OxygenMono_Regular8pt7b);
+      } else {      
+        _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
+      }
+      break;    
+  }
+};
 
 void Screen::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
   _tft->drawFastHLine(x, y, w, color);
@@ -235,3 +249,11 @@ void Screen::drawCircle(int16_t x, int16_t y, int16_t r, boolean fill, uint16_t 
     _tft->drawCircle(x, y, r, color);
   }
 }
+
+void Screen::drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, boolean fill, uint16_t color) {
+  if (fill) {
+    _tft->fillTriangle(x0, y0, x1, y1, x2, y2, color);  
+  } else {
+    _tft->drawTriangle(x0, y0, x1, y1, x2, y2, color);
+  }  
+};

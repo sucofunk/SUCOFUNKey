@@ -35,6 +35,7 @@ class SampleFSIO {
         byte getExtmemUsagePercent();
 
         void generateInstrument(byte sampleNumber, int baseNote);
+        void changeInstrumentParameters(byte sampleNumber, boolean loop, uint8_t delay_count, uint8_t attack_count, uint8_t hold_count, uint8_t decay_count, uint8_t release_count, uint8_t sustain_mult, uint8_t vibrato_delay, uint8_t vibrato_increment);
         AudioSynthWavetableSUCO::instrument_data getInstrumentDataBySample(byte sampleNumber);
 
         boolean sampleBanksStatus[3][24] = {{false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
@@ -96,7 +97,7 @@ class SampleFSIO {
         void clearWaveFormBufferById(byte sampleId72);
         boolean isRecodingAvailable();
 
-        byte waveFormBuffer[73][320][2];
+        byte waveFormBuffer[73][320][2]; // ToDo: move to DMAMEM to save primary RAM
         long waveFormBufferLength[73];
         long pixelToWaveformSamples[73];
         long sampleLengthMS[73];

@@ -2,12 +2,29 @@
 
     SUCOFUNKey v3
 
-    This project is the firmware for the SUCOFUNKey sample sequencer, aka Beatmaker's Sketchbook
+    This project is the firmware - named SUCOFUNKey - for Beatmaker's Sketchbook from SUCOFUNK. 
+
     For more information, check out www.sucofunk.com
 
-    created by Marc Berendes (marc @ sucofunk.com)
+    To support the development of this firmware, please donate to the project and buy hardware
+    from sucofunk.com.
+
+    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
     
-    Last update: 12.03.2022
+   ----------------------------------------------------------------------------------------------
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.    
 
    ---------------------------------------------------------------------------------------------- */
 
@@ -28,6 +45,7 @@
 #include "context/recorder/Recorder.h"
 #include "context/check/Check.h"
 #include <Audio.h>
+#include <MIDI.h>
 
 #include <Adafruit_ST7789.h>
 
@@ -53,6 +71,11 @@ int PIN_VOLUME = 22;
 float volumeValue = 0;
 float volumeTempValue = 0;
 
+// ToDo: make configurable
+byte MIDI_channel_Synth = 10;
+
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
+
 // Function definitions
 void handleKeyboardEventQueue(void);
 void changeContext(byte context);
@@ -69,8 +92,9 @@ char activeSongName[9];
 char activeSongPath[21];
 
 // Sample Memory initialization - one psram chip with 8mb added to teensy board
-// ToDo: Add line for 16 mb / 2 chips
-EXTMEM unsigned int extmemArray[2097152]; // 4194304 = 16mb
+//EXTMEM unsigned int extmemArray[2097152]; // 8mb
+EXTMEM unsigned int extmemArray[4194304]; //  16mb
+
 
 // Interval Timer for playback pattern, metronome, etc..
 IntervalTimer globalTickTimer;
@@ -100,12 +124,12 @@ Screen screen(&tft, PIN_SCREEN_BL, 110);
 FSIO fsio;
 SampleFSIO sfsio(extmemArray, sizeof(extmemArray), &screen);
 
-Home  homeContext(&keyboard, &screen, activeSongPath);
+Home  homeContext(&keyboard, &screen, activeSongPath, activeSongName);
 Sampler samplerContext(&keyboard, &screen, &fsio, &sfsio, &audioResources);
 Recorder recorderContext(&keyboard, &screen, &fsio, &sfsio, &audioResources);
-Sequencer sequencerContext(&keyboard, &screen, &sfsio, extmemArray, &audioResources);
+Sequencer sequencerContext(&keyboard, &screen, &fsio, &sfsio, extmemArray, &audioResources);
 
-Synth synthContext(&keyboard, &screen);
+Synth synthContext(&keyboard, &screen, &fsio, &sfsio, extmemArray, &audioResources);
 Live liveContext(&keyboard, &screen, &fsio, &sfsio, extmemArray, &audioResources);
 
 Settings settingsContext(&keyboard, &screen);
@@ -179,6 +203,17 @@ AudioConnection          patchCord59(audioResources.mixerPreOutR, 0, audioResour
 AudioConnection          patchCord60(audioResources.mixerPreOutR, 0, audioResources.mixerOutR, 1);
 AudioConnection          patchCord61(audioResources.mixerOutL, 0, audioResources.audioOutput, 0);
 AudioConnection          patchCord62(audioResources.mixerOutR, 0, audioResources.audioOutput, 1);
+AudioConnection          patchCord63(audioResources.wavetableSynth5, 0, audioResources.mixerSynth2, 0);
+AudioConnection          patchCord64(audioResources.wavetableSynth6, 0, audioResources.mixerSynth2, 1);
+AudioConnection          patchCord65(audioResources.wavetableSynth4, 0, audioResources.mixerSynth1, 3);
+AudioConnection          patchCord66(audioResources.wavetableSynth2, 0, audioResources.mixerSynth1, 1);
+AudioConnection          patchCord67(audioResources.wavetableSynth3, 0, audioResources.mixerSynth1, 2);
+AudioConnection          patchCord68(audioResources.wavetableSynth1, 0, audioResources.mixerSynth1, 0);
+AudioConnection          patchCord69(audioResources.mixerSynth1, 0, audioResources.mixerSynth, 0);
+AudioConnection          patchCord70(audioResources.mixerSynth2, 0, audioResources.mixerSynth, 1);
+AudioConnection          patchCord71(audioResources.mixerSynth, 0, audioResources.mixerPreOutL, 3);
+AudioConnection          patchCord72(audioResources.mixerSynth, 0, audioResources.mixerPreOutR, 3);
+
 
 // --- END of AudioConnections
 
@@ -357,9 +392,12 @@ const unsigned char startup_logo_subline [] PROGMEM = {
 
 
 void setup() {
-  Serial.begin(9600);
+  //Serial.begin(9600);
   boolean ok = true;
   //strcpy(activeSongPath, songsBasePath); // init main path.. song directory will be concatenated, when available  
+
+  MIDI.begin(MIDI_CHANNEL_OMNI);
+  Serial.begin(57600);
 
   // Screeen Backlight regulator -> make screen dark
   pinMode(PIN_SCREEN_BL, OUTPUT);
@@ -550,6 +588,13 @@ void loop() {
 
   // update fader reading queue
   keyboard.updateContinuousFaderValue();
+
+  if (MIDI.read()) { 
+    // route midi messages for MIDI_channel_Synth and system messages to the synth
+    if (MIDI.getChannel() == MIDI_channel_Synth || MIDI.getChannel() == 0) {
+      synthContext.receiveMidiData(MIDI.getType(), MIDI.getData1(), MIDI.getData2());
+    }
+  }
 }
 
 
@@ -639,6 +684,10 @@ void handleKeyboardEventQueue() {
           sfsio.setSongPath(activeSongPath);
           screen.loadingScreen(0.0);
           sfsio.writeAllSamplesToWaveformBuffer();
+
+          // load sequencer data from SD card
+//sequencerContext.loadFromSD();
+
           changeContext(AppContext::HOME);          
           break;
 

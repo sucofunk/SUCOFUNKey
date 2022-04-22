@@ -645,6 +645,19 @@ char Sucofunkey::getFilenameCharByEventKey(byte eventKey, byte index) {
 
 };
 
+// a black key from the piano roll.. false does not mean that it is a white key.. might be anything else
+boolean Sucofunkey::isEventBlackKey(byte eventKey) {
+  if (eventKey < 22 || eventKey > 78) {
+    return false;
+  } else {
+    if (eventKey == FS_1 || eventKey == GS_1 || eventKey == AS_1 || eventKey == CS_1 || eventKey == DS_1 || eventKey == FS_2 || eventKey == GS_2 || eventKey == AS_2 || eventKey == CS_2 || eventKey == DS_2) {
+      return true;
+    }
+  }
+  return false;
+};
+
+
 // reads one bit from an 16 Bit unsigned integer and returns its boolean value
 bool Sucofunkey::getBooleanValueFrom16BitInt(uint16_t values, int pos) {
     uint16_t v;
