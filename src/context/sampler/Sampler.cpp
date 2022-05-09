@@ -15,6 +15,12 @@ Sampler::Sampler(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *s
 
 void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
 
+    if (currentState == SAMPLER_LIBRARY_OPEN && event.index != Sucofunkey::SAMPLE_LIBRARY_SELECTED && event.index != Sucofunkey::SAMPLE_LIBRARY_CANCEL) {
+        _samplerScreen.handleEvent(event);
+        return;
+    }
+
+
     if (event.pressed) {
       switch(event.index) {
         case Sucofunkey::CURSOR_LEFT:
@@ -73,13 +79,21 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
               }
               break;
         case Sucofunkey::FN_SET:
-              if (currentState==SAMPLE_WAIT_SAVE_SLOT) {
+              if (currentState == SAMPLE_WAIT_SAVE_SLOT) {
                 indicateFreeSamples(false,1);                
                 _keyboard->setBank(_tempBank);
                 _bottomMenu.showMenu(true);
                 currentState = SAMPLE_EDIT_TRIM;
               }
               break;
+
+        case Sucofunkey::ZOOM:
+              if (currentState == SAMPLE_SELECTED_EMPTY) {
+                _samplerScreen.transitionToSelection();
+                currentState = SAMPLER_LIBRARY_OPEN;                
+              } 
+              break;
+
         case Sucofunkey::PAUSE:
               _audioResources->playSdRaw.stop();
               break;              
@@ -112,22 +126,32 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
       byte sampleId = _keyboard->getSampleIdByEventKey(event.index);      
       
       // select a sample and play it
-      if (Sampler::currentState == SAMPLE_SELECTED || Sampler::currentState == SAMPLE_NOTHING) {
+      if (Sampler::currentState == SAMPLE_SELECTED || Sampler::currentState == SAMPLE_NOTHING || Sampler::currentState == SAMPLE_SELECTED_EMPTY) {
         _activeSampleSlot = sampleId;
 
         if (event.pressed) {
-
-          // hide the bottom menu if the selected sampleSlot is empty
-          if (_bottomMenu.isVisible() && !_sfsio->sampleBanksStatus[_activeBank-1][_activeSampleSlot-1]) {
-            _bottomMenu.showMenu(false);
-          }
 
           _blinkSampleSlot(sampleId, true);
           _tempBank = _keyboard->getBank();
           currentState = SAMPLE_SELECTED;
           _setSubmenuState(SUBMENU_NONE);
-          _samplerScreen.showSampleInfo(_keyboard->getBank()-1, sampleId-1, 1.0);
-          _audioResources->playSdRaw.play(_sfsio->sampleFilename[_keyboard->getBank()-1][sampleId-1]);
+          
+          // is there a sample in this slot?
+          if (!_sfsio->sampleBanksStatus[_activeBank-1][_activeSampleSlot-1]) {
+            // hide the bottom menu if the selected sampleSlot is empty
+            if (_bottomMenu.isVisible()) {
+              _bottomMenu.showMenu(false);
+            }
+
+            // no -> show hint, that no sample is in this slot
+            _samplerScreen.showNoSampleInfo();
+            currentState = SAMPLE_SELECTED_EMPTY;
+
+          } else {
+            // yes -> show sample
+            _samplerScreen.showSampleInfo(_keyboard->getBank()-1, sampleId-1, 1.0);
+            _audioResources->playSdRaw.play(_sfsio->sampleFilename[_keyboard->getBank()-1][sampleId-1]);
+          }
         } else {
           _audioResources->playSdRaw.stop();
         }
@@ -205,6 +229,30 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
             cancel();
           }
           break;
+          
+        case Sucofunkey::SAMPLE_LIBRARY_SELECTED:
+          // a sample from the library was selected.. copy it to this slot!
+
+          _sfsio->copyFile(_fsio->getSelectedSamplePathFromSD(), _sfsio->sampleFilename[_keyboard->getBank()-1][_activeSampleSlot-1]);
+          _sfsio->generateWaveFormBufferForSample(_keyboard->getBank()-1, _activeSampleSlot-1);
+
+          _samplerScreen.showSampleInfo(_keyboard->getBank()-1, _activeSampleSlot-1, 1.0);
+          _sfsio->readSampleBankStatusFromSD();
+
+          currentState = SAMPLE_SELECTED;
+          break;
+
+        case Sucofunkey::SAMPLE_LIBRARY_CANCEL:
+          if (currentState == SAMPLER_LIBRARY_OPEN) {
+            if (!_sfsio->sampleBanksStatus[_activeBank-1][_activeSampleSlot-1]) {
+              currentState = SAMPLE_SELECTED_EMPTY;
+              _samplerScreen.showNoSampleInfo();
+            } else {
+              currentState = SAMPLE_SELECTED;
+              _samplerScreen.showSampleInfo(_keyboard->getBank()-1, _activeSampleSlot-1, 1.0);
+            }                
+          } 
+          break;
       }
     }
 
@@ -260,11 +308,14 @@ long Sampler::receiveTimerTick() {
       _timerCounter = 0;
     }
 
-    if (_audioResources->playSdRaw.isPlaying()) {
-      indicatePlayerPosition();
-    } else {
-      _samplerScreen.resetPlayerPosition();
-    }    
+    // draw sample player indicator
+    if (currentState != SAMPLER_LIBRARY_OPEN) {
+      if (_audioResources->playSdRaw.isPlaying()) {
+        indicatePlayerPosition();
+      } else {
+        _samplerScreen.resetPlayerPosition();
+      }    
+    }
 
     if (currentState == SAMPLE_EDIT_TRIM) {
       byte sample72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
@@ -299,8 +350,8 @@ void Sampler::setActive(boolean active) {
       // show menu instantly, as we want the user to edit/save the fresh record
       handleEvent({_keyboard->MENU, true, false, _keyboard->KEY_OPERATION, 0});
     } else {
+      // no sample at this slot
       _samplerScreen.showEmptyScreen();
-      indicateFreeSamples(true, 250);
       _activeSampleSlot = 0;
       currentState = SAMPLE_NOTHING;
     }
@@ -393,9 +444,11 @@ void Sampler::deleteActiveSample() {
   _sfsio->clearWaveFormBufferById(sample72);
   _sfsio->waveFormBufferLength[sample72] = 0;
   _bottomMenu.showMenu(false);
-  _samplerScreen.showEmptyScreen();
+  
+  _samplerScreen.showNoSampleInfo();
+  currentState = SAMPLE_SELECTED_EMPTY;
 
-// ToDo: update EXTMEM, if sample was in memory
+  // ToDo: update EXTMEM, if sample was in memory
 }
 
 void Sampler::saveActiveSample() {

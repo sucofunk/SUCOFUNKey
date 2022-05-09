@@ -69,8 +69,34 @@ int FSIO::getSongCount() {
 }
 
 
+int FSIO::getSamplesCount() {
+    int sc = 0;
+
+    if (!SD.exists("/SAMPLES/")) return -1;
+
+    File sampleDir;
+    sampleDir = SD.open("/SAMPLES/");
+
+    if (sampleDir.isDirectory()) {
+        File nextFile = sampleDir.openNextFile();
+        
+        // todo: implement directories for browsing, too
+
+        while (nextFile) {
+            if (!nextFile.isDirectory() && nextFile.name()[0] != '.' ) {
+                sc++;
+            }
+            nextFile = sampleDir.openNextFile();
+        }
+    }
+
+    sampleDir.close();
+    return sc;
+}
+
+
 // returnvalues:
-// 0 = should never appen
+// 0 = should never happen
 // 1 = ok
 // 2 = directory already existing
 // 3 = directory already existing after shortening
@@ -79,6 +105,13 @@ int FSIO::getSongCount() {
 byte FSIO::createSong(String filename) {
     Serial.print("Songname::");
     Serial.println(filename);
+
+    // check if a general sample library exists. if not, create a /SAMPLES directory on the SD card.
+    // it is not the optimal position to do this, but there is no initial first start of the device to create the file structure on the sd card
+    // if the first song is created, this directory will already exist.
+    if (!SD.exists("/SAMPLES")) {
+      SD.mkdir("/SAMPLES");
+    }
 
     boolean shortened = false;
 
@@ -150,3 +183,50 @@ boolean FSIO::getSongName(int number, char *lineBuffer) {
     songDir.close();
     return false;
 }
+
+boolean FSIO::getSampleName(int number, char *lineBuffer) {
+    int sc = 0;
+    if (!SD.exists("/SAMPLES/")) return false;
+
+    File sampleDir;
+    sampleDir = SD.open("/SAMPLES/");
+
+    if (sampleDir.isDirectory()) {
+        File nextFile = sampleDir.openNextFile();
+        
+        while (nextFile) {
+            if (!nextFile.isDirectory()  && nextFile.name()[0] != '.' ) {
+                if (sc == number) {
+                    strcpy(lineBuffer, nextFile.name());
+                    sampleDir.close();
+                    return true;
+                }
+                sc++;
+            }
+            nextFile = sampleDir.openNextFile();
+        }
+    }
+    sampleDir.close();
+    return false;
+}
+
+
+void FSIO::setSelectedSamplePathFromSD(int number) {
+    // get sample name and add samplelibrary path to _selectedSamplePathFromSD
+    String basePath = "/SAMPLES/";
+    char filename[40];
+    getSampleName(number, filename);
+    basePath.append(filename);    
+    basePath.toCharArray(_selectedSamplePathFromSD, basePath.length()+1);  
+};
+
+void FSIO::setSelectedSamplePathFromSD(char *sampleName) {
+    String basePath = "/SAMPLES/";
+    basePath.append(sampleName);    
+    basePath.toCharArray(_selectedSamplePathFromSD, basePath.length()+1);
+};
+
+
+char* FSIO::getSelectedSamplePathFromSD() {
+  return _selectedSamplePathFromSD;
+};

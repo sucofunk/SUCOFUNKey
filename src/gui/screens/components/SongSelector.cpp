@@ -81,7 +81,7 @@ void SongSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
                 if (_activeItem == 0 && _offset == -1) {
                     _activeComponent = 1; // activate input field
                     _screen->clearAreaLTR(_screen->AREA_SCREEN, _screen->C_STARTUP_BG, 1);                
-                    _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "Record title");
+                    _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "Song title");
                     _input.activateInput();
                 } else {
                     int sel = _offset+_activeItem;                    
@@ -120,10 +120,11 @@ void SongSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
                             // set selected song directory to char array available in main scope
                             strcpy(_activeSongName, buff);
                             // .. and notify main scheduler switch
+                            delay(100); // wait a bit, if SD card is hanging..
                             _keyboard->addApplicationEventToQueue(Sucofunkey::SONGSELECTED);
                         } else {
                             if (result == 0 || result == 2 || result == 3) {
-                                _input.showErrorMessage("Record already exists", 750);
+                                _input.showErrorMessage("Song already exists", 750);
                             } else {
                                 _input.showErrorMessage("No name is not a name!", 750);
                             }                            
@@ -132,7 +133,7 @@ void SongSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
                     case Sucofunkey::INPUT_CANCEL:
                         // back to song collection
                         _screen->clearAreaRTL(_screen->AREA_SCREEN, _screen->C_STARTUP_BG, 1);                        
-                        _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "Record collection");
+                        _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "Song collection");
 
                         _activeComponent = 0;
                         drawSongSelector();
@@ -150,7 +151,7 @@ void SongSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
 void SongSelector::drawSongSelector() {    
     _songCount = _fsio->getSongCount();
 
-    _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "Record collection");
+    _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "Song collection");
         
     _screen->fillArea(_AREA_SONGSELECTOR_LINE_1, _activeItem == 0 ? _screen->C_SELECTOR_SELECTED_BG : _AREA_SONGSELECTOR.bgColor);    
     getLineDescription(_offset, _line1);
@@ -188,7 +189,7 @@ void SongSelector::drawSongSelector() {
 
 boolean SongSelector::getLineDescription(int fileIndex, char *lineBuffer) {
     if (fileIndex == -1) {
-        strcpy(lineBuffer, "create a new record");
+        strcpy(lineBuffer, "create a new song");
         return true;
     } else {
         if (fileIndex+1 <= _songCount) {

@@ -21,6 +21,12 @@ void Screen::testBild(const char* text) {
 void Screen::setBacklightBrightness(int brightness) {
   _BL_brightness = brightness;
   analogWrite(_BL_PIN, _BL_brightness); 
+  
+  if (brightness > 0) {
+    _BL_on = true;
+  } else {
+    _BL_on = false;
+  }
 }
 
 void Screen::fadeBacklightOut(int delayTime) {
@@ -28,6 +34,7 @@ void Screen::fadeBacklightOut(int delayTime) {
     analogWrite(_BL_PIN, b);
     delay(delayTime);
   } 
+  _BL_on = false;
 }
 
 void Screen::fadeBacklightIn(int delayTime) {
@@ -35,7 +42,13 @@ void Screen::fadeBacklightIn(int delayTime) {
     analogWrite(_BL_PIN, b);
     delay(delayTime);
   } 
+  _BL_on = true;
 }
+
+boolean Screen::isBacklightOn() {
+  return _BL_on;
+}
+
 
 void Screen::fillArea(Area area, uint16_t color) {
   _tft->fillRect(area.x1, area.y1, area.x2-area.x1+(area.x1 == 0 ? 1 : 0), area.y2-area.y1+(area.x1 == 0 ? 1 : 0), color);

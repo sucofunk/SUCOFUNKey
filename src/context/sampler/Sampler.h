@@ -22,11 +22,13 @@ class Sampler {
         {
             SAMPLE_NOTHING = 0,
             SAMPLE_SELECTED = 1,
-            SAMPLE_EDIT_TRIM = 2,
-            SAMPLE_WAIT_SAVE_SLOT = 3,
-            SAMPLE_RENAME = 4,
-            SAMPLER_EDIT_SUBMENU = 5
-        };        
+            SAMPLE_SELECTED_EMPTY = 2,
+            SAMPLE_EDIT_TRIM = 3,
+            SAMPLE_WAIT_SAVE_SLOT = 4,
+            SAMPLE_RENAME = 5,
+            SAMPLER_EDIT_SUBMENU = 6,
+            SAMPLER_LIBRARY_OPEN = 7
+        };
 
         enum SamplerSubmenuState
         {

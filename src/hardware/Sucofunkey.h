@@ -244,17 +244,19 @@ class Sucofunkey {
         static const int RECORDED = 316;
         static const int RECORDER_CANCEL = 317;
         static const int CHECKREQUEST = 318; // system check for buttons, encoders, fader, led
+        static const int SAMPLE_LIBRARY_SELECTED = 319; // sample in sampleselector selected -> used to select a sample from sample library at /SAMPLES/ on SD
+        static const int SAMPLE_LIBRARY_CANCEL = 320;
 
-        static const int BLACKKEY_NAV_ITEM1 = 320;
-        static const int BLACKKEY_NAV_ITEM2 = 321;
-        static const int BLACKKEY_NAV_ITEM3 = 322;                
-        static const int BLACKKEY_NAV_ITEM4 = 323;
-        static const int BLACKKEY_NAV_ITEM5 = 324;
-        static const int BLACKKEY_NAV_ITEM6 = 325;
-        static const int BLACKKEY_NAV_ITEM7 = 326;
-        static const int BLACKKEY_NAV_ITEM8 = 327;        
-        static const int BLACKKEY_NAV_ITEM9 = 328;
-        static const int BLACKKEY_NAV_ITEM10 = 329;
+        static const int BLACKKEY_NAV_ITEM1 = 340;
+        static const int BLACKKEY_NAV_ITEM2 = 341;
+        static const int BLACKKEY_NAV_ITEM3 = 342;                
+        static const int BLACKKEY_NAV_ITEM4 = 343;
+        static const int BLACKKEY_NAV_ITEM5 = 344;
+        static const int BLACKKEY_NAV_ITEM6 = 345;
+        static const int BLACKKEY_NAV_ITEM7 = 346;
+        static const int BLACKKEY_NAV_ITEM8 = 347;        
+        static const int BLACKKEY_NAV_ITEM9 = 348;
+        static const int BLACKKEY_NAV_ITEM10 = 349;
 
         // just for debugging to Serial
         void printQueue();

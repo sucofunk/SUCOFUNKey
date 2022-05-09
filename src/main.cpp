@@ -599,6 +599,8 @@ void loop() {
 
 
 void changeContext(AppContext context) {    
+    screen.fadeBacklightOut(1);
+    
     homeContext.setActive(false);
     samplerContext.setActive(false);
 
@@ -655,6 +657,8 @@ void changeContext(AppContext context) {
       default: 
                   break;                  
     }    
+
+    if (!screen.isBacklightOn()) screen.fadeBacklightIn(10);
 }
 
 void handleKeyboardEventQueue() {
@@ -706,7 +710,7 @@ void handleKeyboardEventQueue() {
       }      
     }
 
-    // Encoder pushed -> with FN in every context: change context .. in home screen the same without FN OR Main menu OR Settings
+    // Encoder pushed -> with MENU in every context: change context .. in home screen the same without FN OR Main menu OR Settings
     if (currentAppContext!=STARTUP && currentAppContext!=SYSTEMCHECK && event.pressed && (event.type == Sucofunkey::KEY_MENU_OPERATION || (currentAppContext == AppContext::HOME && event.type == Sucofunkey::KEY_OPERATION) || event.index == Sucofunkey::FN_FUNCTION || event.index == Sucofunkey::MENU_MENU)) {
       switch (event.index) {
         case Sucofunkey::ENCODER_1_PUSH:  

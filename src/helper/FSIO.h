@@ -14,10 +14,16 @@ class FSIO {
         
         byte createSong(String filename);
         int getSongCount();
+        int getSamplesCount(); // counts files in /SAMPLES directory -> global sample library
         boolean getSongName(int number, char *lineBuffer);
+        boolean getSampleName(int number, char *lineBuffer);
 
-    //private:
+        void setSelectedSamplePathFromSD(int number);
+        void setSelectedSamplePathFromSD(char *sampleName);
+        char * getSelectedSamplePathFromSD();
 
+    private:
+        char _selectedSamplePathFromSD[40];
 };
 
 #endif

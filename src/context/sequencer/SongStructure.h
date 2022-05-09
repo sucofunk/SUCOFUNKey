@@ -117,7 +117,7 @@ class SongStructure {
         void debugInfos();
 
     private:
-        uint8_t BLOCKSIZE = 64;
+        uint8_t BLOCKSIZE = 128;
 
         enum closestPointerType {
             NONE = 0,

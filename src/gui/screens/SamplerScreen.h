@@ -8,6 +8,8 @@
 #include "../../helper/AudioResources.h"
 #include "../Screen.h"
 #include "components/BottomMenu.h"
+#include "components/SampleSelector.h"
+
 
 class SamplerScreen {
     public:
@@ -15,7 +17,8 @@ class SamplerScreen {
         SamplerScreen(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *sfsio, AudioResources *audioResources);
         void handleEvent(Sucofunkey::keyQueueStruct event);
 
-        void showEmptyScreen();        
+        void showEmptyScreen();      
+        void clearScreen();
         void showSampleInfo(byte sampleId72, float volumeScaleFactor);        
         void showSampleInfo(byte bank0, byte sampleId0, float volumeScaleFactor);        
         void setBottomMenu(BottomMenu bottomMenu);
@@ -29,6 +32,9 @@ class SamplerScreen {
         void drawPlayerPosition(int x, int start, int end);
         void resetPlayerPosition();
 
+        void showNoSampleInfo();
+        void transitionToSelection();
+
     private:
         Sucofunkey *_keyboard;
         Screen *_screen;
@@ -36,11 +42,17 @@ class SamplerScreen {
         SampleFSIO *_sfsio;
         AudioResources *_audioResources;
         BottomMenu _bottomMenu;
+        SampleSelector _sampleSelector;
+
+        byte _activeComponent = 0; // 0 = Sampler, 1 = SampleSelector
 
         char _cBuff20[20];
 
         int zeroAxisY;
         boolean isPlayerPositionVisible = false;        
+
+        void _drawSampleSelector();
+        void _hideSampleSelector();
 };
 
 #endif

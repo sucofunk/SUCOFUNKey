@@ -44,7 +44,7 @@ class Screen {
         void setBacklightBrightness(int brightness);
         void fadeBacklightOut(int delayTime);
         void fadeBacklightIn(int delayTime);
-
+        boolean isBacklightOn();
 
         void fillArea(Area area, uint16_t color);
         void clearAreaLTR(Area area, uint16_t color, int delayTime);
@@ -71,8 +71,6 @@ class Screen {
         void drawCircle(int16_t x, int16_t y, int16_t r, boolean fill, uint16_t color);
 
         void drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, boolean fill, uint16_t color);
-
-
 
         uint16_t RGBtoColor(byte r, byte g, byte b);
 
@@ -184,7 +182,7 @@ class Screen {
 
         int _BL_PIN;
         int _BL_brightness = 110;
-
+        boolean _BL_on = true;
 
         void _setColor(const int *colorArr);
 };
