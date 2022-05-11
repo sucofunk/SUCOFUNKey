@@ -1,5 +1,6 @@
-# Beatmaker's sketchbook a.k.a. SUCOFUNKey
-[Teensy](https://www.pjrc.com/store/teensy41.html) based Open Source Sample Sequencer. Beatmaker's sketchbook is the name of the device, SUCOFUNKey is the name of the firmware. SUCOFUNK is the brand name.
+SUCOFUNKey - the firmware for beatmaker's sketchbook
+
+In a nutshell: [Teensy](https://www.pjrc.com/store/teensy41.html) based Open Source Sample & Sequencer. 
 
 Beatmaker's sketchbook is an open source alternative to different commercial electronic music devices like the [MPC](https://en.wikipedia.org/wiki/Akai_MPC) or [OP-1](https://en.wikipedia.org/wiki/Teenage_Engineering_OP-1).
 
