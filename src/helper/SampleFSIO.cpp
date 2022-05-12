@@ -364,7 +364,7 @@ boolean SampleFSIO::addSampleToMemory(byte bank1, byte sampleId1, boolean forceR
       offset = _nextOffset;
 
       _nextOffset = copyRawFromSdToMemory(sampleFilename[bank1-1][sampleId1-1], offset);
-      Serial.println(_nextOffset);
+//      Serial.println(_nextOffset);
 
       if (_nextOffset == -1) {
         _nextOffset = offset;
@@ -464,17 +464,17 @@ long SampleFSIO::getByteCountFromMs(long ms) {
 void SampleFSIO::generateInstrument(byte sampleNumber, int baseNote) {
   // retrieve sample size/length from extmem (first 32 bits -> 8 Bits file format 0x81, followed by 24 bits sample size)
   unsigned int header = getExtmemAddress(sampleNumber)[0];
-  Serial.println(header, BIN);
+//  Serial.println(header, BIN);
   uint32_t s = getExtmemAddress(sampleNumber)[1];
-  Serial.println(s, BIN);
+//  Serial.println(s, BIN);
 
   uint32_t header_format = 0x8100 << 16;
   
   //was: uint32_t sample_length = header - header_format; // length in samples (16 bit) --> file size in byte would be double
   uint32_t sample_length = header - header_format;
 
-Serial.print("sampleLength::");
-Serial.println(sample_length);
+//Serial.print("sampleLength::");
+//Serial.println(sample_length);
 
   int16_t *sampleData16 = (int16_t*) getExtmemAddressData(sampleNumber);
 
@@ -491,13 +491,14 @@ Serial.println(sample_length);
   int LOOPSTART = 0;
 
   _sampleData[sampleNumber-1][0].sample = (int16_t*)sampleData16;
+  _sampleData[sampleNumber-1][0].sampleLength = sample_length;
   _sampleData[sampleNumber-1][0].LOOP = false;
   _sampleData[sampleNumber-1][0].INDEX_BITS = LENGTH_BITS;
 
-  _sampleData[sampleNumber-1][0].PER_HERTZ_PHASE_INCREMENT = (1 << (32 - LENGTH_BITS)) * AUDIO_SAMPLE_RATE_EXACT / WAVETABLE_NOTE_TO_FREQUENCY(baseNote) / AUDIO_SAMPLE_RATE_EXACT + 0.5;
+  //_sampleData[sampleNumber-1][0].PER_HERTZ_PHASE_INCREMENT = (1 << (32 - LENGTH_BITS)) * AUDIO_SAMPLE_RATE_EXACT / WAVETABLE_NOTE_TO_FREQUENCY(baseNote) / AUDIO_SAMPLE_RATE_EXACT + 0.5;
 
-  //_sampleData[sampleNumber-1][0].PER_HERTZ_PHASE_INCREMENT = ((0x80000000 >> (LENGTH_BITS-1)) * 1.0 * (44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / WAVETABLE_NOTE_TO_FREQUENCY(baseNote) + 0.5;
-  _sampleData[sampleNumber-1][0].MAX_PHASE = ((uint32_t)LENGTH - 1) << (32 - LENGTH_BITS);
+  _sampleData[sampleNumber-1][0].PER_HERTZ_PHASE_INCREMENT = ((0x80000000 >> (LENGTH_BITS-1)) * 1.0 * (44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / WAVETABLE_NOTE_TO_FREQUENCY(baseNote) + 0.5;
+  _sampleData[sampleNumber-1][0].MAX_PHASE = ((uint32_t)LENGTH - 4) << (32 - LENGTH_BITS);
   _sampleData[sampleNumber-1][0].LOOP_PHASE_END = ((uint32_t)LOOPEND - 1) << (32 - LENGTH_BITS);
   _sampleData[sampleNumber-1][0].LOOP_PHASE_LENGTH = (((uint32_t)LOOPEND - 1) << (32 - LENGTH_BITS)) - (((uint32_t)LOOPSTART - 1) << (32 - LENGTH_BITS));
   _sampleData[sampleNumber-1][0].INITIAL_ATTENUATION_SCALAR = uint16_t(UINT16_MAX * WAVETABLE_DECIBEL_SHIFT(-0 / 100.0));

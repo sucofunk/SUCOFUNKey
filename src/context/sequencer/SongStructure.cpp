@@ -5,7 +5,7 @@ SongStructure::SongStructure() { };
 // ToDo:  - save to sd card OK
 //        - load from sd card OK
 //        - snippets
-//        - implement shift
+//        - implement shift OK
 
 
 // returns the closest pointer to the given position. it always returns the predecessor, even if a successor is closer, as change the pointed list at the predecessor.

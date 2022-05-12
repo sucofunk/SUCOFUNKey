@@ -44,6 +44,41 @@ void FSIO::listDirectory(File dir, int numTabs) {
 }
 
 
+void FSIO::readLibrarySamplesFromSD(LibrarySample *librarySamples) {
+    Serial.println("reading sample library");
+    _librarySamples = librarySamples;
+
+        int sc = 0;
+
+        if (!SD.exists("/SAMPLES/")) return;
+
+        File sampleDir;
+        sampleDir = SD.open("/SAMPLES/");
+        
+        String tempString;
+
+        if (sampleDir.isDirectory()) {
+            File nextFile = sampleDir.openNextFile();
+            
+            // todo: implement directories for browsing, too
+
+            while (nextFile) {
+                if (!nextFile.isDirectory() && nextFile.name()[0] != '.' ) {
+                    tempString = nextFile.name();                        
+                    tempString.toCharArray(_librarySamples[sc].sampleFilename, tempString.length()+1);
+                    sc++;                    
+                }
+                nextFile = sampleDir.openNextFile();
+            }
+        }
+
+        _librarySamplesCount = sc;
+
+        sampleDir.close();
+}
+
+
+
 int FSIO::getSongCount() {
     int sc = 0;
 
@@ -70,28 +105,7 @@ int FSIO::getSongCount() {
 
 
 int FSIO::getSamplesCount() {
-    int sc = 0;
-
-    if (!SD.exists("/SAMPLES/")) return -1;
-
-    File sampleDir;
-    sampleDir = SD.open("/SAMPLES/");
-
-    if (sampleDir.isDirectory()) {
-        File nextFile = sampleDir.openNextFile();
-        
-        // todo: implement directories for browsing, too
-
-        while (nextFile) {
-            if (!nextFile.isDirectory() && nextFile.name()[0] != '.' ) {
-                sc++;
-            }
-            nextFile = sampleDir.openNextFile();
-        }
-    }
-
-    sampleDir.close();
-    return sc;
+    return _librarySamplesCount;;
 }
 
 
@@ -185,29 +199,18 @@ boolean FSIO::getSongName(int number, char *lineBuffer) {
 }
 
 boolean FSIO::getSampleName(int number, char *lineBuffer) {
-    int sc = 0;
-    if (!SD.exists("/SAMPLES/")) return false;
-
-    File sampleDir;
-    sampleDir = SD.open("/SAMPLES/");
-
-    if (sampleDir.isDirectory()) {
-        File nextFile = sampleDir.openNextFile();
-        
-        while (nextFile) {
-            if (!nextFile.isDirectory()  && nextFile.name()[0] != '.' ) {
-                if (sc == number) {
-                    strcpy(lineBuffer, nextFile.name());
-                    sampleDir.close();
-                    return true;
-                }
-                sc++;
-            }
-            nextFile = sampleDir.openNextFile();
-        }
+    if (number < _librarySamplesCount) {
+        String t = _librarySamples[number].sampleFilename;
+        t.toCharArray(lineBuffer, t.length()+1);
+        return true;
     }
-    sampleDir.close();
+
     return false;
+}
+
+String FSIO::getSampleName(int number) {
+    String t = _librarySamples[number].sampleFilename;
+    return t;
 }
 
 

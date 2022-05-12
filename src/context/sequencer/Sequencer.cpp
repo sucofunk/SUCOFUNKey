@@ -28,6 +28,9 @@ Sequencer::Sequencer(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSI
     _blackKeyMenu.setOption(6, "SND");
     _blackKeyMenu.setOption(7, "INS");
     _blackKeyMenu.setOption(8, "FX");    
+
+    _blackKeyMenu.setOption(9, "LOD");    
+    _blackKeyMenu.setOption(10, "SAV");    
 }
 
 // returns the current tick speed.. as tempo changes are not handled global
@@ -80,35 +83,16 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               _activeBank = _keyboard->getBank();                          
               break;
         
-        
-        
         case Sucofunkey::FN_CURSOR_UP:
               _cursorPosition = zoom.zoomIn(_cursorPosition);
               _sequencerScreen.initializeGrid(&_song, _cursorPosition);
               _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
-
-// was: change sequence resolution
-/*              if (!_isPlaying) {
-                _song.changeSongResolutionByTick(true);
-                _calculatePlaybackTickSpeed();
-                _sequencerScreen.drawGrid(_sequencerScreen.RESOLUTION);
-              }
-*/              
               break;
         case Sucofunkey::FN_CURSOR_DOWN:
               _cursorPosition = zoom.zoomOut(_cursorPosition);              
               _sequencerScreen.initializeGrid(&_song, _cursorPosition);
               _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);              
-
-// was: change sequence resolution
-/*              if (!_isPlaying) {
-                _song.changeSongResolutionByTick(false);
-                _calculatePlaybackTickSpeed();              
-                _sequencerScreen.drawGrid(_sequencerScreen.RESOLUTION);              
-              }
-*/              
               break;
-
                 
         // Menu switch will try to open BlackKey menu
         case Sucofunkey::MENU:
@@ -122,27 +106,6 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::PAUSE:
               pausePattern();
               break;
-
-
-
-// Test functions for loading and saving.. remove after implementing
-        case Sucofunkey::FN_PAUSE:
-              // ToDo: remove after testing.. this is just for development..
-              saveToSD();
-              //_fsio->listAllFiles();
-              break;              
-        case Sucofunkey::FN_MENU:
-              // ToDo: remove after testing.. this is just for development..
-              loadFromSD();
-              break;              
-        case Sucofunkey::FN_INPUTSELECTOR:
-              // ToDo: remove after testing.. this is just for development..
-              debugInfos();
-              break;              
-// END test
-
-
-
         case Sucofunkey::FN_PLAY:
                 // play current sample, if one is selected
               if (!_isPlaying) { playMixedSample(_cursorChannel, _cursorPosition); }                
@@ -153,27 +116,23 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
               break;                  
         case Sucofunkey::ZOOM:
-              // ToDo: change Menu State to PIANO and change state to something like pitch select            
+              // ToDo: change Menu State to PIANO and change state to something like pitch select
               break;    
 
         // set velocity from fader
-/*        case Sucofunkey::ENCODER_1_PUSH:
-          if (_pattern.getSampleAt(_cursorChannel, _cursorPosition).sampleNumber <= 253) {
-            if (event.pressed) {              
-              _pattern.setVelocity(_cursorChannel, _cursorPosition, static_cast<byte>(_keyboard->getFaderValue(1, 127)));
-              _sequencerScreen.updateSampleInfoVolume(_cursorChannel, _cursorPosition);              
+        case Sucofunkey::ENCODER_1_PUSH:
+            if (_song.getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE || _song.getPosition(_cursorChannel, _cursorPosition).type == SongStructure::PARAMETER_CHANGE_SAMPLE) {
+                _song.setVelocity(_cursorChannel, _cursorPosition, static_cast<byte>(_keyboard->getFaderValue(1, 127)));
+                _sequencerScreen.updateSampleInfoVolume(_cursorChannel, _cursorPosition);              
             }
-          }
           break;
         // set panning from fader          
         case Sucofunkey::ENCODER_2_PUSH:
-          if (_pattern.getSampleAt(_cursorChannel, _cursorPosition).sampleNumber <= 253) {
-            if (event.pressed) {              
-              _pattern.setStereoPosition(_cursorChannel, _cursorPosition, static_cast<byte>(_keyboard->getFaderValue(1, 127)));
-              _sequencerScreen.updateSampleInfoPanning(_cursorChannel, _cursorPosition);
+            if (_song.getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE || _song.getPosition(_cursorChannel, _cursorPosition).type == SongStructure::PARAMETER_CHANGE_SAMPLE) {
+                _song.setStereoPosition(_cursorChannel, _cursorPosition, static_cast<byte>(_keyboard->getFaderValue(1, 127)));
+                _sequencerScreen.updateSampleInfoPanning(_cursorChannel, _cursorPosition);
             }
-          }              
-          break;*/
+          break;
       }    
       
     }
@@ -256,7 +215,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
 
               // ToDo: check if maximum song length is reached!
 
-              // if cursor is at the end, move it one cell left, otherise it would be out of the grid
+              // if cursor is at the end, move it one cell left, otherwise it would be out of the grid
               if (_cursorPosition >= _song.getSongLength()) {
                 //_cursorPosition = _song.getSongLength()-1;
                 _cursorPosition = _song.getSongLength()-zoom.getZoomlevelOffset();
@@ -328,7 +287,8 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
           break;          
         case Sucofunkey::BLACKKEY_NAV_ITEM5:
           break;
-        case Sucofunkey::BLACKKEY_NAV_ITEM6:              
+        case Sucofunkey::BLACKKEY_NAV_ITEM6:  
+            {
               // Parameter Change for velocity and panning or NOTE OFF
               SongStructure::samplePointerStruct sps = _song.getPosition(_cursorChannel, _cursorPosition);
               switch (sps.type) {
@@ -353,6 +313,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               }
 
               _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+            }
           break;
         case Sucofunkey::BLACKKEY_NAV_ITEM7:
           Serial.println("INSTRUMENT");
@@ -361,8 +322,10 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
           Serial.println("EFFECT");
           break;          
         case Sucofunkey::BLACKKEY_NAV_ITEM9:
+          loadFromSD();
           break;          
         case Sucofunkey::BLACKKEY_NAV_ITEM10:
+          saveToSD();
           break;                    
         default:
         break;
@@ -378,7 +341,6 @@ void Sequencer::moveCursor(Direction direction) {
   _keyboardMode = false;
 
   byte zoomlevelOffset = zoom.getZoomlevelOffset();
-
 
   switch(direction) {
     case UP:  _cursorChannel = _cursorChannel > 0 ? _cursorChannel-1 : 0;
@@ -500,12 +462,9 @@ void Sequencer::setSequencerState(SequencerState state) {
     }    
   }
 
-  Serial.print("Sequencer State :: ");
-  Serial.println(_currentSequencerState);
+//  Serial.print("Sequencer State :: ");
+//  Serial.println(_currentSequencerState);
 };
-
-
-
 
 void Sequencer::_saveCurrentCursorPosition() {
   _savedCursorChannel = _cursorChannel;
@@ -519,8 +478,6 @@ boolean Sequencer::_savedCursorEqualsCurrent() {
       return false;
     }
 }
-
-
 
 void Sequencer::loadSetPlay(byte bank1, byte sample1, byte channel, int position) {
   if (_sfsio->sampleBanksStatus[bank1-1][sample1-1]) {
@@ -565,7 +522,7 @@ void Sequencer::setActive(boolean active) {
     _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
 
     _song.setCurrentPosition(_cursorChannel, _cursorPosition, true);
-//    _sequencerScreen.drawExtMemPercentage(_sfsio->getExtmemUsagePercent());
+    _sequencerScreen.drawExtMemPercentage(_sfsio->getExtmemUsagePercent());
   }
   else {
       _isActive = false;
@@ -769,8 +726,7 @@ boolean Sequencer::isPlaying() {
 
 void Sequencer::loadFromSD() {
   // load from SD card
-  _song.loadFromSD(_sfsio->getSongPath());
-
+  _song.loadFromSD(_sfsio->getSongPath());  
   _cursorPosition = 0;
 
   // redraw the grid
@@ -782,6 +738,8 @@ void Sequencer::loadFromSD() {
 
   // loading samples to extmem
   _sfsio->loadSamplesToMemory(_song.getSamplesUsed());
+  
+  _sequencerScreen.drawExtMemPercentage(_sfsio->getExtmemUsagePercent());
 };
 
 void Sequencer::saveToSD() {

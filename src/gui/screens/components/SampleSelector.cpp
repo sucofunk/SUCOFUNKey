@@ -82,14 +82,7 @@ void SampleSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
 void SampleSelector::drawSampleSelector() {    
     _sampleCount = _fsio->getSamplesCount();
 
-    Serial.print("_offset::");
-    Serial.println(_offset);
-    Serial.print("_activeItem::");
-    Serial.println(_activeItem);
-
-
     _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "Sample library");
-
 
     _screen->fillArea(_AREA_SONGSELECTOR_LINE_1, _activeItem == 0 ? _screen->C_SELECTOR_SELECTED_BG : _AREA_SONGSELECTOR.bgColor);
 

@@ -28,6 +28,7 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
                 _bottomMenu.handleEvent({_keyboard->CURSOR_LEFT, true, false, _keyboard->KEY_OPERATION});
               } else {
                 _keyboard->setBankDown();
+                _activeBank = _keyboard->getBank();
                 
                 if (_keyboard->getBank() != _tempBank) {
                   if (_blinkActiveSample == true) _blinkSampleSlot(_activeSampleSlot, false);
@@ -47,6 +48,7 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
                 _bottomMenu.handleEvent({_keyboard->CURSOR_RIGHT, true, false, _keyboard->KEY_OPERATION});
               } else {                
                 _keyboard->setBankUp(); 
+                _activeBank = _keyboard->getBank();
 
                 if (_keyboard->getBank() != _tempBank) {
                   if (_blinkActiveSample == true) _blinkSampleSlot(_activeSampleSlot, false);

@@ -120,7 +120,7 @@ void AudioSynthWavetableSUCO::setState(int note, int amp, float freq) {
 	env_state = STATE_IDLE;
 	// note ranges calculated by sound font decoder
 	for (i = 0; note > instrument->sample_note_ranges[i]; i++);
-	current_sample = &instrument->samples[i];
+	current_sample = &instrument->samples[i];	
 	if (current_sample == NULL) {
 		sei();
 		return;
@@ -136,6 +136,8 @@ void AudioSynthWavetableSUCO::setState(int note, int amp, float freq) {
 	env_state = STATE_DELAY;
 	PRINT_ENV(STATE_DELAY);
 	state_change = true;
+
+	positionInSample = 0;
 	sei();
 }
 
@@ -204,7 +206,23 @@ void AudioSynthWavetableSUCO::update(void) {
 
 	// filling audio_block two samples at a time
 	p = (uint32_t*)block->data;
-	end = p + AUDIO_BLOCK_SAMPLES / 2;
+
+	if (positionInSample + (AUDIO_BLOCK_SAMPLES / 2) < current_sample->sampleLength) {
+		end = p + AUDIO_BLOCK_SAMPLES / 2;
+		positionInSample = positionInSample + (AUDIO_BLOCK_SAMPLES / 2);
+	} else {
+		end = p;
+		positionInSample = current_sample->sampleLength;
+	}
+
+
+	// Marc: ToDo: hier kann ggf. schon in den nächsten sample gelaufen werden. unterbinden! -> mit 0 auffüllen! ;)
+
+	//	samplelänge - AUDIOBLOCKSAMPLES/2 -> bei jedem update.. wenn ergebnis < AUDIOBLOCKSAMPLES/2 ist, dann mit end auf p + rest setzen
+
+
+
+// was:	end = p + AUDIO_BLOCK_SAMPLES / 2;
 
 	// Main loop to handle interpolation, vibrato (vibrato LFO and modulation LFO), and tremolo (modulation LFO only)
 	// Virbrato and modulation offsets/multipliers are updated depending on the LFO_SMOOTHNESS, with max smoothness (7) being one
@@ -303,7 +321,17 @@ void AudioSynthWavetableSUCO::update(void) {
 
 	// filling audio_block two samples at a time
 	p = (uint32_t *)block->data;
-	end = p + AUDIO_BLOCK_SAMPLES / 2;
+
+	if (positionInSample + (AUDIO_BLOCK_SAMPLES / 2) < current_sample->sampleLength) {
+		end = p + AUDIO_BLOCK_SAMPLES / 2;
+		positionInSample = positionInSample + (AUDIO_BLOCK_SAMPLES / 2);
+	} else {
+		end = p;
+		positionInSample = current_sample->sampleLength;
+	}
+
+
+	//was: end = p + AUDIO_BLOCK_SAMPLES / 2;
 
 	// the following code handles the volume envelope with the following state transitions controlled here:
 	// STATE_DELAY -> STATE_ATTACK -> STATE_HOLD -> STATE_DECAY -> STATE_SUSTAIN or STATE_IDLE

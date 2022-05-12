@@ -327,8 +327,8 @@ void SequencerScreen::hideSampleInfos() {
 }
 
 void SequencerScreen::drawExtMemPercentage(byte percent) {
-  //_screen->fillRect(219, 1, 100, 1, _screen->C_MEMORY_FREE);
-  //_screen->fillRect(219, 1, percent, 1, _screen->C_MEMORY_USED);
+  _screen->fillRect(0, 1, 100, 1, _screen->C_MEMORY_FREE);
+  _screen->fillRect(0, 1, percent, 1, _screen->C_MEMORY_USED);
 }
 
 

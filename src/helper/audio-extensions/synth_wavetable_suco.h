@@ -76,6 +76,7 @@ public:
 	struct sample_data {
 		// SAMPLE VALUES
 		 int16_t* sample;
+		 uint32_t sampleLength; // amount of samples to play until the end is reached -> next sample follows immediately in EXTMEM -> amount in 16 bits count
 		 bool LOOP;
 		 int INDEX_BITS;
 		 float PER_HERTZ_PHASE_INCREMENT;
@@ -240,5 +241,7 @@ private:
 	volatile uint32_t mod_phase = TRIANGLE_INITIAL_PHASE;
 	volatile int32_t mod_pitch_offset_init = 0;
 	volatile int32_t mod_pitch_offset_scnd = 0;
+
+	volatile uint32_t positionInSample = 0; // max: sampleLength
 };
 

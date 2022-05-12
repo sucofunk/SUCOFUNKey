@@ -73,6 +73,7 @@ float volumeTempValue = 0;
 
 // ToDo: make configurable
 byte MIDI_channel_Synth = 10;
+byte MIDI_channel_Live = 1;
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
@@ -94,7 +95,6 @@ char activeSongPath[21];
 // Sample Memory initialization - one psram chip with 8mb added to teensy board
 //EXTMEM unsigned int extmemArray[2097152]; // 8mb
 EXTMEM unsigned int extmemArray[4194304]; //  16mb
-
 
 // Interval Timer for playback pattern, metronome, etc..
 IntervalTimer globalTickTimer;
@@ -122,6 +122,9 @@ Sucofunkey keyboard(PIN_SUCOKEY_INT_1, PIN_SUCOKEY_INT_2, PIN_SUCOKEY_INT_3, PIN
 Screen screen(&tft, PIN_SCREEN_BL, 110);
 
 FSIO fsio;
+// store the filenames from /SAMPLES from the SD card in this array for fast access
+DMAMEM FSIO::LibrarySample librarySamples[500];
+
 SampleFSIO sfsio(extmemArray, sizeof(extmemArray), &screen);
 
 Home  homeContext(&keyboard, &screen, activeSongPath, activeSongName);
@@ -147,22 +150,19 @@ AudioConnection          patchCord3(audioResources.wavetable2, 0, audioResources
 AudioConnection          patchCord4(audioResources.wavetable2, 0, audioResources.mixerWav1R, 1);
 AudioConnection          patchCord5(audioResources.wavetable3, 0, audioResources.mixerWav1L, 2);
 AudioConnection          patchCord6(audioResources.wavetable3, 0, audioResources.mixerWav1R, 2);
+AudioConnection          patchCord15(audioResources.wavetable4, 0, audioResources.mixerWav1L, 3);
+AudioConnection          patchCord16(audioResources.wavetable4, 0, audioResources.mixerWav1R, 3);
+AudioConnection          patchCord21(audioResources.wavetable5, 0, audioResources.mixerWav2L, 0);
+AudioConnection          patchCord22(audioResources.wavetable5, 0, audioResources.mixerWav2R, 0);
 AudioConnection          patchCord7(audioResources.wavetable6, 0, audioResources.mixerWav2L, 1);
 AudioConnection          patchCord8(audioResources.wavetable6, 0, audioResources.mixerWav2R, 1);
 AudioConnection          patchCord9(audioResources.wavetable7, 0, audioResources.mixerWav2L, 2);
 AudioConnection          patchCord10(audioResources.wavetable7, 0, audioResources.mixerWav2R, 2);
 AudioConnection          patchCord11(audioResources.wavetable8, 0, audioResources.mixerWav2L, 3);
 AudioConnection          patchCord12(audioResources.wavetable8, 0, audioResources.mixerWav2R, 3);
-AudioConnection          patchCord13(audioResources.playMem7, 0, audioResources.mixerMem2L, 2);
-AudioConnection          patchCord14(audioResources.playMem7, 0, audioResources.mixerMem2R, 2);
-AudioConnection          patchCord15(audioResources.wavetable4, 0, audioResources.mixerWav1L, 3);
-AudioConnection          patchCord16(audioResources.wavetable4, 0, audioResources.mixerWav1R, 3);
+
 AudioConnection          patchCord17(audioResources.playMem1, 0, audioResources.mixerMem1L, 0);
 AudioConnection          patchCord18(audioResources.playMem1, 0, audioResources.mixerMem1R, 0);
-AudioConnection          patchCord19(audioResources.playMem8, 0, audioResources.mixerMem2L, 3);
-AudioConnection          patchCord20(audioResources.playMem8, 0, audioResources.mixerMem2R, 3);
-AudioConnection          patchCord21(audioResources.wavetable5, 0, audioResources.mixerWav2L, 0);
-AudioConnection          patchCord22(audioResources.wavetable5, 0, audioResources.mixerWav2R, 0);
 AudioConnection          patchCord23(audioResources.playMem2, 0, audioResources.mixerMem1L, 1);
 AudioConnection          patchCord24(audioResources.playMem2, 0, audioResources.mixerMem1R, 1);
 AudioConnection          patchCord25(audioResources.playMem3, 0, audioResources.mixerMem1L, 2);
@@ -173,47 +173,91 @@ AudioConnection          patchCord29(audioResources.playMem5, 0, audioResources.
 AudioConnection          patchCord30(audioResources.playMem5, 0, audioResources.mixerMem2R, 0);
 AudioConnection          patchCord31(audioResources.playMem6, 0, audioResources.mixerMem2L, 1);
 AudioConnection          patchCord32(audioResources.playMem6, 0, audioResources.mixerMem2R, 1);
+AudioConnection          patchCord13(audioResources.playMem7, 0, audioResources.mixerMem2L, 2);
+AudioConnection          patchCord14(audioResources.playMem7, 0, audioResources.mixerMem2R, 2);
+AudioConnection          patchCord19(audioResources.playMem8, 0, audioResources.mixerMem2L, 3);
+AudioConnection          patchCord20(audioResources.playMem8, 0, audioResources.mixerMem2R, 3);
+
+AudioConnection          patchCord37(audioResources.playSdRaw, 0, audioResources.mixerSDL, 0);
+AudioConnection          patchCord38(audioResources.playSdRaw, 0, audioResources.mixerSDR, 0);
+
+AudioConnection          patchCord39(audioResources.playMem, 0, audioResources.mixerSDL, 1);
+AudioConnection          patchCord40(audioResources.playMem, 0, audioResources.mixerSDR, 1);
+
+
+AudioConnection          patchCord43(audioResources.mixerSDL, 0, audioResources.mixerPreOutL, 2);
+AudioConnection          patchCord44(audioResources.mixerSDR, 0, audioResources.mixerPreOutR, 2);
+
+AudioConnection          patchCord41(audioResources.recordMixer, audioResources.queue1);
+AudioConnection          patchCord42(audioResources.recordMixer, audioResources.peak1);
+
+
+
 AudioConnection          patchCord33(audioResources.audioInput, 0, audioResources.recordMixer, 0);
 AudioConnection          patchCord34(audioResources.audioInput, 0, audioResources.mixerOutL, 0);
 AudioConnection          patchCord35(audioResources.audioInput, 1, audioResources.recordMixer, 1);
 AudioConnection          patchCord36(audioResources.audioInput, 1, audioResources.mixerOutR, 0);
-AudioConnection          patchCord37(audioResources.playSdRaw, 0, audioResources.mixerSDL, 0);
-AudioConnection          patchCord38(audioResources.playSdRaw, 0, audioResources.mixerSDR, 0);
-AudioConnection          patchCord39(audioResources.playMem, 0, audioResources.mixerSDL, 1);
-AudioConnection          patchCord40(audioResources.playMem, 0, audioResources.mixerSDR, 1);
-AudioConnection          patchCord41(audioResources.recordMixer, audioResources.queue1);
-AudioConnection          patchCord42(audioResources.recordMixer, audioResources.peak1);
-AudioConnection          patchCord43(audioResources.mixerSDL, 0, audioResources.mixerPreOutL, 2);
-AudioConnection          patchCord44(audioResources.mixerSDR, 0, audioResources.mixerPreOutR, 2);
-AudioConnection          patchCord45(audioResources.mixerMem2L, 0, audioResources.mixerMemL, 1);
-AudioConnection          patchCord46(audioResources.mixerMem2R, 0, audioResources.mixerMemR, 1);
+
+
 AudioConnection          patchCord47(audioResources.mixerMem1L, 0, audioResources.mixerMemL, 0);
 AudioConnection          patchCord48(audioResources.mixerMem1R, 0, audioResources.mixerMemR, 0);
-AudioConnection          patchCord49(audioResources.mixerWav2L, 0, audioResources.mixerWavL, 1);
-AudioConnection          patchCord50(audioResources.mixerWav2R, 0, audioResources.mixerWavR, 1);
+AudioConnection          patchCord45(audioResources.mixerMem2L, 0, audioResources.mixerMemL, 1);
+AudioConnection          patchCord46(audioResources.mixerMem2R, 0, audioResources.mixerMemR, 1);
+AudioConnection          patchCord89(audioResources.mixerMem3L, 0, audioResources.mixerMemL, 2);
+AudioConnection          patchCord90(audioResources.mixerMem3R, 0, audioResources.mixerMemR, 2);
+AudioConnection          patchCord91(audioResources.mixerMem3L, 0, audioResources.mixerMemL, 3);
+AudioConnection          patchCord92(audioResources.mixerMem3R, 0, audioResources.mixerMemR, 3);
+
 AudioConnection          patchCord51(audioResources.mixerWav1L, 0, audioResources.mixerWavL, 0);
 AudioConnection          patchCord52(audioResources.mixerWav1R, 0, audioResources.mixerWavR, 0);
+AudioConnection          patchCord49(audioResources.mixerWav2L, 0, audioResources.mixerWavL, 1);
+AudioConnection          patchCord50(audioResources.mixerWav2R, 0, audioResources.mixerWavR, 1);
+
 AudioConnection          patchCord53(audioResources.mixerMemL, 0, audioResources.mixerPreOutL, 0);
 AudioConnection          patchCord54(audioResources.mixerMemR, 0, audioResources.mixerPreOutR, 0);
+
 AudioConnection          patchCord55(audioResources.mixerWavL, 0, audioResources.mixerPreOutL, 1);
 AudioConnection          patchCord56(audioResources.mixerWavR, 0, audioResources.mixerPreOutR, 1);
+
 AudioConnection          patchCord57(audioResources.mixerPreOutL, 0, audioResources.recordMixer, 2);
 AudioConnection          patchCord58(audioResources.mixerPreOutL, 0, audioResources.mixerOutL, 1);
 AudioConnection          patchCord59(audioResources.mixerPreOutR, 0, audioResources.recordMixer, 3);
 AudioConnection          patchCord60(audioResources.mixerPreOutR, 0, audioResources.mixerOutR, 1);
+
 AudioConnection          patchCord61(audioResources.mixerOutL, 0, audioResources.audioOutput, 0);
 AudioConnection          patchCord62(audioResources.mixerOutR, 0, audioResources.audioOutput, 1);
-AudioConnection          patchCord63(audioResources.wavetableSynth5, 0, audioResources.mixerSynth2, 0);
-AudioConnection          patchCord64(audioResources.wavetableSynth6, 0, audioResources.mixerSynth2, 1);
-AudioConnection          patchCord65(audioResources.wavetableSynth4, 0, audioResources.mixerSynth1, 3);
+
+AudioConnection          patchCord68(audioResources.wavetableSynth1, 0, audioResources.mixerSynth1, 0);
 AudioConnection          patchCord66(audioResources.wavetableSynth2, 0, audioResources.mixerSynth1, 1);
 AudioConnection          patchCord67(audioResources.wavetableSynth3, 0, audioResources.mixerSynth1, 2);
-AudioConnection          patchCord68(audioResources.wavetableSynth1, 0, audioResources.mixerSynth1, 0);
-AudioConnection          patchCord69(audioResources.mixerSynth1, 0, audioResources.mixerSynth, 0);
-AudioConnection          patchCord70(audioResources.mixerSynth2, 0, audioResources.mixerSynth, 1);
+AudioConnection          patchCord65(audioResources.wavetableSynth4, 0, audioResources.mixerSynth1, 3);
+AudioConnection          patchCord63(audioResources.wavetableSynth5, 0, audioResources.mixerSynth2, 0);
+AudioConnection          patchCord64(audioResources.wavetableSynth6, 0, audioResources.mixerSynth2, 1);
+
 AudioConnection          patchCord71(audioResources.mixerSynth, 0, audioResources.mixerPreOutL, 3);
 AudioConnection          patchCord72(audioResources.mixerSynth, 0, audioResources.mixerPreOutR, 3);
 
+AudioConnection          patchCord69(audioResources.mixerSynth1, 0, audioResources.mixerSynth, 0);
+AudioConnection          patchCord70(audioResources.mixerSynth2, 0, audioResources.mixerSynth, 1);
+
+AudioConnection          patchCord73(audioResources.playMemLive1, 0, audioResources.mixerMem3L, 0);
+AudioConnection          patchCord74(audioResources.playMemLive1, 0, audioResources.mixerMem3R, 0);
+AudioConnection          patchCord75(audioResources.playMemLive2, 0, audioResources.mixerMem3L, 1);
+AudioConnection          patchCord76(audioResources.playMemLive2, 0, audioResources.mixerMem3R, 1);
+AudioConnection          patchCord77(audioResources.playMemLive3, 0, audioResources.mixerMem3L, 2);
+AudioConnection          patchCord78(audioResources.playMemLive3, 0, audioResources.mixerMem3R, 2);
+AudioConnection          patchCord79(audioResources.playMemLive4, 0, audioResources.mixerMem3L, 3);
+AudioConnection          patchCord80(audioResources.playMemLive4, 0, audioResources.mixerMem3R, 3);
+AudioConnection          patchCord81(audioResources.playMemLive5, 0, audioResources.mixerMem4L, 0);
+AudioConnection          patchCord82(audioResources.playMemLive5, 0, audioResources.mixerMem4R, 0);
+AudioConnection          patchCord83(audioResources.playMemLive6, 0, audioResources.mixerMem4L, 1);
+AudioConnection          patchCord84(audioResources.playMemLive6, 0, audioResources.mixerMem4R, 1);
+AudioConnection          patchCord85(audioResources.playMemLive7, 0, audioResources.mixerMem4L, 2);
+AudioConnection          patchCord86(audioResources.playMemLive7, 0, audioResources.mixerMem4R, 2);
+AudioConnection          patchCord87(audioResources.playMemLive8, 0, audioResources.mixerMem4L, 3);
+AudioConnection          patchCord88(audioResources.playMemLive8, 0, audioResources.mixerMem4R, 3);
+
+// next patchcord nr: 93
 
 // --- END of AudioConnections
 
@@ -456,6 +500,8 @@ void setup() {
   globalTickTimer.begin(globalTick, globalTickInterval);
   globalTickTimerRec.begin(globalTickRec, globalTickIntervalRec);
 
+  fsio.readLibrarySamplesFromSD(librarySamples);
+
   delay(400); // small delay for better readability on screen
   
   if (ok) {
@@ -591,8 +637,23 @@ void loop() {
 
   if (MIDI.read()) { 
     // route midi messages for MIDI_channel_Synth and system messages to the synth
-    if (MIDI.getChannel() == MIDI_channel_Synth || MIDI.getChannel() == 0) {
+    if ((MIDI.getChannel() == MIDI_channel_Synth || MIDI.getChannel() == 0) && currentAppContext == SYNTH) {
+      Serial.println("Synth context midi");
       synthContext.receiveMidiData(MIDI.getType(), MIDI.getData1(), MIDI.getData2());
+    }
+
+    if (MIDI.getChannel() == MIDI_channel_Live) {
+/*      Serial.print("MIDI::");
+      Serial.print(MIDI.getChannel());
+      Serial.print("::");
+      Serial.print(MIDI.getType());
+      Serial.print("::");
+      Serial.print(MIDI.getData1());
+      Serial.print("::");
+      Serial.println(MIDI.getData2());
+*/
+      //keyboard.setLEDState(Sucofunkey::LED_PLAY, true);
+      liveContext.receiveMidiData(MIDI.getType(), MIDI.getData1(), MIDI.getData2());
     }
   }
 }
@@ -690,7 +751,7 @@ void handleKeyboardEventQueue() {
           sfsio.writeAllSamplesToWaveformBuffer();
 
           // load sequencer data from SD card
-//sequencerContext.loadFromSD();
+          //sequencerContext.loadFromSD();
 
           changeContext(AppContext::HOME);          
           break;
