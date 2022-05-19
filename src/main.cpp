@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------------------------------
 
-    SUCOFUNKey v3
+    SUCOFUNKey
 
     This project is the firmware - named SUCOFUNKey - for Beatmaker's Sketchbook from SUCOFUNK. 
 
