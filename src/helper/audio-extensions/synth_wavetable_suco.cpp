@@ -239,12 +239,10 @@ void AudioSynthWavetableSUCO::update(void) {
 	p = (uint32_t*)block->data;
 
 
-	if (positionInSample + (AUDIO_BLOCK_SAMPLES / 2) < current_sample->sampleLength) {
-		end = p + AUDIO_BLOCK_SAMPLES / 2;
-		positionInSample = positionInSample + (AUDIO_BLOCK_SAMPLES / 2);
+	if (positionInSample + AUDIO_BLOCK_SAMPLES < current_sample->sampleLength) {
+		end = p + (AUDIO_BLOCK_SAMPLES / 2);
 	} else {
 		end = p;
-		positionInSample = current_sample->sampleLength;
 		env_state = STATE_IDLE; // marc: will stop playing the rest.. maybe a tiny bit is not being played in the end..
 	}
 
@@ -341,6 +339,7 @@ void AudioSynthWavetableSUCO::update(void) {
 			*p = pack_16b_16b(s2, s1);
 		}
 	}
+
 	// fill with 0s if non-looping sample that ended prematurely
 	if (p < end) {
 		env_state = STATE_IDLE;
@@ -351,12 +350,13 @@ void AudioSynthWavetableSUCO::update(void) {
 	// filling audio_block two samples at a time
 	p = (uint32_t *)block->data;
 
-	if (positionInSample + (AUDIO_BLOCK_SAMPLES / 2) < current_sample->sampleLength) {
-		end = p + AUDIO_BLOCK_SAMPLES / 2;
-		positionInSample = positionInSample + (AUDIO_BLOCK_SAMPLES / 2);
+	if (positionInSample + AUDIO_BLOCK_SAMPLES < current_sample->sampleLength) {
+		end = p + (AUDIO_BLOCK_SAMPLES / 2);
+		positionInSample = positionInSample + AUDIO_BLOCK_SAMPLES;
 	} else {
 		end = p;
 		positionInSample = current_sample->sampleLength;
+		env_state = STATE_IDLE;
 	}
 
 	//was: end = p + AUDIO_BLOCK_SAMPLES / 2;

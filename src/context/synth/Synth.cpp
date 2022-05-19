@@ -62,8 +62,6 @@ void Synth::handleEvent(Sucofunkey::keyQueueStruct event) {
 
     if (event.type == Sucofunkey::KEY_FN_NOTE) {      
       if (event.pressed) {
-        Serial.println("start");
-
         byte sampleId0 = _keyboard->getSampleIdByEventKey(event.index)-1;
         
         if (_sfsio->sampleBanksStatus[_keyboard->getBank()-1][sampleId0]) {          
@@ -161,6 +159,8 @@ void Synth::receiveMidiData(midi::MidiType type, int d1, int d2) {
 
 
 void Synth::_playNextFreeWavetable(byte note, boolean play) {
+
+  _sfsio->debugInfos();
 
   // No sample as instrument selected? -> ingnore..
   if (_currentInstrumentId == 255) return;

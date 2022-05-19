@@ -132,6 +132,8 @@ class SampleFSIO {
         long pixelToWaveformSamples[73];
         long sampleLengthMS[73];
 
+        void debugInfos();
+
     private:
         unsigned int *_extmemArray;
         long _extmemSize;

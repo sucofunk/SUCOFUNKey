@@ -366,26 +366,15 @@ Serial.println(filename);
     _extmemArray[startOffset+i] = (buff[0] << 16) + (buff[1]);
   }
 
-  // extend sample to be a multiple of the audio buffer to prevent clipping with the next sample in memory, when playing pitched samples
-/*  uint8_t gap = c % AUDIO_BLOCK_SAMPLES;
-
-  Serial.print("C::");
-  Serial.println(c);
-  Serial.print("AUDIO_BLOCK_SAMPLES::");
-  Serial.println(AUDIO_BLOCK_SAMPLES);
-
-  if (gap > 0) {
-    Serial.print("GAP::");
-    Serial.println(gap);
-    for (int i=0; i<gap; i++) {
-      _extmemArray[startOffset+c+i] = 0;
-    }
+  // extend sample to to prevent clipping with the next sample in memory, when playing pitched samples
+  // A VERY DIRTY HACK AND WASTES A LOT OF EXTMEM, but otherwise the wavetable syth object needs to be rewritten. Any volunt here? ;)
+  for (long i=0; i<10240; i++) {
+    _extmemArray[startOffset+c+i] = 0;
   }
-*/
 
   f.close();
 
-  return startOffset+c+2;
+  return startOffset+c+2+10240;
 }
 
 // sampleNumber according to array 0..71
@@ -498,22 +487,11 @@ long SampleFSIO::getByteCountFromMs(long ms) {
 void SampleFSIO::generateInstrument(byte sampleNumber, int baseNote) {
   // retrieve sample size/length from extmem (first 32 bits -> 8 Bits file format 0x81, followed by 24 bits sample size)
   unsigned int header = getExtmemAddress(sampleNumber)[0];
-//  Serial.println(header, BIN);
-  uint32_t s = getExtmemAddress(sampleNumber)[1];
-//  Serial.println(s, BIN);
-
   uint32_t header_format = 0x8100 << 16;
-  
-  //was: uint32_t sample_length = header - header_format; // length in samples (16 bit) --> file size in byte would be double
-  uint32_t sample_length = header - header_format;
-
-//Serial.print("sampleLength::");
-//Serial.println(sample_length);
-
+  uint32_t sample_length = header - header_format - 4;
   int16_t *sampleData16 = (int16_t*) getExtmemAddressData(sampleNumber);
 
   int LENGTH_BITS = 0;
-  // was: int LENGTH = sample_length*2;
   int LENGTH = sample_length*2;
 
   // "calculate" LENGHT_BITS from LENGTH
@@ -522,10 +500,11 @@ void SampleFSIO::generateInstrument(byte sampleNumber, int baseNote) {
   while (LENGTH >>= 1) { LENGTH_BITS++; }
 
   // was:: int LOOPEND = (LENGTH/2) -1;
-  int LOOPEND = (LENGTH/2);
+  //int LOOPEND = (LENGTH/2);
+  int LOOPEND = LENGTH;
   int LOOPSTART = 0;
 
-  _sampleData[sampleNumber-1][0].sample = (int16_t*)sampleData16;
+  _sampleData[sampleNumber-1][0].sample = (int16_t*)sampleData16 + 2; // skipt first 32 bits with header information
   _sampleData[sampleNumber-1][0].sampleLength = sample_length;
   _sampleData[sampleNumber-1][0].LOOP = false;
   _sampleData[sampleNumber-1][0].INDEX_BITS = LENGTH_BITS;
@@ -533,7 +512,7 @@ void SampleFSIO::generateInstrument(byte sampleNumber, int baseNote) {
   _sampleData[sampleNumber-1][0].PER_HERTZ_PHASE_INCREMENT = (1 << (32 - LENGTH_BITS)) * AUDIO_SAMPLE_RATE_EXACT / WAVETABLE_NOTE_TO_FREQUENCY(baseNote) / AUDIO_SAMPLE_RATE_EXACT + 0.5;
   //_sampleData[sampleNumber-1][0].PER_HERTZ_PHASE_INCREMENT = ((0x80000000 >> (LENGTH_BITS-1)) * 1.0 * (44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / WAVETABLE_NOTE_TO_FREQUENCY(baseNote) + 0.5;
   
-  _sampleData[sampleNumber-1][0].MAX_PHASE = ((uint32_t)LENGTH - 4) << (32 - LENGTH_BITS);
+  _sampleData[sampleNumber-1][0].MAX_PHASE = ((uint32_t)LENGTH-4) << (32 - LENGTH_BITS);
   _sampleData[sampleNumber-1][0].LOOP_PHASE_END = ((uint32_t)LOOPEND - 1) << (32 - LENGTH_BITS);
   _sampleData[sampleNumber-1][0].LOOP_PHASE_LENGTH = (((uint32_t)LOOPEND - 1) << (32 - LENGTH_BITS)) - (((uint32_t)LOOPSTART - 1) << (32 - LENGTH_BITS));
   _sampleData[sampleNumber-1][0].INITIAL_ATTENUATION_SCALAR = uint16_t(UINT16_MAX * WAVETABLE_DECIBEL_SHIFT(-0 / 100.0));
@@ -585,3 +564,15 @@ AudioSynthWavetableSUCO::instrument_data SampleFSIO::getInstrumentDataBySample(b
   // ToDo: check if instrumentData is available. if not, create it with standard parameters
   return _instrumentData[sampleNumber-1];
 };
+
+
+void SampleFSIO::debugInfos() {
+/*    Serial.println("----------");
+    for (int i=0; i<72; i++) {
+      Serial.print("Offset ");
+      Serial.print(i);
+      Serial.print("::");
+      Serial.println(_sampleOffsets[i]);
+    }
+*/
+}

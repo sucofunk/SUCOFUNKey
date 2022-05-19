@@ -144,7 +144,7 @@ void Recorder::setActive(boolean active) {
 }
 
 void Recorder::cancelRecording() {
-  currentState == RECORDER_NOTHING;
+  currentState = RECORDER_NOTHING;
   _keyboard->setInput(Sucofunkey::INPUT_NONE);
   _audioResources->muteInput();
   _audioResources->muteResampling();

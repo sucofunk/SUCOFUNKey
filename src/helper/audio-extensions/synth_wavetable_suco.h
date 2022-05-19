@@ -273,5 +273,6 @@ private:
 	volatile int32_t mod_pitch_offset_scnd = 0;
 
 	volatile uint32_t positionInSample = 0; // max: sampleLength
+	volatile uint32_t tempPositionInSample = 0; // max: sampleLength
 };
 
