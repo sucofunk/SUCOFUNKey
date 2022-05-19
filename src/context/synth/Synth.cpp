@@ -142,7 +142,7 @@ void Synth::_playNextFreeWavetable(byte note, boolean play) {
           _polyKeyIDs[i] = note;
 
         // play pitched note: bankstart(1:29|2:53|3:77)+sampleId1-1 if in keyboard mode
-        _sfsio->changeInstrumentParameters(_currentInstrumentId, _loop, _val1, _val2, _val3, _val4, _val5, _val6, _val7, _val8);
+        //_sfsio->changeInstrumentParameters(_currentInstrumentId, _loop, _val1, _val2, _val3, _val4, _val5, _val6, _val7, _val8);
         
         switch(i) {
           case 0:

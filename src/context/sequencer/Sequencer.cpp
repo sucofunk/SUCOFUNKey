@@ -484,8 +484,8 @@ void Sequencer::loadSetPlay(byte bank1, byte sample1, byte channel, int position
     _audioResources->playMem.stop();
 
     SongStructure::sampleStruct s;
-    s.baseMidiNote = 64;
-    s.pitchedNote = 64;
+    s.baseMidiNote = 60;
+    s.pitchedNote = 60;
     s.probability = 100;
     s.sampleNumber = (bank1-1)*24+sample1;
     s.stereoPosition = 64;

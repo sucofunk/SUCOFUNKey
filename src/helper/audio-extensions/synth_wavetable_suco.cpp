@@ -207,22 +207,16 @@ void AudioSynthWavetableSUCO::update(void) {
 	// filling audio_block two samples at a time
 	p = (uint32_t*)block->data;
 
+
 	if (positionInSample + (AUDIO_BLOCK_SAMPLES / 2) < current_sample->sampleLength) {
 		end = p + AUDIO_BLOCK_SAMPLES / 2;
 		positionInSample = positionInSample + (AUDIO_BLOCK_SAMPLES / 2);
 	} else {
 		end = p;
 		positionInSample = current_sample->sampleLength;
+		env_state = STATE_IDLE; // marc: will stop playing the rest.. maybe a tiny bit is not being played in the end..
 	}
 
-
-	// Marc: ToDo: hier kann ggf. schon in den nächsten sample gelaufen werden. unterbinden! -> mit 0 auffüllen! ;)
-
-	//	samplelänge - AUDIOBLOCKSAMPLES/2 -> bei jedem update.. wenn ergebnis < AUDIOBLOCKSAMPLES/2 ist, dann mit end auf p + rest setzen
-
-
-
-// was:	end = p + AUDIO_BLOCK_SAMPLES / 2;
 
 	// Main loop to handle interpolation, vibrato (vibrato LFO and modulation LFO), and tremolo (modulation LFO only)
 	// Virbrato and modulation offsets/multipliers are updated depending on the LFO_SMOOTHNESS, with max smoothness (7) being one
@@ -233,7 +227,9 @@ void AudioSynthWavetableSUCO::update(void) {
 	// diviation oscillating with a triangle wave at a given frequency; the following implementation gets the critical points of those
 	// oscillations correct, but linearly interpolates the *frequency* and *amplitude* range between those points, which technically results
 	// in a "bowing" of the triangle wave curve relative to what it should be (although this typically isn't audible)
-	while (p < end) {
+
+	while (p < end) {		
+
 		// TODO: more elegant support of non-looping samples
 		if (s->LOOP == false && tone_phase >= s->MAX_PHASE) break;
 
@@ -293,8 +289,10 @@ void AudioSynthWavetableSUCO::update(void) {
 			tone_phase += tone_incr + tone_incr_offset;
 			// break if no loop and we've gone past the end of the sample
 			if (s->LOOP == false && tone_phase >= s->MAX_PHASE) break;
+
 			// move phase back if a looped sample has overstepped its loop
 			tone_phase = s->LOOP && tone_phase >= s->LOOP_PHASE_END ? tone_phase - s->LOOP_PHASE_LENGTH : tone_phase;
+
 
 			//repeat as above
 			index = tone_phase >> (32 - s->INDEX_BITS);
@@ -329,7 +327,6 @@ void AudioSynthWavetableSUCO::update(void) {
 		end = p;
 		positionInSample = current_sample->sampleLength;
 	}
-
 
 	//was: end = p + AUDIO_BLOCK_SAMPLES / 2;
 
