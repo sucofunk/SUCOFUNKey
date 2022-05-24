@@ -38,17 +38,43 @@ HomeScreen::HomeScreen(Sucofunkey *keyboard, Screen *screen, char *activeSongNam
     _keyboard = keyboard;
     _screen = screen;    
     _activeSongName = activeSongName;
+    _supporter = SupporterScreen(keyboard, screen);
 }
 
 void HomeScreen::handleEvent(Sucofunkey::keyQueueStruct event) {
+    if (event.pressed) {
+        switch (_activeComponent) {
+            case SUPPORTER:
+                if (event.index == Sucofunkey::MENU_BACK) {                    
+                    showGeneralInformation();
+                } else {
+                    _supporter.handleEvent(event);
+                }
+                
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+boolean HomeScreen::passEventsToMe() {
+    if (_activeComponent == SUPPORTER) return true;
+    return false;
 }
 
 long HomeScreen::receiveTimerTick() {
-    return 100000;
+    if (_activeComponent == SUPPORTER) {
+        return _supporter.receiveTimerTick();
+    } else {
+        return 100000;
+    }
 }
 
 
 void HomeScreen::showGeneralInformation() {
+    _activeComponent = NONE;
+
     Screen::Area text1 = {_screen->AREA_SCREEN.x1, 90, _screen->AREA_SCREEN.x2-21, 130, false, _screen->C_ORANGE};
     Screen::Area projectTitle = {_screen->AREA_SCREEN.x1, _screen->AREA_SCREEN.y1, _screen->AREA_SCREEN.x2, _screen->AREA_SCREEN.x1 + 90, false, _screen->C_BLACK};
 
@@ -71,5 +97,7 @@ void HomeScreen::showGeneralInformation() {
 };
 
 
-void HomeScreen::showSupporterScreen() {
+void HomeScreen::showSupporterScreen() {    
+    _activeComponent = SUPPORTER;
+    _supporter.show();
 }

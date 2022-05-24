@@ -211,7 +211,7 @@ class Screen {
         uint16_t _x, _y = 0;
 
         int _BL_PIN;
-        int _BL_brightness = 110;
+        int _BL_brightness = 127;
         boolean _BL_on = true;
 
         void _setColor(const int *colorArr);

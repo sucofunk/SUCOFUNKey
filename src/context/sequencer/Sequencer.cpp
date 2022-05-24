@@ -153,7 +153,9 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::ENCODER_1_PUSH:
             if (_song.getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE || _song.getPosition(_cursorChannel, _cursorPosition).type == SongStructure::PARAMETER_CHANGE_SAMPLE) {
                 _song.setVelocity(_cursorChannel, _cursorPosition, static_cast<byte>(_keyboard->getFaderValue(1, 127)));
-                _sequencerScreen.updateSampleInfoVolume(_cursorChannel, _cursorPosition);              
+                _sequencerScreen.updateSampleInfoVolume(_cursorChannel, _cursorPosition);
+                
+                if (!_isPlaying) { playMixedSample(_cursorChannel, _cursorPosition); }   
             }
           break;
         // set panning from fader          
@@ -161,10 +163,27 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
             if (_song.getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE || _song.getPosition(_cursorChannel, _cursorPosition).type == SongStructure::PARAMETER_CHANGE_SAMPLE) {
                 _song.setStereoPosition(_cursorChannel, _cursorPosition, static_cast<byte>(_keyboard->getFaderValue(1, 127)));
                 _sequencerScreen.updateSampleInfoPanning(_cursorChannel, _cursorPosition);
+
+                if (!_isPlaying) { playMixedSample(_cursorChannel, _cursorPosition); }   
             }
           break;
-      }    
-      
+        // set pitch from fader          
+        case Sucofunkey::ENCODER_3_PUSH:
+            if (_song.getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE) {
+                _song.setPitchByMidiNote(_cursorChannel, _cursorPosition, static_cast<byte>(_keyboard->getFaderValue(35, 85)));                
+                _sequencerScreen.updateSampleInfoPitch(_cursorChannel, _cursorPosition);
+
+                if (!_isPlaying) { playMixedSample(_cursorChannel, _cursorPosition); }
+            }
+            break;            
+        // set probability from fader          
+        case Sucofunkey::ENCODER_4_PUSH:
+            if (_song.getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE) {
+                _song.setProbability(_cursorChannel, _cursorPosition, static_cast<byte>(_keyboard->getFaderValue(0, 100)));
+                _sequencerScreen.updateSampleInfoProbability(_cursorChannel, _cursorPosition);
+            }
+          break;
+      }          
     }
 
 

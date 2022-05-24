@@ -557,6 +557,9 @@ void globalTickRec() {
 
 void sendTickToActiveContext() {
   switch(currentAppContext) {
+    case  AppContext::HOME:
+           globalTickIntervalNew = homeContext.receiveTimerTick();
+          break;
     case  AppContext::SAMPLER:
            globalTickIntervalNew = samplerContext.receiveTimerTick();
           break;

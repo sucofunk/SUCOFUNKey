@@ -845,6 +845,20 @@ void SongStructure::decreaseProbability(uint8_t channel, uint16_t position) {
     }
 };
 
+// probability needs to be 0..100
+void SongStructure::setProbability(uint8_t channel, uint16_t position, byte probability) {
+    if (_currentPosition.channel == channel && _currentPosition.position == position) {
+        switch(_samplePointers[_currentPosition.samplePointerIndex].type) {
+            case SAMPLE:
+                    _sampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].probability = probability;
+                break;
+            default:
+                break;
+        }
+    } else {
+        // ToDo: is this possible? need to check..
+    }
+};
 
 
 void SongStructure::setSongLength(uint16_t songLength) {

@@ -118,6 +118,7 @@ class SongStructure {
 
         void increaseProbability(uint8_t channel, uint16_t position);
         void decreaseProbability(uint8_t channel, uint16_t position);
+        void setProbability(uint8_t channel, uint16_t position, byte probability);
 
         void setSongLength(uint16_t songLength);
         uint16_t getSongLength();

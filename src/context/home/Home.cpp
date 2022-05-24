@@ -43,6 +43,11 @@ Home::Home(Sucofunkey *keyboard, Screen *screen, char *activeSongPath, char *act
 }
 
 void Home::handleEvent(Sucofunkey::keyQueueStruct event) {
+    if (_homeScreen.passEventsToMe()) {
+      _homeScreen.handleEvent(event);
+      return;
+    }
+
     if (event.pressed) {
       switch(event.index) {
         case Sucofunkey::CURSOR_LEFT: 
@@ -66,10 +71,27 @@ void Home::handleEvent(Sucofunkey::keyQueueStruct event) {
               } else {
                 _bottomMenu.showMenu(true);
               }
-              break;            
+              break;                    
+      }
+
+      if (event.type == Sucofunkey::EVENT_APPLICATION) {
+        switch(event.index) {
+          case Sucofunkey::BOTTOM_NAV_ITEM3:
+            _bottomMenu.showMenu(false);
+            _homeScreen.showSupporterScreen();
+            break;
+          default: 
+            break;  
+        }
       }
     }
+
 }
+
+long Home::receiveTimerTick() {
+  return _homeScreen.receiveTimerTick();
+}
+
 
 void Home::setActive(boolean active) {
   if (active) {

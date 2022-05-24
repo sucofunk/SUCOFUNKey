@@ -28,41 +28,48 @@
 
    ---------------------------------------------------------------------------------------------- */
    
-#ifndef HomeScreen_h
-#define HomeScreen_h
+#ifndef SupporterScreen_h
+#define SupporterScreen_h
 
 #include <Arduino.h>
 #include "../../hardware/Sucofunkey.h"
-#include "../../helper/FSIO.h"
 #include "../Screen.h"
-#include "SupporterScreen.h"
 
-class HomeScreen {
+class SupporterScreen {
     public:
-        HomeScreen();
-        HomeScreen(Sucofunkey *keyboard, Screen *screen, char *activeSongName);
+        SupporterScreen();
+        SupporterScreen(Sucofunkey *keyboard, Screen *screen);
         void handleEvent(Sucofunkey::keyQueueStruct event);
         long receiveTimerTick();
-        boolean passEventsToMe();
-        void showSupporterScreen();
-        void showGeneralInformation();
-
+        void show();        
     private:
-        enum Components
-        {
-            NONE = 0,
-            INSTRUCTIONS = 1,
-            SETTINGS = 2,
-            SUPPORTER = 3
-        };
+        typedef struct  {
+            int x = 64;
+            int y = 64;
+            int z = 0;
+            int lastXPixel = 0;
+            int lastYPixel = 0;
+            int speed = 0;
+        } Star;
 
         Sucofunkey *_keyboard;
         Screen *_screen;
-        FSIO *_fsio;
-        char *_activeSongName;
-        char *_songsBasePath;
-        SupporterScreen _supporter;
-        Components _activeComponent = NONE;
+        boolean _isRunning = false;
+        void _update();
+
+        Star stars[50];
+        int _offsetX;
+        int _offsetY;
+        float _scaleZx;
+        float _scaleZy;
+
+        uint16_t _colors[4] = {_screen->RGBtoColor(125, 125, 125), _screen->RGBtoColor(150, 150, 150), _screen->RGBtoColor(200, 200, 200), _screen->RGBtoColor(254, 254, 254)};
+
+        char _textBuffer[50];
+        uint8_t _updatesCount = 0;
+        uint8_t _supporterCount = 7;
+        uint8_t _supporterPosition = 0;
+        String _supporterText[7] = {"Thanks for your support... ", "Richie Hawtin ", "Halil Kleinmann ", "MrKabelbruch ", "STRANGE BOUND ", "www.sucofunk.com/donate ", "www.sucofunk.com/donate "};
 };
 
 #endif

@@ -276,6 +276,7 @@ class Sucofunkey {
         static const int CHECKREQUEST = 318; // system check for buttons, encoders, fader, led
         static const int SAMPLE_LIBRARY_SELECTED = 319; // sample in sampleselector selected -> used to select a sample from sample library at /SAMPLES/ on SD
         static const int SAMPLE_LIBRARY_CANCEL = 320;
+        static const int MENU_BACK = 321;
 
         static const int BLACKKEY_NAV_ITEM1 = 340;
         static const int BLACKKEY_NAV_ITEM2 = 341;

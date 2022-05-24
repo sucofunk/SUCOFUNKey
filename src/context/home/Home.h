@@ -41,6 +41,7 @@ class Home {
         Home(Sucofunkey *keyboard, Screen *screen, char *activeSongPath, char *activeSongName);
         void setActive(boolean active);
         void handleEvent(Sucofunkey::keyQueueStruct event);
+        long receiveTimerTick();
     private:
         Sucofunkey *_keyboard;
         Screen *_screen;
