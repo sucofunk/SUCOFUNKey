@@ -101,11 +101,14 @@ Currently I am creating almost everything by myself. So the next steps might tak
 - <del>Implementation Song mode (chaining multiple pattern to a song)</del>
 - Move settings from code to a configuration menu within the device
 - More features for the sampler (fade in/out)
+- add feature to select and move blocks in the sequencer
+- add snippets to the sequencer
+- add another zoom level to the sequencer
 
 ## Roadmap
 - Effects channels
 - USB Audio
 - File system integration to a computer via USB to load/save samples from/to device
 - Add MIDI to the sequencer to control external sound devices
-- Live mode with <del>MIDI Integration</del>
+- Live mode with <del>MIDI Integration</del> and snippets
 - Synthesizer
