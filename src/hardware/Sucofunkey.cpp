@@ -635,8 +635,8 @@ int Sucofunkey::getFaderValue(int scaleMin, int scaleMax) {
 
 void Sucofunkey::switchFaderLED(bool on) {
   digitalWrite(faderLEDPin, on ? HIGH : LOW);
-  Serial.print("faderLED::");
-  Serial.println(on);
+//  Serial.print("faderLED::");
+//  Serial.println(on);
 }
 
 
@@ -644,6 +644,7 @@ void Sucofunkey::switchLEDsOff() {
     for (int i=0; i<32; i++) {
       setLEDState(i, false);
     }
+    switchFaderLED(false);
 }
 
 byte Sucofunkey::getSampleIdByEventKey(byte eventKey) {

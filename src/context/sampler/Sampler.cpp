@@ -389,10 +389,13 @@ void Sampler::setActive(boolean active) {
     }
 
   } else {
+    currentState = SAMPLE_NOTHING;
     _isActive = false;
     _keyboard->setBank(0);
     _blinkActiveSample = false;
     _keyboard->setLEDState(_activeSampleLEDPin, false);
+    _keyboard->switchFaderLED(false);
+    _faderState = IDLE;
     _audioResources->playSdRaw.stop();
   }
 }
@@ -534,13 +537,16 @@ void Sampler::cancel() {
   if (_activeSampleSlot == 0) {
     _samplerScreen.showSampleInfo(72, 1.0);
   } else {
-    _samplerScreen.showSampleInfo(_keyboard->getBank()-1, _activeSampleSlot-1, 1.0);    
+    _samplerScreen.showSampleInfo(_keyboard->getBank()-1, _activeSampleSlot-1, 1.0);
   }
   
   _bottomMenu.showMenu(false);
   _trimMarkerStartPosition = 0;
   _trimMarkerEndPosition = 319;
   _volumeScaleFactor = 1.0;
+
+  _keyboard->switchFaderLED(false);
+  _faderState = IDLE;
 }
 
 void Sampler::indicatePlayerPosition() {

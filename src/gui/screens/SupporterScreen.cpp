@@ -93,7 +93,7 @@ void SupporterScreen::_update() {
     // draw Text
     _screen->drawTextInArea(_screen->AREA_SCREEN, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _supporterPosition == 0 ? _screen->C_WHITE :_screen->C_ORANGE, _textBuffer);
 
-    if (_updatesCount > 160) {
+    if (_updatesCount > 120) {
         _updatesCount = 0;
         _screen->drawTextInArea(_screen->AREA_SCREEN, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_BLACK, _textBuffer);
         if (_supporterPosition < _supporterCount-1) {
