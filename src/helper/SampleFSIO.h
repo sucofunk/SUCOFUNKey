@@ -51,6 +51,8 @@ class SampleFSIO {
         
         long copyRawFromSdToMemory(const char *filename, long startOffset);
         boolean addSampleToMemory(byte bank1, byte sampleId1, boolean forceReload);
+        boolean addSampleToMemory(byte sampleId);
+        void removeSampleFromMemory(byte sampleId);
         boolean loadSamplesToMemory(boolean *sampleArray);
 
         long getExtmemOffset(byte sampleNumber);
@@ -131,6 +133,9 @@ class SampleFSIO {
         long waveFormBufferLength[73];
         long pixelToWaveformSamples[73];
         long sampleLengthMS[73];
+        
+        boolean sampleAvailable(byte sampleId); // 0..71
+        boolean sampleInMemory(byte sampleId); // 0..71
 
         void debugInfos();
 

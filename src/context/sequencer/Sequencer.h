@@ -145,6 +145,8 @@ class Sequencer {
         uint16_t _savedCursorPosition = 0;
 
         boolean _playLEDon = false;        
+
+        void _checkIfAllSamplesAreLoaded();
 };
 
 #endif

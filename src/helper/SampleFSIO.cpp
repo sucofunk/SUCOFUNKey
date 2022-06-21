@@ -329,9 +329,6 @@ boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart,
 // -------------------------------------------------------------------------------
 long SampleFSIO::copyRawFromSdToMemory(const char *filename, long startOffset) {
   File f;
-  
-Serial.print("copyRawFromSdToMemory::");
-Serial.println(filename);
 
   if (SD.exists(filename)) {
     f = SD.open(filename, O_READ);  
@@ -380,14 +377,13 @@ Serial.println(filename);
 // sampleNumber according to array 0..71
 boolean SampleFSIO::addSampleToMemory(byte bank1, byte sampleId1, boolean forceReload) {
   byte sample72 = (bank1-1)*24+sampleId1-1;
-
+ 
   if (_sampleOffsets[sample72] == -1 || forceReload) {
       long offset = 0;
 
       offset = _nextOffset;
 
       _nextOffset = copyRawFromSdToMemory(sampleFilename[bank1-1][sampleId1-1], offset);
-//      Serial.println(_nextOffset);
 
       if (_nextOffset == -1) {
         _nextOffset = offset;
@@ -402,8 +398,59 @@ boolean SampleFSIO::addSampleToMemory(byte bank1, byte sampleId1, boolean forceR
         return true;
       }
   } 
-  return true;   
+  return true;
 }
+
+
+// sampleId = 0..71
+void SampleFSIO::removeSampleFromMemory(byte sampleId) {
+
+  // sample to remove is not in memory.. nothing to do..
+  if (_sampleOffsets[sampleId] == -1) return;
+
+
+  // find sampleIDoffset
+  long sampleOffsetToRemove = _sampleOffsets[sampleId];
+
+  byte nextOffsetId = 72;
+  long nextOffset = LONG_MAX;
+  // find next sampleIdOffset
+  for (int i=0; i<72; i++) {
+    if (_sampleOffsets[i] > sampleOffsetToRemove && _sampleOffsets[i] < sampleOffsetToRemove && _sampleOffsets[i] < nextOffset) {
+      nextOffsetId = i;
+    }
+  }
+
+  if (nextOffsetId < 72) {
+    // calculate offset and move all remaining bits in extmem down    
+    long offset = nextOffset - sampleOffsetToRemove;
+
+    long o = nextOffset;
+    
+    // shift everything in extmem at a higher position down
+    while (o < sizeof(_extmemArray)/4) {
+      _extmemArray[o] = _extmemArray[o - offset];
+      o++;
+    }
+
+    // update all other _sampleOffsets which are larger than the offset to remove
+
+    for (int i=0; i<72; i++) {
+      if (_sampleOffsets[i] > sampleOffsetToRemove) {
+        _sampleOffsets[i] = _sampleOffsets[i] - offset;
+      }
+    }
+
+    _nextOffset = _nextOffset - offset;
+
+  } else {
+    // no other offset? -> sample to remove is the last one in extmem. set _nextOffset to the current position
+    _nextOffset = sampleOffsetToRemove;
+  }
+
+  _sampleOffsets[sampleId] = -1;
+}
+
 
 boolean SampleFSIO::loadSamplesToMemory(boolean *sampleArray) {
   
@@ -449,6 +496,18 @@ byte SampleFSIO::getExtmemUsagePercent() {
   float f = (static_cast<float>(_nextOffset) / static_cast<float>(_extmemSize/4)) * 100.0;
   return round(f);
 };
+
+
+ // 0..71 checks if the sample is available on sd card
+boolean SampleFSIO::sampleAvailable(byte sampleId) {      
+  return sampleBanksStatus[sampleId/24][sampleId%24];
+};
+
+ // 0..71 checks if the sample is loaded into extmem
+boolean SampleFSIO::sampleInMemory(byte sampleId) {
+  return _sampleOffsets[sampleId] == -1 ? false : true;
+};
+
 
 
 // ------------------------------------------------------------------------------

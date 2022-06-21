@@ -90,7 +90,7 @@ void AudioResources::unmuteResampling() {
 };
 
 void AudioResources::setInputMic() {
-    activeInput = AUDIO_INPUT_MIC;        
+    activeInput = AUDIO_INPUT_MIC;            
     audioShield.inputSelect(activeInput);
     audioShield.micGain(currentMicGain);
 }

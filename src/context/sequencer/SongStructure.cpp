@@ -925,7 +925,7 @@ boolean * SongStructure::getSamplesUsed()
 
                 while (nextPointer != 0) {
                     if (_samplePointers[nextPointer].type == SAMPLE) {
-                        samplesUsed[_sampleBucket[_samplePointers[_blocks[block].startPointer[c]].typeIndex].sampleNumber-1] = true;
+                        samplesUsed[_sampleBucket[_samplePointers[nextPointer].typeIndex].sampleNumber-1] = true;
                     }
                     nextPointer = _samplePointers[nextPointer].successor;
                 }

@@ -196,7 +196,7 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
           _samplerScreen.showSavingMessage();
 
           // saving..
-          int sampleId72 =  _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
+          int sampleId72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
           uint32_t start = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerStartPosition;
           uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * (_trimMarkerEndPosition+1);
 
@@ -483,7 +483,10 @@ void Sampler::deleteActiveSample() {
   _samplerScreen.showNoSampleInfo();
   currentState = SAMPLE_SELECTED_EMPTY;
 
-  // ToDo: update EXTMEM, if sample was in memory
+  // remove sample from extmem, if it is loaded
+  if (sample72 < 72) {
+    _sfsio->removeSampleFromMemory(sample72);
+  }
 }
 
 void Sampler::saveActiveSample() {
@@ -494,6 +497,14 @@ void Sampler::saveActiveSample() {
   uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * (_trimMarkerEndPosition+1);
 
   char * filename = _activeSampleSlot == 0 ? _sfsio->recorderFilename : _sfsio->sampleFilename[_tempBank-1][_activeSampleSlot-1];
+
+  boolean reloadAfterSaving = false;
+
+  // 72 is latestRecording
+  if (sampleId72 < 72) {
+    _sfsio->removeSampleFromMemory(sampleId72);
+    reloadAfterSaving = true;
+  }
 
   // copy to temp file 
   _sfsio->deleteFile("TEMP.RAW");
@@ -522,6 +533,11 @@ void Sampler::saveActiveSample() {
   _trimMarkerStartPosition = 0;
   _trimMarkerEndPosition = 319;
   _volumeScaleFactor = 1.0;
+
+  // reload the changed sample in extmem, if if was in there before
+  if (reloadAfterSaving) {
+    _sfsio->addSampleToMemory(_tempBank, _activeSampleSlot, false);
+  }
 }
 
 void Sampler::saveActiveSampleAs() {

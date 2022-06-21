@@ -111,7 +111,7 @@ class Sampler {
         int _trimMarkerEndPosition = 319;
         float _volumeScaleFactor = 1.0;
 
-        byte _tempBank;
+        byte _tempBank = 1;
 
         void _blinkSampleSlot(byte sampleId1, boolean on);
         void _play();

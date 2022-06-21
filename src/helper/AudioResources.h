@@ -46,7 +46,7 @@ class AudioResources {
         int activeInput = AUDIO_INPUT_LINEIN;
         
         const float maxVolume = 1.0;
-        const int maxMicGain = 64;
+        const int maxMicGain = 63;
         const byte maxLineInLevel = 15; 
         
         float currentVolume = 0.5;

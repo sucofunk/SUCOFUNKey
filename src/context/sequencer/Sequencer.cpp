@@ -131,6 +131,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
 
         case Sucofunkey::PLAY:
               _calculatePlaybackTickSpeed();
+              _checkIfAllSamplesAreLoaded();
               playSong();
               break;
         case Sucofunkey::PAUSE:
@@ -367,7 +368,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::BLACKKEY_NAV_ITEM7:
           Serial.println("INSTRUMENT");
           break;          
-        case Sucofunkey::BLACKKEY_NAV_ITEM8:
+        case Sucofunkey::BLACKKEY_NAV_ITEM8:        
           Serial.println("EFFECT");
           break;          
         case Sucofunkey::BLACKKEY_NAV_ITEM9:
@@ -630,14 +631,14 @@ void Sequencer::_prepareMixerRouting(byte channel) {
       _playWavetableMixerL = &_audioResources->mixerWav1L;
       _playWavetableMixerR = &_audioResources->mixerWav1R;
       _playMemoryMixerGain = channel;
-      _playWavetableMixerGain = channel;      
+      _playWavetableMixerGain = channel;     
   } else {
       _playMemoryMixerL = &_audioResources->mixerMem2L;
       _playMemoryMixerR = &_audioResources->mixerMem2R;
       _playWavetableMixerL = &_audioResources->mixerWav2L;
       _playWavetableMixerR = &_audioResources->mixerWav2R;
       _playMemoryMixerGain = channel-4;
-      _playWavetableMixerGain = channel-4;
+      _playWavetableMixerGain = channel-4;     
   }
 
   switch (channel) {
@@ -711,10 +712,10 @@ void Sequencer::playMixedSample(byte channel, uint16_t position) {
         break;
     }
 
-// was: if (_pattern.getSampleAt(channel, position).probability == 100 || random(100) <= _pattern.getSampleAt(channel, _playerPosition).probability) {
+    // is there something to do? -> sample probability OK or a parameter change. then go!
     if (random(100) <= probability || _song.getPosition(channel, position).type == SongStructure::PARAMETER_CHANGE_SAMPLE) {
       if (stereoPosition < 64) {
-        _playMemoryMixerL->gain(_playMemoryMixerGain, (velocity/127.0)*1.0 );
+        _playMemoryMixerL->gain(_playMemoryMixerGain, (velocity/127.0)*1.0);
         _playMemoryMixerR->gain(_playMemoryMixerGain, (velocity/127.0)*(stereoPosition/64.0));
 
         _playWavetableMixerL->gain(_playWavetableMixerGain, (velocity/127.0)*1.0 );
@@ -807,4 +808,20 @@ long Sequencer::_calculatePlaybackTickSpeed() {
   _playbackTickSpeed = bpmToMicroseconds(_song.getPlayBackSpeed(), _song.getSongResolution()*4);
 
   return _playbackTickSpeed;
+}
+
+// checks if the used samples in the song are available on disk and already loaded into extmem. if not, do so..
+void Sequencer::_checkIfAllSamplesAreLoaded() {
+  boolean *sampleArray = _song.getSamplesUsed();
+
+  for (byte b=0; b<3; b++) {
+    for (byte s=0; s<24; s++) {
+      if (sampleArray[b*24+s]) {
+        if (_sfsio->sampleAvailable(b*24+s) && !_sfsio->sampleInMemory(b*24+s)) {
+          _sfsio->addSampleToMemory(b+1, s+1, true);
+        }
+        Serial.println();        
+      }
+    }
+  }
 }
