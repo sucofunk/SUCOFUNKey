@@ -69,7 +69,10 @@ class SongStructure {
         } parameterChangeSampleStruct;
 
         typedef struct  {
-            // ToDo: struct for midi notes
+            byte note = 60;
+            byte velocity = 64;
+            byte channel = 11;
+            byte probability = 100; // probability of note to play 0..100
         } midiNoteStruct;
 
 
@@ -87,15 +90,15 @@ class SongStructure {
         
         sampleStruct getSampleFromBucketId(uint16_t sampleBucketIndex);
         parameterChangeSampleStruct getParameterChangeFromBucketId(uint16_t parameterChangeBucketIndex);
+        midiNoteStruct getMidiNoteFromBucketId(uint16_t midiNoteBucketIndex);
 
         boolean setSample(uint8_t channel, uint16_t position, sampleStruct sample);
         boolean setParameterChange(uint8_t channel, uint16_t position, parameterChangeSampleStruct parameterChange);
+        boolean setMidiNote(uint8_t channel, uint16_t position, midiNoteStruct sample);        
         
         uint16_t setNewPointerStructureAt(uint8_t channel, uint16_t position);
         boolean setNoteOff(uint8_t channel, uint16_t position);
-        void removePosition(uint8_t channel, uint16_t position);
-        
-        void shiftPosition(uint8_t channel, uint16_t position, shiftAction action); // not implemented - useless?
+        void removePosition(uint8_t channel, uint16_t position);        
 
         boolean copyPosition(uint8_t fromChannel, uint16_t fromPosition, uint8_t toChannel, uint16_t toPosition, boolean deleteAfterOperation);
         boolean movePosition(uint8_t fromChannel, uint16_t fromPosition, uint8_t toChannel, uint16_t toPosition);
@@ -109,6 +112,10 @@ class SongStructure {
         void stereoPositionTickLeft(uint8_t channel, uint16_t position);
         void stereoPositionTickRight(uint8_t channel, uint16_t position);
         void setStereoPosition(uint8_t channel, uint16_t position, byte stereoPosition); // 0 = left .. 64 = center .. 127=right
+
+        void increaseMidiChannel(uint8_t channel, uint16_t position);
+        void decreaseMidiChannel(uint8_t channel, uint16_t position);
+        void setMidiChannel(uint8_t channel, uint16_t position, byte velocity);
 
         void increasePitchByOne(uint8_t channel, uint16_t position);
         void decreasePitchByOne(uint8_t channel, uint16_t position);
@@ -205,6 +212,9 @@ class SongStructure {
             uint16_t nextParameterChangeBucketIndex = 1;
             uint16_t reuseableParameterChangeBucketIndex = 0;
 
+            uint16_t nextMidiNoteBucketIndex = 1;
+            uint16_t reuseableMidiNoteBucketIndex = 0;
+
             uint16_t songLength = 64; // 1, 2, 3, 4 .. * 16 steps = 64 steps = 1 time
             byte     songResolution = 4; // resulution at Zoomlevel NORMAL
             
@@ -216,10 +226,12 @@ class SongStructure {
         uint16_t _getNextSamplePointerIndex();
         uint16_t _getNextSampleBucketIndex();
         uint16_t _getNextParameterChangeBucketIndex();
+        uint16_t _getNextMidiNoteBucketIndex();
 
         samplePointerStruct _samplePointers[10000];
         sampleStruct _sampleBucket[5000];
         parameterChangeSampleStruct _parameterChangeSampleBucket[5000];
+        midiNoteStruct _midiNoteBucket[500];
 
         uint16_t _maxSongLength = sizeof(_blocks)/sizeof(blockStruct) * BLOCKSIZE; // amount of buckets * blocksize
 

@@ -147,6 +147,10 @@ class Screen {
         const uint16_t C_SELECTOR_SELECTED_BG = C_ORANGE;
         const uint16_t C_PLAYER_POSITION = C_ORANGE;
 
+        const uint16_t C_MIDINOTE = RGBtoColor(17, 138, 178);
+        const uint16_t C_NOTEOFF_INNER = RGBtoColor(255, 0, 0);
+
+
         // Area definitions
         Area AREA_SCREEN = { 0, 0, 319, 239, false, C_BLACK};  // Fullscreen
         Area AREA_HEADLINE = { 0, 0, 319, 25, false, C_BLACK}; // Headline

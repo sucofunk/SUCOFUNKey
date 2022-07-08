@@ -32,6 +32,7 @@
 #include "../../hardware/Sucofunkey.h"
 #include "../../gui/Screen.h"
 #include "Live.h"
+#include "MIDI.h"
 
 Live::Live(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *sfsio, unsigned int *extmemArray, AudioResources *audioResources) {
     _keyboard = keyboard;    
@@ -53,6 +54,14 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::CURSOR_RIGHT:
               break;
         case Sucofunkey::SET:
+              break;
+        case Sucofunkey::PLAY:
+              // MIDI Test 60 = NOTE, 100 = VELOCITY, 11 = CHANNEL
+              //_keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_NOTE_ON, 60, 100, 11);
+              break;
+        case Sucofunkey::PAUSE:
+              // MIDI Test
+              //_keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_NOTE_OFF, 60, 0, 11);
               break;
       }
     }

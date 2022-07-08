@@ -449,6 +449,11 @@ void Sucofunkey::addApplicationEventToQueue(int eventId) {
   keyQueue.push(&k);
 }
 
+void Sucofunkey::addApplicationEventWithDataToQueue(int eventId, byte data1, byte data2, byte data3) {
+  keyQueueStruct k = { eventId, true, false, EVENT_APPLICATION, 0, data1, data2, data3 };
+  keyQueue.push(&k);
+}
+
 
 // -------------------------------------------------------------------------------------------------
 // Keys may be ignored, if a Function is needing full attention e.g. recording

@@ -69,6 +69,8 @@ class SequencerScreen {
         void drawPlayStepIndicator(uint16_t position, boolean draw);
 
         void showSampleInfos(byte channel, uint16_t position, boolean fullInfo);
+        void showMidiNoteInfos(byte channel, uint16_t position);
+        void updateMidiChannel(byte channel, uint16_t position);
         void updateSampleInfoVolume(byte channel, uint16_t position);
         void updateSampleInfoPanning(byte channel, uint16_t position);
         void updateSampleInfoPitch(byte channel, uint16_t position);

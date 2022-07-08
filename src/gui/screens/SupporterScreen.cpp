@@ -50,8 +50,10 @@ long SupporterScreen::receiveTimerTick() {
 }
 
 void SupporterScreen::show() {
-    _screen->clearAreaRTL(_screen->AREA_SCREEN, _screen->C_BLACK, 1);
-    
+    _screen->fadeBacklightOut(2);
+    _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);
+    _screen->fadeBacklightIn(0);
+
     // initializing Stars
     for (int i=0; i<50; i++) {
         stars[i].x = random(-160, 160);

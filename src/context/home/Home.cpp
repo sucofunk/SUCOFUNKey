@@ -40,6 +40,9 @@ Home::Home(Sucofunkey *keyboard, Screen *screen, char *activeSongPath, char *act
     _activeSongName = activeSongName;
     _homeScreen = HomeScreen(_keyboard, _screen, _activeSongName);
     _bottomMenu = BottomMenu(_keyboard, _screen, "Instructions", 0, "Settings", 0, "Supporter", 0);
+    _bottomMenu.disableItem(1);
+    _bottomMenu.disableItem(2);
+    _bottomMenu.selectItem(3);
 }
 
 void Home::handleEvent(Sucofunkey::keyQueueStruct event) {

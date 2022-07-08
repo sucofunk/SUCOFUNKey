@@ -223,18 +223,20 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
       switch(event.index) {
         case Sucofunkey::BOTTOM_NAV_ITEM1:
           // show edit submenu
-          if (_submenuState == SUBMENU_NONE) {
-            _setSubmenuState(SUBMENU_EDIT);
+          if (_submenuState == SUBMENU_NONE && currentState == SAMPLE_SELECTED) {
+            editActiveSample();
+
+            //_setSubmenuState(SUBMENU_EDIT);
             _bottomMenu.showMenu(true);
             return;
           }
 
           // switch to trim/edit mode
-          if (_submenuState == SUBMENU_EDIT && currentState == SAMPLE_SELECTED) {
+/*          if (_submenuState == SUBMENU_EDIT && currentState == SAMPLE_SELECTED) {
             editActiveSample();
             return;
           } 
-          
+*/          
           // save current sample after editing
           if (_submenuState == SUBMENU_SAVE && currentState == SAMPLE_EDIT_TRIM) {
             saveActiveSample();
@@ -590,9 +592,10 @@ void Sampler::_setSubmenuState(SamplerSubmenuState state) {
       break;
     
     case SUBMENU_EDIT:
-      _bottomMenu.setupMenu3("Trim", 0, "Fade", 0, "Rename", 0);
+/*      _bottomMenu.setupMenu3("Trim", 0, "Fade", 0, "Rename", 0);
       _bottomMenu.selectItem(1);
       _submenuState = state;
+*/      
       break;
     
     default:

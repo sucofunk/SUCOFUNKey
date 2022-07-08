@@ -138,7 +138,8 @@ void SequencerScreen::drawSample(byte channel, uint16_t position, boolean drawBa
   switch (sps.type) {
     case SongStructure::NOTE_OFF:
         hideSampleInfos();
-        _screen->fillRect((position-_xPositionOffset)/_zoom->getZoomlevelOffset()*15+3, channel*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_GRID_DARK);      
+        _screen->fillRect((position-_xPositionOffset)/_zoom->getZoomlevelOffset()*15+3, channel*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_WHITE);
+        _screen->fillRect((position-_xPositionOffset)/_zoom->getZoomlevelOffset()*15+5, channel*15+_screen->AREA_CONTENT.y1+6, 6, 6, _screen->C_NOTEOFF_INNER);
       break;
     case SongStructure::SAMPLE:
       _screen->fillRect((position-_xPositionOffset)/_zoom->getZoomlevelOffset()*15+3, channel*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_WHITE); 
@@ -149,6 +150,15 @@ void SequencerScreen::drawSample(byte channel, uint16_t position, boolean drawBa
       _screen->fillRect((position-_xPositionOffset)/_zoom->getZoomlevelOffset()*15+3, channel*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_GRID_BRIGHT);
       showSampleInfos(channel, position, false);
       break;
+    case SongStructure::MIDINOTE:
+      hideSampleInfos();
+      _screen->fillRect((position-_xPositionOffset)/_zoom->getZoomlevelOffset()*15+3, channel*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_MIDINOTE); 
+
+      if (_song->getMidiNoteFromBucketId(sps.typeIndex).velocity == 0) {
+          _screen->fillRect((position-_xPositionOffset)/_zoom->getZoomlevelOffset()*15+5, channel*15+_screen->AREA_CONTENT.y1+6, 6, 6, _screen->C_NOTEOFF_INNER);
+      }
+      showMidiNoteInfos(channel, position);
+      break;      
     default:
       hideSampleInfos();
       if (drawBackground) {
@@ -168,7 +178,8 @@ void SequencerScreen::drawSamples() {
 
       switch (sps.type) {
         case SongStructure::NOTE_OFF:
-          _screen->fillRect(p*15+3, c*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_GRID_DARK);
+          _screen->fillRect(p*15+3, c*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_WHITE);
+          _screen->fillRect(p*15+5, c*15+_screen->AREA_CONTENT.y1+6, 6, 6, _screen->C_NOTEOFF_INNER);
           break;
         case SongStructure::SAMPLE:
           _screen->fillRect(p*15+3, c*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_WHITE);    
@@ -176,6 +187,15 @@ void SequencerScreen::drawSamples() {
         case SongStructure::PARAMETER_CHANGE_SAMPLE:
           _screen->fillRect(p*15+3, c*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_GRID_BRIGHT);
           break;
+
+        case SongStructure::MIDINOTE:
+          _screen->fillRect(p*15+3, c*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_MIDINOTE);    
+          
+          if (_song->getMidiNoteFromBucketId(sps.typeIndex).velocity == 0) {
+              _screen->fillRect(p*15+5, c*15+_screen->AREA_CONTENT.y1+6, 6, 6, _screen->C_NOTEOFF_INNER);
+          }
+          break;
+
         default:
           _screen->fillRect(p*15+3, c*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_BLACK);
           break;
@@ -299,6 +319,44 @@ void SequencerScreen::showSampleInfos(byte channel, uint16_t position, boolean f
 }
 
 
+void SequencerScreen::showMidiNoteInfos(byte channel, uint16_t position) {
+  _sampleInfosVisible = true;
+
+  _screen->hr(_screen->AREA_SEQUENCER_OPTIONS_SAMPLENAME, 1, _screen->C_GRID_DARK);
+  _screen->vr(_screen->AREA_SEQUENCER_OPTION1, 1, _screen->C_GRID_DARK);  
+  _screen->vr(_screen->AREA_SEQUENCER_OPTION2, 1, _screen->C_GRID_DARK);  
+  _screen->vr(_screen->AREA_SEQUENCER_OPTION3, 1, _screen->C_GRID_DARK);  
+   
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTIONS_SAMPLENAME, _screen->TEXTPOSITION_LEFT_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "MIDI Out");
+
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION1, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "velocity");
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION2, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "channel");
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "note");
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION4, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "prob");
+
+  // draw frame for volume bar
+  _screen->vr(_screen->AREA_SEQUENCER_OPTION1_VOLUME, 0.0, _screen->C_WHITE);
+  _screen->vr(_screen->AREA_SEQUENCER_OPTION1_VOLUME, 1.0, _screen->C_WHITE);
+  _screen->hr(_screen->AREA_SEQUENCER_OPTION1_VOLUME, 0.0, _screen->C_WHITE);
+  _screen->hr(_screen->AREA_SEQUENCER_OPTION1_VOLUME, 1.0, _screen->C_WHITE);
+
+  updateSampleInfoVolume(channel, position);
+  updateMidiChannel(channel, position);
+
+  updateSampleInfoPitch(channel, position);
+  updateSampleInfoProbability(channel, position);  
+}
+
+void SequencerScreen::updateMidiChannel(byte channel, uint16_t position) {
+  SongStructure::samplePointerStruct sps = _song->getPosition(channel, position);
+  if (sps.type == SongStructure::MIDINOTE) {
+    sprintf(_cBuff5_3, "%d", _song->getMidiNoteFromBucketId(sps.typeIndex).channel);
+    _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION2_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff5_3);
+  }
+}
+
+
+
 void SequencerScreen::updateSampleInfoVolume(byte channel, uint16_t position) {
   // draw volume/velocity bar
   SongStructure::samplePointerStruct sps = _song->getPosition(channel, position);
@@ -307,6 +365,9 @@ void SequencerScreen::updateSampleInfoVolume(byte channel, uint16_t position) {
   }
   if (sps.type == SongStructure::PARAMETER_CHANGE_SAMPLE) {
     _tempInt = static_cast<int>(_song->getParameterChangeFromBucketId(sps.typeIndex).velocity/2);  
+  }
+  if (sps.type == SongStructure::MIDINOTE) {
+    _tempInt = static_cast<int>(_song->getMidiNoteFromBucketId(sps.typeIndex).velocity/2);
   }
 
   _screen->fillRect(_screen->AREA_SEQUENCER_OPTION1_VOLUME.x1+1+_tempInt, _screen->AREA_SEQUENCER_OPTION1_VOLUME.y1+1, 63-_tempInt, 7, _screen->C_BLACK);
@@ -325,6 +386,10 @@ void SequencerScreen::updateSampleInfoPanning(byte channel, uint16_t position) {
   if (sps.type == SongStructure::PARAMETER_CHANGE_SAMPLE) {
     _tempInt = static_cast<int>(_song->getParameterChangeFromBucketId(sps.typeIndex).stereoPosition/2);  
   }
+  if (sps.type == SongStructure::MIDINOTE) {
+    updateMidiChannel(channel, position);
+    return;
+  }  
 
   _screen->fillArea(_screen->AREA_SEQUENCER_OPTION2_PANNING, _screen->C_BLACK);
   _screen->hr(_screen->AREA_SEQUENCER_OPTION2_PANNING, 0.5, _screen->C_GRID_BRIGHT);
@@ -341,16 +406,27 @@ void SequencerScreen::updateSampleInfoPitch(byte channel, uint16_t position) {
     sprintf(_cBuff5_3, "%d", _song->getSampleFromBucketId(sps.typeIndex).pitchedNote);
     _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff5_3);
   }
+  if (sps.type == SongStructure::MIDINOTE) {
+    // ToD: translate to note names like C#4
+    sprintf(_cBuff5_3, "%d", _song->getMidiNoteFromBucketId(sps.typeIndex).note);
+    _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff5_3);
+  }  
 };
 
 void SequencerScreen::updateSampleInfoProbability(byte channel, uint16_t position) {
   SongStructure::samplePointerStruct sps = _song->getPosition(channel, position);
+    
   if (sps.type == SongStructure::SAMPLE) {
-    sprintf(_cBuff5_4, "%d%%", _song->getSampleFromBucketId(sps.typeIndex).probability );      
+    sprintf(_cBuff5_4, "%d%%", _song->getSampleFromBucketId(sps.typeIndex).probability );  
     _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION4_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff5_4);
   }  
-};
 
+  if (sps.type == SongStructure::MIDINOTE) {
+    sprintf(_cBuff5_4, "%d%%", _song->getMidiNoteFromBucketId(sps.typeIndex).probability );  
+    _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION4_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff5_4);
+  }  
+
+};
 
 void SequencerScreen::hideSampleInfos() {
   if (_sampleInfosVisible) _screen->fillArea(_screen->AREA_SEQUENCER_OPTIONS, _screen->C_BLACK);

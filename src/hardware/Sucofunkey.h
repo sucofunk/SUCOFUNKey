@@ -60,11 +60,14 @@ class Sucofunkey {
         static const byte INPUT_LINE_RESAMPLE = 5;        
 
         typedef struct keyQueueStruct {
-            int  index;
+            int   index;
             bool  pressed;
             bool  ignore;
             byte  type;  // KEY_NOTE | KEY_OPERATION | KEY_FN_NOTE | KEY_FN_OPERATION | KEY_FREE | ENCODER | APPLICATION
             int   value; // can be used to return values from callbacks
+            byte  data1;
+            byte  data2;
+            byte  data3;
         } Key;
 
         // ToDo: move interrupt pins to static const?
@@ -75,6 +78,7 @@ class Sucofunkey {
         boolean hasEvents();
         keyQueueStruct getNextEvent();
         void addApplicationEventToQueue(int eventId);
+        void addApplicationEventWithDataToQueue(int eventId, byte data1, byte data2, byte data3);
         void setIgnoreKeys(bool state);
         void setLEDState(int led, bool state);
 
@@ -288,6 +292,9 @@ class Sucofunkey {
         static const int BLACKKEY_NAV_ITEM8 = 347;        
         static const int BLACKKEY_NAV_ITEM9 = 348;
         static const int BLACKKEY_NAV_ITEM10 = 349;
+
+        static const int MIDI_SEND_NOTE_ON = 500;
+        static const int MIDI_SEND_NOTE_OFF = 501;
 
         // just for debugging to Serial
         void printQueue();

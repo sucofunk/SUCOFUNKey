@@ -51,13 +51,13 @@ Sequencer::Sequencer(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSI
     _sequencerScreen = SequencerScreen(_keyboard, _screen, _sfsio, _audioResources, &zoom);
 
     _blackKeyMenu = BlackKeyMenu(_keyboard, _screen);
-    _blackKeyMenu.setOption(1, "SEL");
+    //_blackKeyMenu.setOption(1, "SEL");
     _blackKeyMenu.setOption(2, "MOV");
     _blackKeyMenu.setOption(3, "DBL");
     
     _blackKeyMenu.setOption(6, "SND");
     _blackKeyMenu.setOption(7, "INS");
-    _blackKeyMenu.setOption(8, "FX");    
+    //_blackKeyMenu.setOption(8, "FX");    
 
     _blackKeyMenu.setOption(9, "LOD");    
     _blackKeyMenu.setOption(10, "SAV");    
@@ -230,6 +230,8 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
     }
 
     if (event.type == Sucofunkey::ENCODER) {
+      SongStructure::pointerType t = _song.getPosition(_cursorChannel, _cursorPosition).type;
+      
       switch (event.index) {
         case Sucofunkey::FN_ENCODER_1:
             if (_isPlaying) {
@@ -278,8 +280,8 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
 
 
 
-          case Sucofunkey::ENCODER_1: 
-            if (_song.getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE || _song.getPosition(_cursorChannel, _cursorPosition).type == SongStructure::PARAMETER_CHANGE_SAMPLE) {
+          case Sucofunkey::ENCODER_1:             
+            if ( t == SongStructure::SAMPLE || t == SongStructure::PARAMETER_CHANGE_SAMPLE || t == SongStructure::MIDINOTE) {
               if (event.pressed) {
                 _song.increaseVelocity(_cursorChannel, _cursorPosition);
               } else {
@@ -289,17 +291,32 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
             }
             break;
           case Sucofunkey::ENCODER_2:
-            if (_song.getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE || _song.getPosition(_cursorChannel, _cursorPosition).type == SongStructure::PARAMETER_CHANGE_SAMPLE) {
               if (event.pressed) {
-                _song.stereoPositionTickRight(_cursorChannel, _cursorPosition);
+                if ( t == SongStructure::SAMPLE || t == SongStructure::PARAMETER_CHANGE_SAMPLE) {
+                  _song.stereoPositionTickRight(_cursorChannel, _cursorPosition);
+                }
+                if ( t == SongStructure::MIDINOTE) {
+                  _song.increaseMidiChannel(_cursorChannel, _cursorPosition);
+                }                
               } else {
-                _song.stereoPositionTickLeft(_cursorChannel, _cursorPosition);
-              }
+                if ( t == SongStructure::SAMPLE || t == SongStructure::PARAMETER_CHANGE_SAMPLE) {
+                  _song.stereoPositionTickLeft(_cursorChannel, _cursorPosition);
+                }
+                if ( t == SongStructure::MIDINOTE) {
+                  _song.decreaseMidiChannel(_cursorChannel, _cursorPosition);
+                }            
+              }              
+
+              if ( t == SongStructure::SAMPLE || t == SongStructure::PARAMETER_CHANGE_SAMPLE) {
                 _sequencerScreen.updateSampleInfoPanning(_cursorChannel, _cursorPosition);              
-            }
+              }
+              if ( t == SongStructure::MIDINOTE) {
+                _sequencerScreen.updateMidiChannel(_cursorChannel, _cursorPosition);              
+              }            
+
             break;
           case Sucofunkey::ENCODER_3:
-            if (_song.getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE) {
+            if ( t == SongStructure::SAMPLE || t == SongStructure::MIDINOTE) {
               if (event.pressed) {
                 _song.increasePitchByOne(_cursorChannel, _cursorPosition);
               } else {
@@ -309,7 +326,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
             }
             break;
           case Sucofunkey::ENCODER_4:
-            if (_song.getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE) {
+            if ( t == SongStructure::SAMPLE || t == SongStructure::MIDINOTE) {
               if (event.pressed) {
                 _song.increaseProbability(_cursorChannel, _cursorPosition);
               } else {
@@ -325,7 +342,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
     if (event.type == Sucofunkey::EVENT_APPLICATION) {
       switch (event.index) {
         case Sucofunkey::BLACKKEY_NAV_ITEM1:
-          Serial.println("SELECT");
+          //Serial.println("SELECT");
           break;
         case Sucofunkey::BLACKKEY_NAV_ITEM2:
               setSequencerState(MOVE_CELL);
@@ -366,10 +383,10 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
             }
           break;
         case Sucofunkey::BLACKKEY_NAV_ITEM7:
-          Serial.println("INSTRUMENT");
+          _song.setMidiNote(_cursorChannel, _cursorPosition, {});
+          _sequencerScreen.drawSample(_cursorChannel, _cursorPosition, false);
           break;          
         case Sucofunkey::BLACKKEY_NAV_ITEM8:        
-          Serial.println("EFFECT");
           break;          
         case Sucofunkey::BLACKKEY_NAV_ITEM9:
           loadFromSD();
@@ -466,7 +483,7 @@ void Sequencer::setSequencerState(SequencerState state) {
             if (_cursorPosition+zoom.getZoomlevelOffset() < _song.getSongLength() && !_song.isSomethingAt(_cursorChannel, _cursorPosition + zoom.getZoomlevelOffset())) {
               
               if(_song.copyPosition(_savedCursorChannel, _savedCursorPosition, _savedCursorChannel, _savedCursorPosition + zoom.getZoomlevelOffset(), false)) {
-              moveCursor(RIGHT);
+                moveCursor(RIGHT);
                 _sequencerScreen.drawSample(_savedCursorChannel, _savedCursorPosition, true);
                 _sequencerScreen.drawSample(_cursorChannel, _cursorPosition, true);
               };
@@ -610,10 +627,24 @@ void Sequencer::pausePattern() {
 void Sequencer::_playNext() {
     _sequencerScreen.drawPlayStepIndicator(_playerPosition, true);
 
+    SongStructure::samplePointerStruct sps;
+
     for (byte c=0; c < 8; c++) {
-      if (_song.getPosition(c, _playerPosition).type != SongStructure::UNDEFINED) {
-        playMixedSample(c, _playerPosition);    
-      }      
+      sps = _song.getPosition(c, _playerPosition); 
+      if (sps.type == SongStructure::MIDINOTE) {
+        
+        if (random(100) <= _song.getMidiNoteFromBucketId(sps.typeIndex).probability) {
+          if (_song.getMidiNoteFromBucketId(sps.typeIndex).velocity > 0) {
+            _keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_NOTE_ON, _song.getMidiNoteFromBucketId(sps.typeIndex).note, _song.getMidiNoteFromBucketId(sps.typeIndex).velocity, _song.getMidiNoteFromBucketId(sps.typeIndex).channel);
+          } else {
+            _keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_NOTE_OFF, _song.getMidiNoteFromBucketId(sps.typeIndex).note, 0, _song.getMidiNoteFromBucketId(sps.typeIndex).channel);
+          }      
+        }        
+      } else {
+        if (sps.type != SongStructure::UNDEFINED) {
+          playMixedSample(c, _playerPosition);    
+        }      
+      } 
     }
 
     if (_playerPosition == _song.getSongLength()-1) { 

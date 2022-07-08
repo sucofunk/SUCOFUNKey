@@ -72,8 +72,8 @@ float volumeValue = 0;
 float volumeTempValue = 0;
 
 // ToDo: make configurable
-byte MIDI_channel_Synth = 10;
-byte MIDI_channel_Live = 1;
+byte MIDI_channel_Synth = 2;  // Channel 2 for triggering notes in the Synth mode
+byte MIDI_channel_Live = 1;    // Channel 1 for triggering Samples
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
@@ -436,12 +436,10 @@ const unsigned char startup_logo_subline [] PROGMEM = {
 
 
 void setup() {
-  //Serial.begin(9600);
+  Serial.begin(57600);
+
   boolean ok = true;
   //strcpy(activeSongPath, songsBasePath); // init main path.. song directory will be concatenated, when available  
-
-  MIDI.begin(MIDI_CHANNEL_OMNI);
-  Serial.begin(57600);
 
   // Screeen Backlight regulator -> make screen dark
   pinMode(PIN_SCREEN_BL, OUTPUT);
@@ -505,8 +503,10 @@ void setup() {
   delay(400); // small delay for better readability on screen
   
   if (ok) {
-    startupContext.transitionToSelection();
+    startupContext.transitionToSelection(); // show song collection
   }
+
+  MIDI.begin(MIDI_CHANNEL_OMNI);
 }
 
 
@@ -610,8 +610,6 @@ void loop() {
     
     if (abs(volumeValue-volumeTempValue) > 0.05) {
       volumeValue = volumeTempValue;
-//      Serial.print("Volume::");
-//      Serial.println(volumeValue);
       audioResources.audioShield.volume(volumeValue);
     }    
     
@@ -640,22 +638,15 @@ void loop() {
 
   if (MIDI.read()) { 
     // route midi messages for MIDI_channel_Synth and system messages to the synth
+
+    Serial.println(currentAppContext);
+    Serial.println(MIDI.getChannel());
+
     if ((MIDI.getChannel() == MIDI_channel_Synth || MIDI.getChannel() == 0) && currentAppContext == SYNTH) {
-      Serial.println("Synth context midi");
       synthContext.receiveMidiData(MIDI.getType(), MIDI.getData1(), MIDI.getData2());
     }
 
     if (MIDI.getChannel() == MIDI_channel_Live) {
-/*      Serial.print("MIDI::");
-      Serial.print(MIDI.getChannel());
-      Serial.print("::");
-      Serial.print(MIDI.getType());
-      Serial.print("::");
-      Serial.print(MIDI.getData1());
-      Serial.print("::");
-      Serial.println(MIDI.getData2());
-*/
-      //keyboard.setLEDState(Sucofunkey::LED_PLAY, true);
       liveContext.receiveMidiData(MIDI.getType(), MIDI.getData1(), MIDI.getData2());
     }
   }
@@ -769,6 +760,18 @@ void handleKeyboardEventQueue() {
 
         case Sucofunkey::CHECKREQUEST:
           changeContext(AppContext::SYSTEMCHECK);
+          break;
+
+        case Sucofunkey::MIDI_SEND_NOTE_ON:
+          // data1 = NOTE, data2 = VELOCITY, data3 = CHANNEL
+          MIDI.sendNoteOn(event.data1, event.data2, event.data3);
+          break;
+
+        case Sucofunkey::MIDI_SEND_NOTE_OFF:
+          // data1 = NOTE, data2 = VELOCITY, data3 = CHANNEL
+          MIDI.sendNoteOff(event.data1, 0, event.data3);
+          break;
+
         default:
           break;
       }      
