@@ -109,6 +109,8 @@ class Sampler {
 
         int _trimMarkerStartPosition = 0;
         int _trimMarkerEndPosition = 319;
+        int _trimMarkerStartSampleCountOffset = 0;
+        int _trimMarkerEndSampleCountOffset = 0;
         float _volumeScaleFactor = 1.0;
 
         byte _tempBank = 1;
@@ -120,6 +122,7 @@ class Sampler {
 
         void _setSubmenuState(SamplerSubmenuState state);
         void _showSaveBottomMenu();
+        void _resetTrimMarkerOffsets(boolean start, boolean end);
 };
 
 #endif

@@ -139,7 +139,8 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
               } else {
                 _faderState = FaderState::IDLE;
                 _keyboard->switchFaderLED(false);
-              }              
+              }
+              _resetTrimMarkerOffsets(true, false);
               break;
         case Sucofunkey::ENCODER_2_PUSH:
               if (currentState == SAMPLE_EDIT_TRIM && _faderState != FaderState::TRIM_END) {
@@ -149,6 +150,7 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
                 _faderState = FaderState::IDLE;
                 _keyboard->switchFaderLED(false);
               }              
+              _resetTrimMarkerOffsets(false, true);
               break;              
       }
     }
@@ -197,8 +199,8 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
 
           // saving..
           int sampleId72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
-          uint32_t start = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerStartPosition;
-          uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * (_trimMarkerEndPosition+1);
+          uint32_t start = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerStartPosition + _trimMarkerStartSampleCountOffset;
+          uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * (_trimMarkerEndPosition+ _trimMarkerEndSampleCountOffset + 1);
 
           if (_activeSampleSlot == 0) {
             _sfsio->copyFilePart(_sfsio->recorderFilename, _sfsio->sampleFilename[_keyboard->getBank()-1][sampleId-1], start*2, end*2, _volumeScaleFactor);
@@ -305,8 +307,49 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
                   _trimMarkerEndPosition++;
                 }
 
+                _resetTrimMarkerOffsets(true, false);
                 _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, sample72, _volumeScaleFactor);
+                _samplerScreen.drawTrimMarkerOffsets(_trimMarkerStartSampleCountOffset, _trimMarkerEndSampleCountOffset);
                 break;
+
+          case Sucofunkey::FN_ENCODER_1:
+                // change start position offset..
+                // ..may not exceed amount of samples per pixel -> use a normal tick to move the marker
+                
+                if (event.pressed) {
+                  if (_trimMarkerStartSampleCountOffset < _sfsio->pixelToWaveformSamples[sample72]-1) {
+                    _trimMarkerStartSampleCountOffset = _trimMarkerStartSampleCountOffset + 1;
+                  }                                    
+                } else {                  
+                  if (_trimMarkerStartPosition == 0 && _trimMarkerStartSampleCountOffset <= 0) break;
+
+                  if (_trimMarkerStartSampleCountOffset > -(_sfsio->pixelToWaveformSamples[sample72]-1)) {
+                    _trimMarkerStartSampleCountOffset = _trimMarkerStartSampleCountOffset - 1;
+                  }
+                }
+
+                _samplerScreen.drawTrimMarkerOffsets(_trimMarkerStartSampleCountOffset, _trimMarkerEndSampleCountOffset);                
+                break;
+
+          case Sucofunkey::FN_ENCODER_2:
+                // change start position offset..
+                // ..may not exceed amount of samples per pixel -> use a normal tick to move the marker                
+
+                if (event.pressed) {
+                  if (_trimMarkerEndPosition == 319 && _trimMarkerEndSampleCountOffset >= 0) break;
+
+                  if (_trimMarkerEndSampleCountOffset < _sfsio->pixelToWaveformSamples[sample72]-1) {
+                    _trimMarkerEndSampleCountOffset = _trimMarkerEndSampleCountOffset + 1;
+                  }                                    
+                } else {
+                  if (_trimMarkerEndSampleCountOffset > -(_sfsio->pixelToWaveformSamples[sample72]-1)) {
+                    _trimMarkerEndSampleCountOffset = _trimMarkerEndSampleCountOffset - 1;
+                  }
+                }
+
+                _samplerScreen.drawTrimMarkerOffsets(_trimMarkerStartSampleCountOffset, _trimMarkerEndSampleCountOffset);
+                break;
+
           case Sucofunkey::ENCODER_2:
                 maxWidth = _sfsio->waveFormBufferLength[sample72];
                 _trimMarkerEndPosition += (event.pressed ? 1 : -1);
@@ -317,7 +360,9 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
                   _trimMarkerStartPosition--;
                 }
 
-                _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, sample72, _volumeScaleFactor);                
+                _resetTrimMarkerOffsets(false, true);
+                _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, sample72, _volumeScaleFactor);
+                _samplerScreen.drawTrimMarkerOffsets(_trimMarkerStartSampleCountOffset, _trimMarkerEndSampleCountOffset);
                 break;          
           case Sucofunkey::ENCODER_3:
                 _volumeScaleFactor += (event.pressed ? 0.025 : -0.025);
@@ -329,6 +374,10 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
         }          
     }
 }
+
+
+// -------------------------------------------------------------------------------------------------------------------------------
+
 
 long Sampler::receiveTimerTick() {
     _timerCounter++;
@@ -358,12 +407,14 @@ long Sampler::receiveTimerTick() {
           _samplerScreen.removeTrimMarker(_trimMarkerStartPosition, sample72, _volumeScaleFactor);
           _trimMarkerStartPosition = _keyboard->getContinuousFaderValue(0, _trimMarkerEndPosition-1);
           _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, sample72, _volumeScaleFactor);
+          _samplerScreen.drawTrimMarkerOffsets(_trimMarkerStartSampleCountOffset, _trimMarkerEndSampleCountOffset);
         break;
         case FaderState::TRIM_END:
           _samplerScreen.removeTrimMarker(_trimMarkerEndPosition, sample72, _volumeScaleFactor);
           // ToDo: Endposition might be smaller that screen width!!!
           _trimMarkerEndPosition = _keyboard->getContinuousFaderValue(_trimMarkerStartPosition+1, 320);
           _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, sample72, _volumeScaleFactor);
+          _samplerScreen.drawTrimMarkerOffsets(_trimMarkerStartSampleCountOffset, _trimMarkerEndSampleCountOffset);
         break;
 
       }
@@ -415,8 +466,8 @@ void Sampler::_play() {
   if (currentState == SAMPLE_EDIT_TRIM) {
     int sampleId72 = (_activeSampleSlot == 0 ? 72 : (_keyboard->getBank()-1)*24+_activeSampleSlot-1);
 
-    uint32_t start = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerStartPosition;
-    uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerEndPosition;
+    uint32_t start = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerStartPosition + _trimMarkerStartSampleCountOffset;
+    uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerEndPosition + _trimMarkerEndSampleCountOffset;
 
     _audioResources->playSdRaw.play(filename, start*2, end*2, _volumeScaleFactor);
   }
@@ -495,8 +546,8 @@ void Sampler::saveActiveSample() {
   _samplerScreen.showSavingMessage();
 
   int sampleId72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
-  uint32_t start = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerStartPosition;
-  uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * (_trimMarkerEndPosition+1);
+  uint32_t start = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerStartPosition + _trimMarkerStartSampleCountOffset;
+  uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * (_trimMarkerEndPosition + _trimMarkerEndSampleCountOffset + 1);
 
   char * filename = _activeSampleSlot == 0 ? _sfsio->recorderFilename : _sfsio->sampleFilename[_tempBank-1][_activeSampleSlot-1];
 
@@ -534,6 +585,7 @@ void Sampler::saveActiveSample() {
 
   _trimMarkerStartPosition = 0;
   _trimMarkerEndPosition = 319;
+  _resetTrimMarkerOffsets(true, true);
   _volumeScaleFactor = 1.0;
 
   // reload the changed sample in extmem, if if was in there before
@@ -561,6 +613,7 @@ void Sampler::cancel() {
   _bottomMenu.showMenu(false);
   _trimMarkerStartPosition = 0;
   _trimMarkerEndPosition = 319;
+  _resetTrimMarkerOffsets(true, true);
   _volumeScaleFactor = 1.0;
 
   _keyboard->switchFaderLED(false);
@@ -614,4 +667,10 @@ void Sampler::_showSaveBottomMenu() {
     } else {
       _bottomMenu.selectItem(1);
     }
+}
+
+
+void Sampler::_resetTrimMarkerOffsets(boolean start, boolean end) {
+  if (start) _trimMarkerStartSampleCountOffset = 0;
+  if (end) _trimMarkerEndSampleCountOffset = 0;
 }

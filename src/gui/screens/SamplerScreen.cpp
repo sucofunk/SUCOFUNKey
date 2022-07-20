@@ -151,6 +151,18 @@ void SamplerScreen::drawTrimMarker(int trimMarkerStartPosition, int trimMarkerEn
     drawTrimMarker(trimMarkerStartPosition, trimMarkerEndPosition, (bank0*24)+sampleId0, volumeScaleFactor);
 }
 
+void SamplerScreen::drawTrimMarkerOffsets(int startOffset, int endOffset) {
+
+        sprintf(_cBuff20, "%d", startOffset);
+        _screen->drawTextInArea(_screen->AREA_HEADLINE_STARTOFFSET, _screen->TEXTPOSITION_LEFT_TOP, true, _screen->TEXTSIZE_MEDIUM, true, _screen->C_TRIM_START, _cBuff20);
+
+        sprintf(_cBuff20, "%d", endOffset);
+        _screen->drawTextInArea(_screen->AREA_HEADLINE_ENDOFFSET, _screen->TEXTPOSITION_RIGHT_TOP, true, _screen->TEXTSIZE_MEDIUM, true, _screen->C_TRIM_END, _cBuff20);
+
+
+};
+
+
 void SamplerScreen::removeTrimMarker(int position, byte sampleId72, float volumeScaleFactor) {
     _screen->drawLine(position, _screen->AREA_CONTENT.y1, position, _screen->AREA_CONTENT.y2, _screen->C_BLACK);
     _screen->drawLine(position, floor(zeroAxisY+_sfsio->waveFormBuffer[sampleId72][position][0]*volumeScaleFactor), position, floor(zeroAxisY-_sfsio->waveFormBuffer[sampleId72][position][1]*volumeScaleFactor), _screen->C_WHITE);

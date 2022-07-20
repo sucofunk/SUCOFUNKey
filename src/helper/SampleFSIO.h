@@ -66,6 +66,8 @@ class SampleFSIO {
         long getByteCountFromMs(long ms);        
         byte getExtmemUsagePercent();
 
+        //long getSampleCountFromSample(byte sampleNumber);
+
         void generateInstrument(byte sampleNumber, int baseNote);
         void changeInstrumentParameters(byte sampleNumber, boolean loop, uint8_t delay_count, uint8_t attack_count, uint8_t hold_count, uint8_t decay_count, uint8_t release_count, uint8_t sustain_mult, uint8_t vibrato_delay, uint8_t vibrato_increment);
         AudioSynthWavetableSUCO::instrument_data getInstrumentDataBySample(byte sampleNumber);

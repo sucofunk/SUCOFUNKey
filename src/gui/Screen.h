@@ -154,6 +154,10 @@ class Screen {
         // Area definitions
         Area AREA_SCREEN = { 0, 0, 319, 239, false, C_BLACK};  // Fullscreen
         Area AREA_HEADLINE = { 0, 0, 319, 25, false, C_BLACK}; // Headline
+
+        Area AREA_HEADLINE_STARTOFFSET = { 0, 0, 50, 25, false, C_BLACK}; // Headline
+        Area AREA_HEADLINE_ENDOFFSET = { 269, 0, 319, 25, false, C_BLACK}; // Headline
+
         Area AREA_CONTENT = { AREA_SCREEN.x1, AREA_SCREEN.y1+25, AREA_SCREEN.x2, AREA_SCREEN.y2-25, false, C_BLACK}; // like screen, but without headline and bottom navigation
 
         Area AREA_CENTER_TEXT = { AREA_SCREEN.x1, AREA_SCREEN.y1+100, AREA_SCREEN.x2, AREA_SCREEN.y2-100, false, C_ORANGE}; // content line in the middle of the screen for system check
