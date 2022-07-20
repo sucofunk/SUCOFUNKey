@@ -135,7 +135,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               playSong();
               break;
         case Sucofunkey::PAUSE:
-              pausePattern();
+              stopSong();
               break;
         case Sucofunkey::FN_PLAY:
                 // play current sample, if one is selected
@@ -600,19 +600,30 @@ void Sequencer::setActive(boolean active) {
 
 void Sequencer::playSong() {
    _isPlaying = !_isPlaying;
-  _blinkPosition = 0;
 
   if (!_isPlaying) { 
     stopAllChannels();
+
+    // song was paused (2x play), next play will start at cursor position
+    _nextPlayStartAtCursor = true;    
+    _playerPosition = _cursorPosition;
+    _blinkPosition = _cursorPosition;
+
     _sequencerScreen.drawPlayStepIndicator(_playerPosition, false); 
     _keyboard->setLEDState(Sucofunkey::LED_PLAY, false);
   } else {
-    _playerPosition = 0;
-    _blinkPosition = 0;
+    if (_nextPlayStartAtCursor) {
+      _playerPosition = _cursorPosition;
+      _blinkPosition = _cursorPosition;
+    } else {
+      _playerPosition = 0;
+      _blinkPosition = 0;
+    }
   }
 }
 
-void Sequencer::pausePattern() {
+// stops playing the song and (even if not playing) moves player cursor to start
+void Sequencer::stopSong() {
   if (_isPlaying) {
     _isPlaying = false;
     stopAllChannels();
@@ -622,6 +633,8 @@ void Sequencer::pausePattern() {
     // ToDo: draw cursor somewhere ;)
     stopAllChannels();
   }
+  _nextPlayStartAtCursor = false;
+  _playerPosition = 0;
 }
 
 void Sequencer::_playNext() {

@@ -82,7 +82,7 @@ class Sequencer {
         void loadSetPlay(byte bank, byte sample, byte channel, int position);
         void playSong();
         void playMixedSample(byte channel, uint16_t position);
-        void pausePattern();
+        void stopSong();
         void stopAllChannels();
 
         boolean isPlaying();
@@ -145,6 +145,9 @@ class Sequencer {
         uint16_t _savedCursorPosition = 0;
 
         boolean _playLEDon = false;        
+
+        // if true, play will start from cursor position, false will play from start
+        boolean _nextPlayStartAtCursor = false;
 
         void _checkIfAllSamplesAreLoaded();
 };
