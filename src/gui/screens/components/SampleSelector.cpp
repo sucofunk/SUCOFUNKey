@@ -138,7 +138,7 @@ void SampleSelector::drawSampleSelector() {
 
     _screen->fillArea(_AREA_SONGSELECTOR_LINE_3, _activeItem == 2 ? _screen->C_SELECTOR_SELECTED_BG : _AREA_SONGSELECTOR.bgColor);
 
-    if (_offset+2 <= _sampleCount-2) {
+    if (_offset+2 <= _sampleCount-1) {
         getLineDescription(_offset+2, _line3);
 
         if (_activeItem == 2) _fsio->setSelectedSamplePathFromSD(_line3);    

@@ -194,7 +194,7 @@ void SongSelector::drawSongSelector() {
     }
 
     _screen->fillArea(_AREA_SONGSELECTOR_LINE_3, _activeItem == 2 ? _screen->C_SELECTOR_SELECTED_BG : _AREA_SONGSELECTOR.bgColor);
-    if (_offset+2 <= _songCount-2) {
+    if (_offset+2 <= _songCount-1) {
         getLineDescription(_offset+2, _line3);
         _screen->drawTextInArea(_AREA_SONGSELECTOR_LINE_3, _screen->TEXTPOSITION_LEFT_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _line3);
     }
