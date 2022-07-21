@@ -162,6 +162,7 @@ void BlackKeyMenu::handleEvent(Sucofunkey::keyQueueStruct event) {
 };
 
 void BlackKeyMenu::showMenu() {
+    _screen->fillArea(_screen->AREA_BOTTOM_MENU, _screen->C_BLACK);
     _visible = true;
     _redrawMenu();
 };

@@ -37,8 +37,8 @@
 #include "../../helper/SampleFSIO.h"
 #include "../../helper/FSIO.h"
 #include "../../gui/screens/SamplerScreen.h"
-#include "../../gui/screens/components/BottomMenu.h"
 #include "../../gui/screens/components/Input.h"
+#include "../../gui/screens/components/BlackKeyMenu.h"
 
 class Sampler {
     public:
@@ -56,15 +56,8 @@ class Sampler {
             SAMPLE_EDIT_TRIM = 3,
             SAMPLE_WAIT_SAVE_SLOT = 4,
             SAMPLE_RENAME = 5,
-            SAMPLER_EDIT_SUBMENU = 6,
+            SAMPLER_WAIT_DELETE_CONFIRM = 6,
             SAMPLER_LIBRARY_OPEN = 7
-        };
-
-        enum SamplerSubmenuState
-        {
-            SUBMENU_NONE = 0,
-            SUBMENU_EDIT = 1,
-            SUBMENU_SAVE = 2
         };
 
         enum FaderState
@@ -94,18 +87,16 @@ class Sampler {
         byte _activeBank = 1;
 
         SamplerState currentState = SAMPLE_NOTHING;
-        SamplerSubmenuState _submenuState = SUBMENU_NONE;
         int _faderState = FaderState::IDLE;
 
         SamplerScreen _samplerScreen;
+        BlackKeyMenu _blackKeyMenu;
         Input _input;
 
         byte _blinkActiveSample = false;
         byte _blinkActiveSampleStatus = false;
         byte _activeSampleLEDPin = 0;
         byte _activeSampleSlot = 0; // 1..24 corresponding to selected sample bank
-
-        BottomMenu _bottomMenu;
 
         int _trimMarkerStartPosition = 0;
         int _trimMarkerEndPosition = 319;
@@ -120,8 +111,6 @@ class Sampler {
 
         int _timerCounter = 0;
 
-        void _setSubmenuState(SamplerSubmenuState state);
-        void _showSaveBottomMenu();
         void _resetTrimMarkerOffsets(boolean start, boolean end);
 };
 
