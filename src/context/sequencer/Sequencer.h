@@ -87,7 +87,7 @@ class Sequencer {
 
         boolean isPlaying();
         
-        void loadFromSD();
+        void loadFromSD(boolean drawGrid);
         void saveToSD();
         void debugInfos();
 

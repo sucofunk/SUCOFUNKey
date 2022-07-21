@@ -76,7 +76,6 @@ long Sequencer::receiveTimerTick() {
     _keyboard->setLEDState(Sucofunkey::LED_PLAY, _playLEDon);
   }
 
- // was:  if (_blinkPosition < _pattern.getPatternResolution()-1) {
   if (_blinkPosition < (_song.getSongResolution()*4)-1) {
     _blinkPosition++;
   } else {
@@ -136,6 +135,8 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               break;
         case Sucofunkey::PAUSE:
               stopSong();
+              // autosave
+              saveToSD();
               break;
         case Sucofunkey::FN_PLAY:
                 // play current sample, if one is selected
@@ -190,8 +191,8 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
 
     if (event.type == Sucofunkey::KEY_NOTE && event.pressed) {
 
-      // check if blackKeys menu is active and pass the key to it, if it is a black key
-      if (_currentMenuState == MENU_BLACKKEY && _keyboard->isEventBlackKey(event.index)) {
+      // check if blackKeys menu is active and pass the key to it
+      if (_currentMenuState == MENU_BLACKKEY) {
         _blackKeyMenu.handleEvent(event);
         return;
       }
@@ -267,9 +268,8 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
 
               // ToDo: check if maximum song length is reached!
 
-              // if cursor is at the end, move it one cell left, otherwise it would be out of the grid
+              // if cursor is at the end, move it one cell left, otherwise it would be out off the grid
               if (_cursorPosition >= _song.getSongLength()) {
-                //_cursorPosition = _song.getSongLength()-1;
                 _cursorPosition = _song.getSongLength()-zoom.getZoomlevelOffset();
               }
 
@@ -389,7 +389,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::BLACKKEY_NAV_ITEM8:        
           break;          
         case Sucofunkey::BLACKKEY_NAV_ITEM9:
-          loadFromSD();
+          loadFromSD(true);
           break;          
         case Sucofunkey::BLACKKEY_NAV_ITEM10:
           saveToSD();
@@ -528,9 +528,6 @@ void Sequencer::setSequencerState(SequencerState state) {
         break;
     }    
   }
-
-//  Serial.print("Sequencer State :: ");
-//  Serial.println(_currentSequencerState);
 };
 
 void Sequencer::_saveCurrentCursorPosition() {
@@ -611,6 +608,8 @@ void Sequencer::playSong() {
 
     _sequencerScreen.drawPlayStepIndicator(_playerPosition, false); 
     _keyboard->setLEDState(Sucofunkey::LED_PLAY, false);
+    // autosave
+    saveToSD();
   } else {
     if (_nextPlayStartAtCursor) {
       _playerPosition = _cursorPosition;
@@ -818,22 +817,26 @@ boolean Sequencer::isPlaying() {
 }
 
 
-void Sequencer::loadFromSD() {
+void Sequencer::loadFromSD(boolean drawGrid) {
   // load from SD card
   _song.loadFromSD(_sfsio->getSongPath());  
   _cursorPosition = 0;
 
   // redraw the grid
-  _sequencerScreen.initializeGrid(&_song, _cursorPosition);
-  _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+  if (drawGrid) {
+    _sequencerScreen.initializeGrid(&_song, _cursorPosition);
+    _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
 
-  // set right position in song structure
-  _song.setCurrentPosition(_cursorChannel, _cursorPosition, true);
+    // set right position in song structure
+    _song.setCurrentPosition(_cursorChannel, _cursorPosition, true);
+  }
 
   // loading samples to extmem
   _sfsio->loadSamplesToMemory(_song.getSamplesUsed());
   
-  _sequencerScreen.drawExtMemPercentage(_sfsio->getExtmemUsagePercent());
+  if (drawGrid) {
+    _sequencerScreen.drawExtMemPercentage(_sfsio->getExtmemUsagePercent());
+  }
 };
 
 void Sequencer::saveToSD() {
@@ -847,10 +850,7 @@ void Sequencer::debugInfos() {
 
 
 long Sequencer::_calculatePlaybackTickSpeed() {
-//  _playbackTickSpeed = bpmToMicroseconds(_song.getPlayBackSpeed(), _song.getSongResolution());
-  // scale down to 
   _playbackTickSpeed = bpmToMicroseconds(_song.getPlayBackSpeed(), _song.getSongResolution()*4);
-
   return _playbackTickSpeed;
 }
 

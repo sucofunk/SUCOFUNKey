@@ -745,7 +745,7 @@ void handleKeyboardEventQueue() {
           sfsio.writeAllSamplesToWaveformBuffer();
 
           // load sequencer data from SD card
-          //sequencerContext.loadFromSD();
+          sequencerContext.loadFromSD(false);
 
           changeContext(AppContext::HOME);          
           break;

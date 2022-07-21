@@ -107,7 +107,7 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::MENU:
                 if (_blackKeyMenu.isVisible()) {
                   _blackKeyMenu.hideMenu();
-                  cancel();                
+                  cancel();                  
                 } else {
                   if (currentState == SAMPLE_WAIT_SAVE_SLOT) {
                     cancel();
@@ -631,7 +631,8 @@ void Sampler::cancel() {
   if (_activeSampleSlot == 0) {
     _samplerScreen.showSampleInfo(72, 1.0);
   } else {
-    _samplerScreen.showSampleInfo(_keyboard->getBank()-1, _activeSampleSlot-1, 1.0);
+    _samplerScreen.showSampleInfo(_keyboard->getBank()-1, _activeSampleSlot-1, 1.0);  
+    _blinkSampleSlot(_activeSampleSlot, true);
   }
   
   _blackKeyMenu.hideMenu();
