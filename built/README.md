@@ -1,0 +1,1 @@
+This directory contains different releases and builds. As there is not stable release by now, the filenames are just sucofunkey_YY-MM-DD_#.

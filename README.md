@@ -12,6 +12,8 @@ The PCB is designed without any SMD components and can be soldered with a standa
 Check out [@sucofunkey on Instagram](https://www.instagram.com/sucofunkey/) for a visual impression of the device and progress.
 You can sign up to the newsletter on [www.sucofunk.com](https://sucofunk.com), check some background infos, contact me and stay up to date.
 
+To see the implemented features, read the [user manual](doc/manual.md).
+
 If you are interested in participating, just send me a message. I spend a lot of time into the project without any return yet. If you want to support the project and help to keep the costs (office/workshop rent, hosting, etc.) as low as possible and speed the project up, I would be happy when you donate via Paypal. If you spend more than 25€, your name will be listed on the supporter screen in the device. Leave our name or nickname in the comment field of the donation process. [Donate](https://www.paypal.com/donate/?hosted_button_id=H9K23YHV95UXC)
 
 
@@ -40,8 +42,8 @@ The firmware is a VSCode project, using the [PlatformIO](https://platformio.org/
 ## Status
 
 SUCOFUNKey is work in progress. Here is a short overview of what is already implemented and the next steps, including a roadmap of the project.
-So far the firmware is in a state to be called useable ;)
 The main Features - Sampling & Sequencing - are working properly.
+Read the [user manual](doc/manual.md) for details.
 
 ### Hardware
 - is ready and can be purchased at [www.sucofunk.com](https://sucofunk.com)
@@ -76,6 +78,7 @@ The main Features - Sampling & Sequencing - are working properly.
   - variable pattern length
   - automatic pattern resolution scaling
   - playback speed with 0.5 BPM resolution
+  - Triggering external MIDI gear with channel, note, velocity and NOTE OFF
 
 ### MIDI integration
   - Samples can be played at every time
@@ -87,7 +90,7 @@ Currently I am creating almost everything by myself. So the next steps might tak
 ### Off device & Hardware
 - <del>Publish circuit diagram</del>
 - <del>Create DIY tutorial with pictures for soldering parts</del>
-- Publish files to print your own case
+- <del>Publish files to print your own case<del>
 - Create user manual/video tutorial
 - <del>Improve the website</del>
 
@@ -109,6 +112,6 @@ Currently I am creating almost everything by myself. So the next steps might tak
 - Effects channels
 - USB Audio
 - File system integration to a computer via USB to load/save samples from/to device
-- Add MIDI to the sequencer to control external sound devices
+- <del>Add MIDI to the sequencer to control external sound devices<del>
 - Live mode with <del>MIDI Integration</del> and snippets
 - Synthesizer
