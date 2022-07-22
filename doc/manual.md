@@ -3,6 +3,8 @@
 Beatmaker's sketchbook is developed to be as intuitive to use as possible. As you know, it is Open Source and will change and improve over time.
 The learning curve is pretty flat. Just play around.
 
+Last edit: 22.07.2022
+
 ## 1 Input controls
 
 ![Overview](images/overview.jpg "Overview")
@@ -194,6 +196,6 @@ There are two directories on the root folder of the SD-Card.
 ## 9.2 Updating the firmware
 
 To update the firmware of your Beatmaker's sketchbook, just compile the sources of this project or get a pre-compiled version.
-The latest .hex file is stored [here](/built/).
+The latest pre-built version as .hex file is stored [here](/built/).
 
-To install it, you need the [Teensy Loader application](https://www.pjrc.com/teensy/loader.html) installed on your PC or Mac. Make sure to read the very short manual and upload the .hex file to the  teensy inside Beatmaker's sketchbook. If you need to hit the program button, oben the device and push the program button. It is located as an extra button on the bottom side of the printed circuit board.
+To install it, you need the [Teensy Loader application](https://www.pjrc.com/teensy/loader.html) installed on your PC or Mac. Make sure to read the very short manual and upload the .hex file to the  teensy inside Beatmaker's sketchbook. If you need to hit the program button, open the device and push the program button. It is located as an extra button on the bottom side of the printed circuit board.
