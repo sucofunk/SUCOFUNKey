@@ -137,6 +137,7 @@ class SongStructure {
         byte getSongResolution();
         void changeSongResolutionByTick(boolean increase);
 
+        void setMetadataToDefault();
 
         boolean *getSamplesUsed();
         boolean samplesUsed[72] = { false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
@@ -148,6 +149,8 @@ class SongStructure {
 
         boolean loadFromSD(char *songPath);
         boolean saveToSD(char *songPath);
+
+        void clearSelection(uint8_t startChannel, uint16_t startPosition, uint8_t endChannel, uint16_t endPosition);
 
         void test();
         void testLog();

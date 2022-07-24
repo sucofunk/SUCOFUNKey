@@ -625,6 +625,25 @@ AudioSynthWavetableSUCO::instrument_data SampleFSIO::getInstrumentDataBySample(b
 };
 
 
+
+void SampleFSIO::clearSampleMemory() {
+  // set the whole sample values to 0 .. silence ;)
+  for (unsigned long i=0; i<4194304; i++) {
+      _extmemArray[i] = 0;
+  }
+
+  // set offset to the beginning
+  _nextOffset = 0;
+
+  // clear all sample offsets
+  for (int i=0; i<72; i++) {
+    _sampleOffsets[i] = -1;
+  }
+};
+
+
+
+
 void SampleFSIO::debugInfos() {
 /*    Serial.println("----------");
     for (int i=0; i<72; i++) {

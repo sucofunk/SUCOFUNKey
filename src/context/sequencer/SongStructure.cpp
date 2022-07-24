@@ -1047,6 +1047,26 @@ void SongStructure::changeSongResolutionByTick(boolean increase) {
 };
 
 
+// re-initializing _meta might be an option, too. maybe the values for BPM, etc.. might get edited in the settings menue..
+void SongStructure::setMetadataToDefault() {
+    _meta.nextSamplePointerIndex = 0;
+    _meta.reusableSamplePointerIndex = 0;
+    
+    _meta.nextSampleBucketIndex = 1;
+    _meta.reuseableSampleBucketIndex = 0;
+
+    _meta.nextParameterChangeBucketIndex = 1;
+    _meta.reuseableParameterChangeBucketIndex = 0;
+
+    _meta.nextMidiNoteBucketIndex = 1;
+    _meta.reuseableMidiNoteBucketIndex = 0;
+
+    _meta.songLength = 64;
+    _meta.songResolution = 4;
+    
+    _meta.playbackSpeed = 80.0;
+};
+
 
 // recalculates, which samples need to be in EXTMEM and returns the array
 boolean * SongStructure::getSamplesUsed()
@@ -1437,7 +1457,13 @@ uint16_t SongStructure::_getNextSamplePointerIndex() {
 };
 
 
-
+void SongStructure::clearSelection(uint8_t startChannel, uint16_t startPosition, uint8_t endChannel, uint16_t endPosition) {
+    for (uint16_t p=startPosition; p<endPosition; p++) {
+        for (uint8_t c=startChannel; c<endChannel; c++) {
+            removePosition(c, p);
+        }
+    }
+};
 
 
 

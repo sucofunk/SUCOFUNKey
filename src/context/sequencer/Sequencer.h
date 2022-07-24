@@ -59,7 +59,8 @@ class Sequencer {
         enum SequencerState {
             NORMAL = 0,
             MOVE_CELL = 1,
-            DOUBLE_CELL = 2
+            DOUBLE_CELL = 2,
+            CONFIRM_CLS = 3
         };
 
         enum Direction {
@@ -150,6 +151,7 @@ class Sequencer {
         boolean _nextPlayStartAtCursor = false;
 
         void _checkIfAllSamplesAreLoaded();
+        void _clearSong();
 };
 
 #endif

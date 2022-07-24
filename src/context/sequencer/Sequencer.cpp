@@ -54,13 +54,14 @@ Sequencer::Sequencer(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSI
     //_blackKeyMenu.setOption(1, "SEL");
     _blackKeyMenu.setOption(2, "MOV");
     _blackKeyMenu.setOption(3, "DBL");
-    
+
+
     _blackKeyMenu.setOption(6, "SND");
     _blackKeyMenu.setOption(7, "INS");
     //_blackKeyMenu.setOption(8, "FX");    
 
-    _blackKeyMenu.setOption(9, "LOD");    
-    _blackKeyMenu.setOption(10, "SAV");    
+    //_blackKeyMenu.setOption(9, "LOD");    
+    _blackKeyMenu.setOption(10, "CLS");    
 }
 
 // returns the current tick speed.. as tempo changes are not handled global
@@ -389,10 +390,11 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::BLACKKEY_NAV_ITEM8:        
           break;          
         case Sucofunkey::BLACKKEY_NAV_ITEM9:
-          loadFromSD(true);
+          // loadFromSD(true);
           break;          
         case Sucofunkey::BLACKKEY_NAV_ITEM10:
-          saveToSD();
+          // CLS -> deletes all notes from song
+          setSequencerState(CONFIRM_CLS); 
           break;                    
         default:
         break;
@@ -495,7 +497,13 @@ void Sequencer::setSequencerState(SequencerState state) {
           }            
 
           _blackKeyMenu.setExclusiveAction(3, false);
-          _currentSequencerState = NORMAL;      
+          _currentSequencerState = NORMAL;    
+          break;
+      case CONFIRM_CLS:
+          _clearSong();
+          _blackKeyMenu.setExclusiveAction(10, false);
+          _currentSequencerState = NORMAL;            
+          break;
       default:
         break;
     }
@@ -522,6 +530,10 @@ void Sequencer::setSequencerState(SequencerState state) {
         } else {
           _currentSequencerState = NORMAL;
         }
+        break;
+      case CONFIRM_CLS:
+          _blackKeyMenu.setExclusiveAction(10, true);
+          _currentSequencerState = CONFIRM_CLS;
         break;
       default:
         _currentSequencerState = NORMAL;
@@ -868,4 +880,25 @@ void Sequencer::_checkIfAllSamplesAreLoaded() {
       }
     }
   }
+}
+
+
+void Sequencer::_clearSong() {
+    // 1 empty sample ram
+  _sfsio->clearSampleMemory();
+
+  // 2 clear all data structures or initialize it new
+  _song.clearSelection(0, 0, 7, _song.getSongLength());
+
+  // 3 set defaults for meta data
+  _song.setMetadataToDefault();
+
+  // 4 redraw grid
+  _cursorPosition = 0;
+  _cursorChannel = 0;
+
+  _sequencerScreen.initializeGrid(&_song, _cursorPosition);
+  _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+  _song.setCurrentPosition(_cursorChannel, _cursorPosition, true);       
+  _sequencerScreen.drawExtMemPercentage(_sfsio->getExtmemUsagePercent());
 }

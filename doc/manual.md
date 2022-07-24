@@ -146,6 +146,9 @@ Black key Menu Options
     Adds a MIDI Out message. You can adjust the MIDI parameters Velocity, Channel and Note with ENCODERS1..3.
     To send a corresponding Note Off, you need to send the exact same Note/Channel combination with a Velocity of zero. If the velocity is zero, it will be marked with a red X on the grid.
 
+    CLS
+    Clear Song -> removes everything from the current song. You need to confirm that operation with a second hit on CLS.
+
 
 Playback behavior
 
