@@ -38,7 +38,7 @@ uint16_t Zoom::zoomIn(uint16_t cursorPosition) {
     setZoomLevel(_currentZoomLevel-1);
   }
 
-  // return the changed cursort position. If we are switching between zoomlebels, the cursort needs always to stay on a position that can be shown on the grid
+  // return the changed cursort position. If we are switching between zoomlevels, the cursor needs always to stay on a position that can be shown on the grid
   int ncp = cursorPosition - (cursorPosition % getZoomlevelOffset());
   return ncp < 0 ? 0 : ncp;  
 };
@@ -48,7 +48,7 @@ uint16_t Zoom::zoomOut(uint16_t cursorPosition) {
     setZoomLevel(_currentZoomLevel+1);  
   }
 
-  // return the changed cursort position. If we are switching between zoomlebels, the cursort needs always to stay on a position that can be shown on the grid
+  // return the changed cursort position. If we are switching between zoomlevels, the cursor needs always to stay on a position that can be shown on the grid
   int ncp = cursorPosition - (cursorPosition % getZoomlevelOffset());
   return ncp < 0 ? 0 : ncp;  
 };
@@ -80,11 +80,11 @@ byte Zoom::getZoomlevelOffset() {
       break;
     case ZOOM_OUT_1:
       // ToDo: adjust when behavior is defined!
-      return 4;
+      return 8;
       break;
     case ZOOM_OUT_2:
       // ToDo: adjust when behavior is defined!
-      return 4;
+      return 32;
       break;
     default:
       break;
@@ -104,11 +104,11 @@ float Zoom::getZoomlevelFactor() {
       break;
     case ZOOM_OUT_1:
       // ToDo: adjust when behavior is defined!
-      return 1.0;
+      return 0.5;
       break;
     case ZOOM_OUT_2:
       // ToDo: adjust when behavior is defined!
-      return 1.0;
+      return 0.125;
       break;
     default:
       break;

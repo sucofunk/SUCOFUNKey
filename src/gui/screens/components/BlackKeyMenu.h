@@ -48,6 +48,7 @@ class BlackKeyMenu {
         void handleEvent(Sucofunkey::keyQueueStruct event);
         void showMenu();
         void hideMenu();
+
         boolean isVisible();
                 
     private:

@@ -260,8 +260,7 @@ void Sucofunkey::_mcpKeysPressedToQueueEvents(uint16_t mcpValuesCurrent, uint16_
     // check if value corresponds to an input on the mcp and if a change happened (bit switched)
     if (mcpInput[i] == true && getBooleanValueFrom16BitInt(diffVals, i) == true) {      
 
-        // 100 = Function Key hold, 200 = Menu Key hold
-        offset = 0;
+        offset = 0; // 100 = FUNK Key hold, 200 = MENU Key hold, 600 = SET Key hold
         sendKey = true;
 
         // read encoders
@@ -352,8 +351,34 @@ void Sucofunkey::_mcpKeysPressedToQueueEvents(uint16_t mcpValuesCurrent, uint16_
           if (_menuKeyHold) _menuKeyInterrupted = true;
         }
 
+
+        // Set Key and NOT FN + SET?
+        if (i+mcpOffset == SET) {
+          if (keyStatus) {
+            _setKeyHold = true;
+            _setKeyMillis = millis();
+            _setKeyInterrupted = false;
+            sendKey = false;
+          } else {
+            // set key pressed and released within 1 second, send set key to queue
+            if (_setKeyHold && !_setKeyInterrupted && (millis() - _setKeyMillis < 1500)) {
+              keyStatus = true;
+            } else {
+              sendKey = false;
+            }
+
+            _setKeyHold = false;
+            _setKeyInterrupted = false;
+          }          
+        } else {
+          if (_setKeyHold) _setKeyInterrupted = true;
+        }
+
+
+        if (_setKeyHold) offset = 600;
         if (_menuKeyHold) offset = 200; 
         if (_fnKeyHold) offset = 100;         
+
 
       if (sendKey) {
         inputType = mcpInputTypes[i];
@@ -700,3 +725,27 @@ bool Sucofunkey::getBooleanValueFrom16BitInt(uint16_t values, int pos) {
     v = (values & ( 1 << pos )) >> pos;
     return v == 1 ? true : false;
 }
+
+// returns a note name for a midi note (e.g. 61 -> C#4)
+// starts at midi note 24 -> C0 and ends at 127 -> G9
+String Sucofunkey::getMIDINoteName(byte note) {
+    String retVal = "";
+
+    if (note >= 24 && note <= 127) {
+      char nn[12] = {'C', 'C', 'D', 'D', 'E', 'F', 'F', 'G', 'G', 'A', 'A', 'B'};
+
+      int n = note - 24;
+      int m = n % 12;
+      boolean hash = false;
+
+      if (m == 1 || m == 3 || m == 6 || m == 8 || m == 10) hash = true;
+
+      int o = n / 12 + 1;
+
+      retVal.append(nn[m]);
+      if (hash) retVal.append('#');
+      retVal.append(o);
+    }
+
+    return retVal;
+};

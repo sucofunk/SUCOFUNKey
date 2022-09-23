@@ -29,7 +29,6 @@
    ---------------------------------------------------------------------------------------------- */
 
 #include "SampleFSIO.h"
-#include "audio-extensions/synth_wavetable_suco.h"
 
 SampleFSIO::SampleFSIO(unsigned int *extmemArray, long extmemSize, Screen *screen) {
   _extmemArray = extmemArray;
@@ -391,10 +390,6 @@ boolean SampleFSIO::addSampleToMemory(byte bank1, byte sampleId1, boolean forceR
         return false;
       } else {
         _sampleOffsets[sample72] = offset;
-
-        // generate wavetable
-        generateInstrument(sample72+1, 60);
-
         return true;
       }
   } 
@@ -498,7 +493,7 @@ byte SampleFSIO::getExtmemUsagePercent() {
 };
 
 
- // 0..71 checks if the sample is available on sd card
+// 0..71 checks if the sample is available on sd card
 boolean SampleFSIO::sampleAvailable(byte sampleId) {      
   return sampleBanksStatus[sampleId/24][sampleId%24];
 };
@@ -542,89 +537,6 @@ long SampleFSIO::getByteCountFromMs(long ms) {
   return round(44.1*ms*2);
 };
 
-// sampleNUmber 1..72
-void SampleFSIO::generateInstrument(byte sampleNumber, int baseNote) {
-  // retrieve sample size/length from extmem (first 32 bits -> 8 Bits file format 0x81, followed by 24 bits sample size)
-  unsigned int header = getExtmemAddress(sampleNumber)[0];
-  uint32_t header_format = 0x8100 << 16;
-  uint32_t sample_length = header - header_format - 4;
-  int16_t *sampleData16 = (int16_t*) getExtmemAddressData(sampleNumber);
-
-  int LENGTH_BITS = 0;
-  int LENGTH = sample_length*2;
-
-  // "calculate" LENGHT_BITS from LENGTH
-  // source: http://graphics.stanford.edu/~seander/bithacks.html#IntegerLogObvious
-  //while (LENGTH >>= 1) { LENGTH_BITS++; }
-  while (LENGTH >>= 1) { LENGTH_BITS++; }
-
-  // was:: int LOOPEND = (LENGTH/2) -1;
-  //int LOOPEND = (LENGTH/2);
-  int LOOPEND = LENGTH;
-  int LOOPSTART = 0;
-
-  _sampleData[sampleNumber-1][0].sample = (int16_t*)sampleData16 + 2; // skipt first 32 bits with header information
-  _sampleData[sampleNumber-1][0].sampleLength = sample_length;
-  _sampleData[sampleNumber-1][0].LOOP = false;
-  _sampleData[sampleNumber-1][0].INDEX_BITS = LENGTH_BITS;
-
-  _sampleData[sampleNumber-1][0].PER_HERTZ_PHASE_INCREMENT = (1 << (32 - LENGTH_BITS)) * AUDIO_SAMPLE_RATE_EXACT / WAVETABLE_NOTE_TO_FREQUENCY(baseNote) / AUDIO_SAMPLE_RATE_EXACT + 0.5;
-  //_sampleData[sampleNumber-1][0].PER_HERTZ_PHASE_INCREMENT = ((0x80000000 >> (LENGTH_BITS-1)) * 1.0 * (44100.0 / AUDIO_SAMPLE_RATE_EXACT)) / WAVETABLE_NOTE_TO_FREQUENCY(baseNote) + 0.5;
-  
-  _sampleData[sampleNumber-1][0].MAX_PHASE = ((uint32_t)LENGTH-4) << (32 - LENGTH_BITS);
-  _sampleData[sampleNumber-1][0].LOOP_PHASE_END = ((uint32_t)LOOPEND - 1) << (32 - LENGTH_BITS);
-  _sampleData[sampleNumber-1][0].LOOP_PHASE_LENGTH = (((uint32_t)LOOPEND - 1) << (32 - LENGTH_BITS)) - (((uint32_t)LOOPSTART - 1) << (32 - LENGTH_BITS));
-  _sampleData[sampleNumber-1][0].INITIAL_ATTENUATION_SCALAR = uint16_t(UINT16_MAX * WAVETABLE_DECIBEL_SHIFT(-0 / 100.0));
-
-  _sampleData[sampleNumber-1][0].DELAY_COUNT = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / AudioSynthWavetableSUCO::ENVELOPE_PERIOD + 0.5);
-  _sampleData[sampleNumber-1][0].ATTACK_COUNT = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / AudioSynthWavetableSUCO::ENVELOPE_PERIOD + 0.5);
-  _sampleData[sampleNumber-1][0].HOLD_COUNT = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / AudioSynthWavetableSUCO::ENVELOPE_PERIOD + 0.5);
-  _sampleData[sampleNumber-1][0].DECAY_COUNT = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / AudioSynthWavetableSUCO::ENVELOPE_PERIOD + 0.5);
-  _sampleData[sampleNumber-1][0].RELEASE_COUNT = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / AudioSynthWavetableSUCO::ENVELOPE_PERIOD + 0.5);
-  _sampleData[sampleNumber-1][0].SUSTAIN_MULT = int32_t(0 * AudioSynthWavetableSUCO::UNITY_GAIN);
-
-  _sampleData[sampleNumber-1][0].VIBRATO_DELAY = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / (2 * AudioSynthWavetableSUCO::LFO_PERIOD));
-  _sampleData[sampleNumber-1][0].VIBRATO_INCREMENT = uint32_t(8.2 * AudioSynthWavetableSUCO::LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT));
-  _sampleData[sampleNumber-1][0].VIBRATO_PITCH_COEFFICIENT_INITIAL = (WAVETABLE_CENTS_SHIFT(0) - 1.0) * 4;
-  _sampleData[sampleNumber-1][0].VIBRATO_PITCH_COEFFICIENT_SECOND = (1.0 - WAVETABLE_CENTS_SHIFT(0)) * 4;
-
-  _sampleData[sampleNumber-1][0].MODULATION_DELAY = uint32_t(0 * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / (2 * AudioSynthWavetableSUCO::LFO_PERIOD));
-  _sampleData[sampleNumber-1][0].MODULATION_INCREMENT = uint32_t(8.2 * AudioSynthWavetableSUCO::LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT));
-  _sampleData[sampleNumber-1][0].MODULATION_PITCH_COEFFICIENT_INITIAL = (WAVETABLE_CENTS_SHIFT(0) - 1.0) * 4;
-  _sampleData[sampleNumber-1][0].MODULATION_PITCH_COEFFICIENT_SECOND = (1.0 - WAVETABLE_CENTS_SHIFT(0)) * 4;
-  _sampleData[sampleNumber-1][0].MODULATION_AMPLITUDE_INITIAL_GAIN = int32_t(UINT16_MAX * (WAVETABLE_DECIBEL_SHIFT(0) - 1.0)) * 4;
-  _sampleData[sampleNumber-1][0].MODULATION_AMPLITUDE_SECOND_GAIN = int32_t(UINT16_MAX * (1.0 - WAVETABLE_DECIBEL_SHIFT(0))) * 4;
-
-  _instrumentData[sampleNumber-1].sample_count = 1;
-  _instrumentData[sampleNumber-1].sample_note_ranges = _completeRange;
-  _instrumentData[sampleNumber-1].samples = _sampleData[sampleNumber-1];
-};
-
-void SampleFSIO::changeInstrumentParameters(byte sampleNumber, boolean loop, uint8_t delay_count, uint8_t attack_count, uint8_t hold_count, uint8_t decay_count, uint8_t release_count, uint8_t sustain_mult, uint8_t vibrato_delay, uint8_t vibrato_increment) {
-/*  _sampleData[sampleNumber-1][0].LOOP = loop;
-
-  _sampleData[sampleNumber-1][0].DELAY_COUNT = uint32_t(delay_count * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / AudioSynthWavetableSUCO::ENVELOPE_PERIOD + 0.5);
-  _sampleData[sampleNumber-1][0].ATTACK_COUNT = uint32_t(attack_count * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / AudioSynthWavetableSUCO::ENVELOPE_PERIOD + 0.5);
-  _sampleData[sampleNumber-1][0].HOLD_COUNT = uint32_t(hold_count * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / AudioSynthWavetableSUCO::ENVELOPE_PERIOD + 0.5);
-  _sampleData[sampleNumber-1][0].DECAY_COUNT = uint32_t(decay_count * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / AudioSynthWavetableSUCO::ENVELOPE_PERIOD + 0.5);
-  _sampleData[sampleNumber-1][0].RELEASE_COUNT = uint32_t(release_count * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / AudioSynthWavetableSUCO::ENVELOPE_PERIOD + 0.5);
-  _sampleData[sampleNumber-1][0].SUSTAIN_MULT = int32_t(sustain_mult * AudioSynthWavetableSUCO::UNITY_GAIN);
-
-  _sampleData[sampleNumber-1][0].VIBRATO_DELAY = uint32_t(vibrato_delay * AudioSynthWavetableSUCO::SAMPLES_PER_MSEC / (2 * AudioSynthWavetableSUCO::LFO_PERIOD));
-  _sampleData[sampleNumber-1][0].VIBRATO_INCREMENT = uint32_t(vibrato_increment / 1000.0 * AudioSynthWavetableSUCO::LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT));
-  _sampleData[sampleNumber-1][0].VIBRATO_PITCH_COEFFICIENT_INITIAL = (WAVETABLE_CENTS_SHIFT(-release_count / 1000.0) - 1.0) * 4;
-  _sampleData[sampleNumber-1][0].VIBRATO_PITCH_COEFFICIENT_SECOND = (1.0 - WAVETABLE_CENTS_SHIFT(sustain_mult / 1000.0)) * 4;
-*/  
-}
-
-
-// sampleNumber 1..72
-AudioSynthWavetableSUCO::instrument_data SampleFSIO::getInstrumentDataBySample(byte sampleNumber) {
-  // ToDo: check if instrumentData is available. if not, create it with standard parameters
-  return _instrumentData[sampleNumber-1];
-};
-
-
 
 void SampleFSIO::clearSampleMemory() {
   // set the whole sample values to 0 .. silence ;)
@@ -640,8 +552,6 @@ void SampleFSIO::clearSampleMemory() {
     _sampleOffsets[i] = -1;
   }
 };
-
-
 
 
 void SampleFSIO::debugInfos() {

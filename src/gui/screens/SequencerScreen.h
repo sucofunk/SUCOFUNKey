@@ -38,6 +38,7 @@
 #include "../../helper/AudioResources.h"
 #include "../Screen.h"
 #include "../../context/sequencer/SongStructure.h"
+#include "../../context/sequencer/Swing.h"
 #include "../../context/sequencer/Zoom.h"
 
 class SequencerScreen {
@@ -59,7 +60,7 @@ class SequencerScreen {
                 SCALE = 10
         };
 
-        void initializeGrid(SongStructure *pattern, uint16_t cursorPosition); 
+        void initializeGrid(SongStructure *pattern, uint16_t cursorPosition, Swing *swing); 
         void drawGrid(LastAction action);
         void drawCursorAt(byte channel, uint16_t position, boolean draw);
         void drawSample(byte channel, uint16_t position, boolean drawBackground);
@@ -78,6 +79,8 @@ class SequencerScreen {
         void hideSampleInfos();
 
         void drawBPM(float bpm);
+        void drawSwingInfoFromExpression(byte expression);
+        void drawSwingInfo(byte level, byte group);
         void drawExtMemPercentage(byte percent);
 
     private:
@@ -104,9 +107,15 @@ class SequencerScreen {
         int _tempInt = 0;
 
         uint16_t _xPositionOffset = 0;    // if we move the cursor to the right at the end of the screen, the pattern moves and starts with the offset on the left
-        uint16_t _xPositionCapacity = 21; // available columns
+        uint16_t _xPositionCapacity = 16; // available columns
+        uint8_t  _cellWidth = 19;
+        uint8_t  _cellHeight = 15;
+
+        uint8_t _cursorChannel = 0;
+        uint16_t _cursorPosition = 0;
 
         SongStructure *_song;
+        Swing *_swing;
         SongStructure::sampleStruct _tempSample;
 
         uint8_t _amountOfGridCellsToDraw();

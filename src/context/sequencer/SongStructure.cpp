@@ -29,14 +29,11 @@
    ---------------------------------------------------------------------------------------------- */
    
 #include "SongStructure.h"
+#include "Swing.h"
 
-SongStructure::SongStructure() { };
-
-// ToDo:  - save to sd card OK
-//        - load from sd card OK
-//        - snippets
-//        - implement shift OK
-
+SongStructure::SongStructure() { 
+    _swing = Swing();
+};
 
 // returns the closest pointer to the given position. it always returns the predecessor, even if a successor is closer, as change the pointed list at the predecessor.
 SongStructure::closestPointer SongStructure::_getClosestPointerIndex(uint8_t channel, uint16_t position) {
@@ -202,6 +199,8 @@ boolean SongStructure::setSample(uint8_t channel, uint16_t position, sampleStruc
     _sampleBucket[sbi].sampleNumber = sample.sampleNumber;
     _sampleBucket[sbi].stereoPosition = sample.stereoPosition;
     _sampleBucket[sbi].velocity = sample.velocity;
+    _sampleBucket[sbi].swing = sample.swing;
+    _sampleBucket[sbi].reverse = sample.reverse;
 
     uint16_t startPointerIndex = _blocks[blockIndex].startPointer[channel];
 
@@ -293,6 +292,8 @@ boolean SongStructure::setParameterChange(uint8_t channel, uint16_t position, pa
 
     _parameterChangeSampleBucket[pcbi].stereoPosition = parameterChange.stereoPosition;
     _parameterChangeSampleBucket[pcbi].velocity = parameterChange.velocity;
+    _parameterChangeSampleBucket[pcbi].pitchChange = parameterChange.pitchChange;
+    _parameterChangeSampleBucket[pcbi].reverse = parameterChange.reverse;
 
     uint16_t startPointerIndex = _blocks[blockIndex].startPointer[channel];
 
@@ -642,6 +643,8 @@ boolean SongStructure::copyPosition(uint8_t fromChannel, uint16_t fromPosition, 
         nss.sampleNumber = ss.sampleNumber;
         nss.stereoPosition = ss.stereoPosition;
         nss.velocity = ss.velocity;
+        nss.swing = ss.swing;
+        nss.reverse = ss.reverse;
         
         if (setSample(toChannel, toPosition, nss) == false) {
             return false;
@@ -654,6 +657,8 @@ boolean SongStructure::copyPosition(uint8_t fromChannel, uint16_t fromPosition, 
         parameterChangeSampleStruct nps;
         nps.stereoPosition = ps.stereoPosition;
         nps.velocity = ps.velocity;
+        nps.pitchChange = ps.pitchChange;
+        nps.reverse = ps.reverse;
 
         if (setParameterChange(toChannel, toPosition, nps) == false) {
             return false;
@@ -727,10 +732,7 @@ void SongStructure::increaseVelocity(uint8_t channel, uint16_t position) {
             default:
                 break;
         }
-    } else {
-        // ToDo: is this possible? need to check..
-        Serial.println("ELSE!");
-    }
+    } 
 };
 
 void SongStructure::decreaseVelocity(uint8_t channel, uint16_t position) {
@@ -753,9 +755,7 @@ void SongStructure::decreaseVelocity(uint8_t channel, uint16_t position) {
             default:
                 break;
         }
-    } else {
-        // ToDo: is this possible? need to check..
-    }
+    } 
 };
 
 void SongStructure::setVelocity(uint8_t channel, uint16_t position, byte velocity) {
@@ -773,9 +773,7 @@ void SongStructure::setVelocity(uint8_t channel, uint16_t position, byte velocit
             default:
                 break;                
         }
-    } else {
-        // ToDo: select position and change velocity -> needed when loading a songstructure?
-    }
+    } 
 };
 
 
@@ -786,10 +784,7 @@ void SongStructure::increaseMidiChannel(uint8_t channel, uint16_t position) {
         if (_midiNoteBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].channel < 12) {
             _midiNoteBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].channel += 1;
         }
-    } else {
-        // ToDo: is this possible? need to check..
-        Serial.println("ELSE!");
-    }
+    } 
 };
 
 void SongStructure::decreaseMidiChannel(uint8_t channel, uint16_t position) {
@@ -797,10 +792,7 @@ void SongStructure::decreaseMidiChannel(uint8_t channel, uint16_t position) {
         if (_midiNoteBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].channel > 1) {
             _midiNoteBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].channel -= 1;
         }
-    } else {
-        // ToDo: is this possible? need to check..
-        Serial.println("ELSE!");
-    }
+    } 
 };
 
 void SongStructure::setMidiChannel(uint8_t channel, uint16_t position, byte midiChannel) {
@@ -828,8 +820,6 @@ void SongStructure::stereoPositionTickLeft(uint8_t channel, uint16_t position) {
             default:
                 break;
         }
-    } else {
-        // ToDo: is this possible? need to check..
     }
 };
 
@@ -849,8 +839,6 @@ void SongStructure::stereoPositionTickRight(uint8_t channel, uint16_t position) 
             default:
                 break;
         }
-    } else {
-        // ToDo: is this possible? need to check..
     }
 };
 
@@ -866,8 +854,6 @@ void SongStructure::setStereoPosition(uint8_t channel, uint16_t position, byte s
             default:
                 break;
         }
-    } else {
-        // ToDo: select position and change panning -> needed when loading a songstructure?
     }
 };
 
@@ -884,12 +870,15 @@ void SongStructure::increasePitchByOne(uint8_t channel, uint16_t position) {
                     _midiNoteBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].note += 1;
                 }
                 break;
+            case PARAMETER_CHANGE_SAMPLE:
+                if (_parameterChangeSampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].pitchChange < 254) {                    
+                    _parameterChangeSampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].pitchChange += 1;
+                }                
+                break;
             default:
                 break;
         }
-    } else {
-        // ToDo: is this possible? need to check..
-    }
+    } 
 };
 
 void SongStructure::decreasePitchByOne(uint8_t channel, uint16_t position) {
@@ -904,13 +893,16 @@ void SongStructure::decreasePitchByOne(uint8_t channel, uint16_t position) {
                 if (_midiNoteBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].note > 1) {
                     _midiNoteBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].note -= 1;
                 }
-                break;                
+                break;
+            case PARAMETER_CHANGE_SAMPLE:
+                if (_parameterChangeSampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].pitchChange > 0) {                    
+                    _parameterChangeSampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].pitchChange -= 1;
+                }                
+                break;                                
             default:
                 break;
         }
-    } else {
-        // ToDo: is this possible? need to check..
-    }
+    } 
 };
 
 void SongStructure::setPitchByMidiNote(uint8_t channel, uint16_t position, byte note) {
@@ -925,9 +917,7 @@ void SongStructure::setPitchByMidiNote(uint8_t channel, uint16_t position, byte 
             default:
                 break;
         }
-    } else {
-        // ToDo: select position and change note -> needed when loading a songstructure?
-    }
+    } 
 };
 
 void SongStructure::setBaseMidiNote(uint8_t channel, uint16_t position, byte note) {
@@ -939,9 +929,7 @@ void SongStructure::setBaseMidiNote(uint8_t channel, uint16_t position, byte not
             default:
                 break;
         }
-    } else {
-        // ToDo: select position and change note -> needed when loading a songstructure?
-    }
+    } 
 };
 
 void SongStructure::increaseProbability(uint8_t channel, uint16_t position) {
@@ -960,9 +948,7 @@ void SongStructure::increaseProbability(uint8_t channel, uint16_t position) {
             default:
                 break;
         }
-    } else {
-        // ToDo: is this possible? need to check..
-    }
+    } 
 };
 
 void SongStructure::decreaseProbability(uint8_t channel, uint16_t position) {
@@ -981,8 +967,6 @@ void SongStructure::decreaseProbability(uint8_t channel, uint16_t position) {
             default:
                 break;
         }
-    } else {
-        // ToDo: is this possible? need to check..
     }
 };
 
@@ -999,10 +983,101 @@ void SongStructure::setProbability(uint8_t channel, uint16_t position, byte prob
             default:
                 break;
         }
-    } else {
-        // ToDo: is this possible? need to check..
+    } 
+};
+
+
+void SongStructure::swingLevelUp(uint8_t channel, uint16_t position) {
+    byte expression, group;
+    if (_currentPosition.channel == channel && _currentPosition.position == position) {
+        switch(_samplePointers[_currentPosition.samplePointerIndex].type) {
+            case SAMPLE:
+                    expression = _sampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].swing;
+                    group = _swing.getGroupFromBinarySwingExpression(expression);
+                    if (group == 0) {
+                        _sampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].swing = _swing.levelUpInExpression(expression);
+                    } else {
+                        setSwingGroupLevel(group, _swing.levelUp(getSwingGroupLevel(group)));                        
+                    };                    
+                break;
+            case MIDINOTE:
+                break;    
+            default:
+                break;
+        }
     }
 };
+
+void SongStructure::swingLevelDown(uint8_t channel, uint16_t position) {
+    byte expression, group;
+    if (_currentPosition.channel == channel && _currentPosition.position == position) {
+        switch(_samplePointers[_currentPosition.samplePointerIndex].type) {
+            case SAMPLE:
+                    expression = _sampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].swing;
+                    group = _swing.getGroupFromBinarySwingExpression(expression);
+                    if (group == 0) {
+                        _sampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].swing = _swing.levelDownInExpression(expression);
+                    } else {
+                        setSwingGroupLevel(group, _swing.levelDown(getSwingGroupLevel(group)));
+                    };                    
+                break;
+            case MIDINOTE:
+                break;                
+            default:
+                break;
+        }
+    }
+};
+
+void SongStructure::swingGroupUp(uint8_t channel, uint16_t position) {
+    byte expression;
+
+    if (_currentPosition.channel == channel && _currentPosition.position == position) {
+        switch(_samplePointers[_currentPosition.samplePointerIndex].type) {
+            case SAMPLE:
+                    expression = _sampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].swing;
+                    _sampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].swing = _swing.groupUpInExpression(expression);
+                break;
+            case MIDINOTE:
+                break;                
+            default:
+                break;
+        }
+    }
+};
+
+void SongStructure::swingGroupDown(uint8_t channel, uint16_t position) {
+    byte expression;
+    if (_currentPosition.channel == channel && _currentPosition.position == position) {
+        switch(_samplePointers[_currentPosition.samplePointerIndex].type) {
+            case SAMPLE:
+                    expression = _sampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].swing;
+                    _sampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].swing = _swing.groupDownInExpression(expression);
+                break;
+            case MIDINOTE:
+                break;                
+            default:
+                break;
+        }
+    }    
+};
+
+
+void SongStructure::reverseSamplePlayback(uint8_t channel, uint16_t position) {
+    if (_currentPosition.channel == channel && _currentPosition.position == position) {
+        switch(_samplePointers[_currentPosition.samplePointerIndex].type) {
+            case SAMPLE:
+                    _sampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].reverse = !_sampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].reverse;
+                break;
+            case PARAMETER_CHANGE_SAMPLE:
+                    _parameterChangeSampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].reverse = !_parameterChangeSampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].reverse;
+                break;                
+            default:
+                break;
+        }
+    }        
+};
+
 
 
 void SongStructure::setSongLength(uint16_t songLength) {
@@ -1064,7 +1139,7 @@ void SongStructure::setMetadataToDefault() {
     _meta.songLength = 64;
     _meta.songResolution = 4;
     
-    _meta.playbackSpeed = 80.0;
+    _meta.playbackSpeed = 85.0;
 };
 
 
@@ -1121,6 +1196,15 @@ float SongStructure::getPlayBackSpeed() {
 };
 
 
+byte SongStructure::getSwingGroupLevel(byte group) {
+    return _meta.swingGroupLevels[group];
+};
+
+void SongStructure::setSwingGroupLevel(byte group, byte level) {
+    _meta.swingGroupLevels[group] = level;
+};
+
+
 
 // ----------------------------------------------------------------------------------------------------------
 // Loading and saving a song structure
@@ -1131,13 +1215,9 @@ boolean SongStructure::loadFromSD(char *songPath) {
     File readFile;
     byte *bufferBlocks;
 
-    Serial.println(songPath);
-
     // read _meta
     strcpy(buff, songPath);
     strcat(buff, "/PATTERN/META.DAT");
-
-    Serial.println(buff); 
 
     readFile = SD.open(buff, FILE_READ);
 
@@ -1156,8 +1236,6 @@ boolean SongStructure::loadFromSD(char *songPath) {
     // read _blocks
     strcpy(buff, songPath);
     strcat(buff, "/PATTERN/BLOCKS.DAT");
-
-    Serial.println(buff); 
 
     readFile = SD.open(buff, FILE_READ);
 
@@ -1180,8 +1258,6 @@ boolean SongStructure::loadFromSD(char *songPath) {
     strcpy(buff, songPath);
     strcat(buff, "/PATTERN/SMPLPTR.DAT");
 
-    Serial.println(buff); 
-
     readFile = SD.open(buff, FILE_READ);
 
     for (uint16_t i=0; i<sizeof(_samplePointers)/sizeof(samplePointerStruct); i++) {
@@ -1201,8 +1277,6 @@ boolean SongStructure::loadFromSD(char *songPath) {
     // read _sampleBucket
     strcpy(buff, songPath);
     strcat(buff, "/PATTERN/SMPLBKT.DAT");
-
-    Serial.println(buff); 
 
     readFile = SD.open(buff, FILE_READ);
 
@@ -1224,8 +1298,6 @@ boolean SongStructure::loadFromSD(char *songPath) {
     strcpy(buff, songPath);
     strcat(buff, "/PATTERN/SPSBKT.DAT");
 
-    Serial.println(buff); 
-
     readFile = SD.open(buff, FILE_READ);
 
     for (uint16_t i=0; i<sizeof(_parameterChangeSampleBucket)/sizeof(parameterChangeSampleStruct); i++) {
@@ -1246,8 +1318,6 @@ boolean SongStructure::loadFromSD(char *songPath) {
     strcpy(buff, songPath);
     strcat(buff, "/PATTERN/MIDINOBKT.DAT");
 
-    Serial.println(buff); 
-
     readFile = SD.open(buff, FILE_READ);
 
     for (uint16_t i=0; i<sizeof(_midiNoteBucket)/sizeof(midiNoteStruct); i++) {
@@ -1261,8 +1331,6 @@ boolean SongStructure::loadFromSD(char *songPath) {
     }
 
     readFile.close();
-
-
 
     return true;
 };
@@ -1281,8 +1349,6 @@ boolean SongStructure::saveToSD(char *songPath) {
     strcat(buff, "/PATTERN/META.DAT");
 
     if (SD.exists(buff)) { SD.remove(buff); }
-   
-    Serial.println(buff);
 
     writeFile = SD.open(buff, FILE_WRITE);
 
@@ -1297,8 +1363,6 @@ boolean SongStructure::saveToSD(char *songPath) {
     strcat(buff, "/PATTERN/BLOCKS.DAT");
 
     if (SD.exists(buff)) { SD.remove(buff); }
-   
-    Serial.println(buff); 
 
     writeFile = SD.open(buff, FILE_WRITE);
 
@@ -1317,8 +1381,6 @@ boolean SongStructure::saveToSD(char *songPath) {
     strcat(buff, "/PATTERN/SMPLPTR.DAT");
 
     if (SD.exists(buff)) { SD.remove(buff); }
-
-    Serial.println(buff); 
 
     writeFile = SD.open(buff, FILE_WRITE);
 
@@ -1339,8 +1401,6 @@ boolean SongStructure::saveToSD(char *songPath) {
 
     if (SD.exists(buff)) { SD.remove(buff); }
 
-    Serial.println(buff); 
-
     writeFile = SD.open(buff, FILE_WRITE);
 
     for (uint16_t i=0; i<sizeof(_sampleBucket)/sizeof(sampleStruct); i++) {
@@ -1358,8 +1418,6 @@ boolean SongStructure::saveToSD(char *songPath) {
     strcat(buff, "/PATTERN/SPSBKT.DAT");
 
     if (SD.exists(buff)) { SD.remove(buff); }
-
-    Serial.println(buff); 
 
     writeFile = SD.open(buff, FILE_WRITE);
 
@@ -1380,8 +1438,6 @@ boolean SongStructure::saveToSD(char *songPath) {
 
     if (SD.exists(buff)) { SD.remove(buff); }
 
-    Serial.println(buff); 
-
     writeFile = SD.open(buff, FILE_WRITE);
 
     for (uint16_t i=0; i<sizeof(_midiNoteBucket)/sizeof(midiNoteStruct); i++) {
@@ -1390,8 +1446,6 @@ boolean SongStructure::saveToSD(char *songPath) {
     }
  
     writeFile.close();
-
-
 
     return true;
 };
@@ -1459,11 +1513,17 @@ uint16_t SongStructure::_getNextSamplePointerIndex() {
 
 void SongStructure::clearSelection(uint8_t startChannel, uint16_t startPosition, uint8_t endChannel, uint16_t endPosition) {
     for (uint16_t p=startPosition; p<endPosition; p++) {
-        for (uint8_t c=startChannel; c<endChannel; c++) {
+        for (uint8_t c=startChannel; c<=endChannel; c++) {
             removePosition(c, p);
         }
     }
 };
+
+
+
+
+
+
 
 
 

@@ -181,6 +181,8 @@ void BlackKeyMenu::hideMenu() {
     _exclusivePosition = 0;
 };
 
+
+
 boolean BlackKeyMenu::isVisible() {
     return _visible;    
 };

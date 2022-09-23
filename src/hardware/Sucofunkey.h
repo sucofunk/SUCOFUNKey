@@ -137,8 +137,13 @@ class Sucofunkey {
         static const int MENU_CURSOR_LEFT = 267;
         static const int MENU_CURSOR_UP = 266;
         static const int MENU_CURSOR_DOWN = 265;
-    
         static const int MENU_CURSOR_RIGHT = 264;
+
+        // SET + Key -> Offset 600 + key
+        static const int SET_CURSOR_RIGHT = 664;
+        static const int SET_CURSOR_LEFT = 667;
+        static const int SET_CURSOR_UP = 666;
+        static const int SET_CURSOR_DOWN = 665;        
 
         static const int ENCODER_1_PUSH = 10;
         static const int ENCODER_2_PUSH = 6;
@@ -308,6 +313,8 @@ class Sucofunkey {
         char getFilenameCharByEventKey(byte eventKey, byte index);    
         boolean isEventBlackKey(byte eventKey); // a black key from the piano roll.. false does not mean that it is a white key.. might be anything else
 
+        String getMIDINoteName(byte note);
+
     private:
         // Interrupt Pins on Teensy from Sucokey
         int _intKeyPin1;
@@ -332,11 +339,18 @@ class Sucofunkey {
         // Is the Function Key held for a key combination?
         boolean _fnKeyHold;
         boolean _fnKeyInterrupted;
+        unsigned long _fnKeyMillis;
+
+        // Is the Menu Key held for a key combination?
         boolean _menuKeyHold;
         boolean _menuKeyInterrupted;
-        unsigned long _fnKeyMillis;
         unsigned long _menuKeyMillis;
-        
+
+        // Is the Set Key held for a key combination?
+        boolean _setKeyHold;
+        boolean _setKeyInterrupted;
+        unsigned long _setKeyMillis;
+
         // needs to be true to e.g. not change menu context while recording
         boolean _ignoreKeys;
         boolean _isRecording;
@@ -385,6 +399,10 @@ class Sucofunkey {
             byte LED_PIN;
         } LookUpTableEntry;
 
+        typedef struct midiNoteLookUpTableStruct {
+            String name;
+        } MidiNoteLookUpTableEntry;
+
         //                                        0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,  15
         //                                        16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31
         //                                        32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47
@@ -424,6 +442,7 @@ class Sucofunkey {
             { 23, "D#2", {'0', '+'}, {'0', '0'}, LED_DS_2},
             { 24, "E2",  {' ', ' '}, {' ', ' '}, LED_E_2}
         };
+
 
         // one entry for each rotary encoder
         uint8_t _encoderTempValues[4] = {0, 0, 0, 0};

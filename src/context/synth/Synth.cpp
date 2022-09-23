@@ -45,7 +45,6 @@ Synth::Synth(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *sfsio
 
 
 void Synth::handleEvent(Sucofunkey::keyQueueStruct event) {
-
     if (event.pressed) {
       switch(event.index) {
         case Sucofunkey::CURSOR_LEFT:
@@ -64,7 +63,7 @@ void Synth::handleEvent(Sucofunkey::keyQueueStruct event) {
       if (event.pressed) {
         byte sampleId0 = _keyboard->getSampleIdByEventKey(event.index)-1;
         
-        if (_sfsio->sampleBanksStatus[_keyboard->getBank()-1][sampleId0]) {          
+        if (_sfsio->sampleBanksStatus[_keyboard->getBank()-1][sampleId0]) {
           _selectSample(_keyboard->getBank(), sampleId0+1);
         }
       } else {
@@ -80,53 +79,9 @@ void Synth::handleEvent(Sucofunkey::keyQueueStruct event) {
         }
         else {                
           _playNextFreeWavetable(note, false);
+          _audioResources->playMem.stop();
       }
-    }
-
-    if (event.type == Sucofunkey::ENCODER) {
-      switch(event.index) {
-        case Sucofunkey::ENCODER_1: 
-          if (event.pressed) { _val1++; } else { _val1--; }
-            Serial.print("_val1::");
-            Serial.println(_val1);
-            break;
-        case Sucofunkey::ENCODER_2: 
-          if (event.pressed) { _val2++; } else { _val2--; }
-          Serial.print("_val2::");
-          Serial.println(_val2);
-          break;
-        case Sucofunkey::ENCODER_3: 
-          if (event.pressed) { _val3++; } else { _val3--; }
-          Serial.print("_val3::");
-          Serial.println(_val3);
-          break;
-        case Sucofunkey::ENCODER_4:
-          if (event.pressed) { _val4++; } else { _val4--; }
-          Serial.print("_val4::");
-          Serial.println(_val4);
-          break;
-        case Sucofunkey::FN_ENCODER_1: 
-          if (event.pressed) { _val5++; } else { _val5--; }
-            Serial.print("_val5::");
-            Serial.println(_val5);
-            break;
-        case Sucofunkey::FN_ENCODER_2: 
-          if (event.pressed) { _val6++; } else { _val6--; }
-          Serial.print("_val6::");
-          Serial.println(_val6);
-          break;
-        case Sucofunkey::FN_ENCODER_3: 
-          if (event.pressed) { _val7++; } else { _val7--; }
-          Serial.print("_val7::");
-          Serial.println(_val7);
-          break;
-        case Sucofunkey::FN_ENCODER_4:
-          if (event.pressed) { _val8++; } else { _val8--; }
-          Serial.print("_val8::");
-          Serial.println(_val8);
-          break;
-      }
-    }
+    }   
 }
 
 void Synth::setActive(boolean active) {
@@ -159,8 +114,7 @@ void Synth::receiveMidiData(midi::MidiType type, int d1, int d2) {
 
 
 void Synth::_playNextFreeWavetable(byte note, boolean play) {
-
-  _sfsio->debugInfos();
+  //_sfsio->debugInfos();
 
   // No sample as instrument selected? -> ingnore..
   if (_currentInstrumentId == 255) return;
@@ -171,33 +125,25 @@ void Synth::_playNextFreeWavetable(byte note, boolean play) {
       if (_polyKeyIDs[i] == 0) {
           _polyKeyIDs[i] = note;
 
-        // play pitched note: bankstart(1:29|2:53|3:77)+sampleId1-1 if in keyboard mode
-        //_sfsio->changeInstrumentParameters(_currentInstrumentId, _loop, _val1, _val2, _val3, _val4, _val5, _val6, _val7, _val8);
-        
+        // play pitched note: bankstart(1:29|2:53|3:77)+sampleId1-1 if in keyboard mode      
         switch(i) {
           case 0:
-            _audioResources->wavetableSynth1.setInstrument(_sfsio->getInstrumentDataBySample(_currentInstrumentId));
-            _audioResources->wavetableSynth1.playNote(note);
+            _audioResources->playMem1.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false);
             break;
           case 1:
-            _audioResources->wavetableSynth2.setInstrument(_sfsio->getInstrumentDataBySample(_currentInstrumentId));
-            _audioResources->wavetableSynth2.playNote(note);
+            _audioResources->playMem2.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false);
             break;
           case 2:
-            _audioResources->wavetableSynth3.setInstrument(_sfsio->getInstrumentDataBySample(_currentInstrumentId));
-            _audioResources->wavetableSynth3.playNote(note);
+            _audioResources->playMem3.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false);
             break;
           case 3:
-            _audioResources->wavetableSynth4.setInstrument(_sfsio->getInstrumentDataBySample(_currentInstrumentId));
-            _audioResources->wavetableSynth4.playNote(note);
+            _audioResources->playMem4.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false);
             break;
           case 4:
-            _audioResources->wavetableSynth5.setInstrument(_sfsio->getInstrumentDataBySample(_currentInstrumentId));
-            _audioResources->wavetableSynth5.playNote(note);
+            _audioResources->playMem5.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false);
             break;
           case 5:
-            _audioResources->wavetableSynth6.setInstrument(_sfsio->getInstrumentDataBySample(_currentInstrumentId));
-            _audioResources->wavetableSynth6.playNote(note);
+            _audioResources->playMem6.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false);
             break;                                                
         }
 
@@ -212,22 +158,22 @@ void Synth::_playNextFreeWavetable(byte note, boolean play) {
 
           switch(i) {
             case 0:
-              _audioResources->wavetableSynth1.stop();            
+              _audioResources->playMem1.stop();
               break;
             case 1:
-              _audioResources->wavetableSynth2.stop();            
+              _audioResources->playMem2.stop();
               break;
             case 2:
-              _audioResources->wavetableSynth3.stop();            
+              _audioResources->playMem3.stop();
               break;
             case 3:
-              _audioResources->wavetableSynth4.stop();            
+              _audioResources->playMem4.stop();
               break;
             case 4:
-              _audioResources->wavetableSynth5.stop();            
+              _audioResources->playMem5.stop();
               break;
             case 5:
-              _audioResources->wavetableSynth6.stop();            
+              _audioResources->playMem6.stop();
               break;
           }
 
@@ -241,10 +187,5 @@ void Synth::_playNextFreeWavetable(byte note, boolean play) {
 void Synth::_selectSample(byte bank1, byte sampleId1) {
   _sfsio->addSampleToMemory(bank1, sampleId1, false);  
   _currentInstrumentId = (bank1-1)*24+sampleId1;
-  _sfsio->generateInstrument(_currentInstrumentId, 60);
-
-  // play for pre-listening
-  _audioResources->wavetableSynth1.setInstrument(_sfsio->getInstrumentDataBySample(_currentInstrumentId));
-  _audioResources->wavetableSynth1.amplitude(0.3);
-  _audioResources->wavetableSynth1.playNote(60);
+  _audioResources->playMem.play(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId));
 }

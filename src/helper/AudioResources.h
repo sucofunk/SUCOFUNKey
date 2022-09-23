@@ -34,8 +34,7 @@
 #include <Arduino.h>
 #include <Audio.h>
 #include "audio-extensions/play_sd_raw_suco.h"
-#include "audio-extensions/synth_wavetable_suco.h"
-
+#include "audio-extensions/play_memory_suco.h"
 
 class AudioResources {
 
@@ -85,7 +84,7 @@ class AudioResources {
         void setInputMic();
         void setInputLine();
 
-        AudioSynthWavetableSUCO      wavetable1;
+/*        AudioSynthWavetableSUCO      wavetable1;
         AudioSynthWavetableSUCO      wavetable2;
         AudioSynthWavetableSUCO      wavetable3;
         AudioSynthWavetableSUCO      wavetable4;
@@ -93,25 +92,25 @@ class AudioResources {
         AudioSynthWavetableSUCO      wavetable6;
         AudioSynthWavetableSUCO      wavetable7;
         AudioSynthWavetableSUCO      wavetable8;
-        
-        AudioPlayMemory          playMem;
-        AudioPlayMemory          playMem1;
-        AudioPlayMemory          playMem2;
-        AudioPlayMemory          playMem3;
-        AudioPlayMemory          playMem4;
-        AudioPlayMemory          playMem5;
-        AudioPlayMemory          playMem6;
-        AudioPlayMemory          playMem7;
-        AudioPlayMemory          playMem8;
+*/        
+        AudioPlayMemorySUCO          playMem;
+        AudioPlayMemorySUCO          playMem1;
+        AudioPlayMemorySUCO          playMem2;
+        AudioPlayMemorySUCO          playMem3;
+        AudioPlayMemorySUCO          playMem4;
+        AudioPlayMemorySUCO          playMem5;
+        AudioPlayMemorySUCO          playMem6;
+        AudioPlayMemorySUCO          playMem7;
+        AudioPlayMemorySUCO          playMem8;
 
-        AudioPlayMemory          playMemLive1;
-        AudioPlayMemory          playMemLive2;
-        AudioPlayMemory          playMemLive3;
-        AudioPlayMemory          playMemLive4;
-        AudioPlayMemory          playMemLive5;
-        AudioPlayMemory          playMemLive6;
-        AudioPlayMemory          playMemLive7;
-        AudioPlayMemory          playMemLive8;
+        AudioPlayMemorySUCO          playMemLive1;
+        AudioPlayMemorySUCO          playMemLive2;
+        AudioPlayMemorySUCO          playMemLive3;
+        AudioPlayMemorySUCO          playMemLive4;
+        AudioPlayMemorySUCO          playMemLive5;
+        AudioPlayMemorySUCO          playMemLive6;
+        AudioPlayMemorySUCO          playMemLive7;
+        AudioPlayMemorySUCO          playMemLive8;
 
         AudioPlaySdRawSUCO       playSdRaw;
 
@@ -154,15 +153,29 @@ class AudioResources {
 
 
         // Synth section
-        AudioSynthWavetableSUCO      wavetableSynth5;
+/*        AudioSynthWavetableSUCO      wavetableSynth5;
         AudioSynthWavetableSUCO      wavetableSynth6;
         AudioSynthWavetableSUCO      wavetableSynth4;
         AudioSynthWavetableSUCO      wavetableSynth2;
         AudioSynthWavetableSUCO      wavetableSynth3;
         AudioSynthWavetableSUCO      wavetableSynth1;
+*/        
         AudioMixer4              mixerSynth1;    
         AudioMixer4              mixerSynth2;   
         AudioMixer4              mixerSynth;    
+
+
+/*
+        // from Open Audio for phaseshifter
+        AudioConvert_I16toF32    cnvrt1;    // Convert to float
+        AudioConvert_F32toI16    cnvrt2;
+
+        RadioIQMixer_F32         iqmixer1;
+        AudioFilter90Deg_F32     hilbert1;
+        AudioMixer4_F32          sum1;      // Summing node for the SSB receiver
+        AudioFilterFIR_F32       fir1;      // Low Pass Filter to frequency limit the SSB
+        AudioEffectDelay_OA_F32  delay1;    // Pleasant and useful sound between L & R
+*/
 };
 
 #endif

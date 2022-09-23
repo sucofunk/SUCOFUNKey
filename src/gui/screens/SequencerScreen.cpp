@@ -41,16 +41,20 @@ SequencerScreen::SequencerScreen(Sucofunkey *keyboard, Screen *screen, SampleFSI
 }
 
 
+// -----------------------------------------------------------------------------------------------------------------------------------------
+// --- On Grid -----------------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------------------------------------------
 
-void SequencerScreen::initializeGrid(SongStructure *song, uint16_t cursorPosition) {
+
+void SequencerScreen::initializeGrid(SongStructure *song, uint16_t cursorPosition, Swing *swing) {
   _song = song;
+  _swing = swing;
   _screen->fillArea(_screen->AREA_CONTENT, _screen->C_BLACK);
   
   // calculate xPositionOffset for the current cursorPosition at the given zoomLevel
   
   // case 1: cursor is at the beginning
   if (cursorPosition == 0) _xPositionOffset = 0;
-
 
   // case 2: cursor is somewhere in the middle, but the whole grid does not fill the entire screen
   //          - adjust xpositionoffset and center cursor at the middle of the screen
@@ -80,14 +84,16 @@ void SequencerScreen::initializeGrid(SongStructure *song, uint16_t cursorPositio
 
 
 void SequencerScreen::drawGrid(LastAction action) {
+  //uint16_t maxWidth = _screen->AREA_SCREEN.x2-2;
+  uint16_t maxWidth = _cellWidth*_xPositionCapacity+1;
 
-  uint16_t maxWidth = _screen->AREA_SCREEN.x2-2;
-
-  if ((_song->getSongLength()/_zoom->getZoomlevelOffset()) < _xPositionCapacity) maxWidth = (_song->getSongLength()/_zoom->getZoomlevelOffset())*15+1; 
+  if ((_song->getSongLength()/_zoom->getZoomlevelOffset()) <= _xPositionCapacity) {
+    maxWidth = (_song->getSongLength()/_zoom->getZoomlevelOffset())*_cellWidth+1; 
+  } 
 
   // horizontal lines
   for (int i = 0; i <= 8; i++) {
-    _screen->drawFastHLine(0, i*15+_screen->AREA_CONTENT.y1+1, maxWidth, _screen->C_GRID_BRIGHT);
+    _screen->drawFastHLine(0, i*_cellHeight+_screen->AREA_CONTENT.y1+1, maxWidth, _screen->C_GRID_BRIGHT);
   }
 
   // showTail -> draw the end of the song
@@ -101,23 +107,22 @@ void SequencerScreen::drawGrid(LastAction action) {
 
   // vertical lines  
   uint8_t lc = ((_xPositionOffset/_zoom->getZoomlevelOffset()) % static_cast<uint8_t>(_song->getSongResolution()*_zoom->getZoomlevelFactor())) + 1;
+  uint8_t h = _cellHeight * 8; // 8 Channels
 
   int amountOfGridcellsToDraw = _amountOfGridCellsToDraw();
 
   for (int i=0; i<=amountOfGridcellsToDraw; i++) {
-    // 120 -> channels * 15
-    _screen->drawFastVLine(i*15, _screen->AREA_CONTENT.y1+1, 120, lc == 1 ?_screen->C_WHITE : _screen->C_GRID_BRIGHT);
+    _screen->drawFastVLine(i*_cellWidth, _screen->AREA_CONTENT.y1+1, h, lc == 1 ?_screen->C_WHITE : _screen->C_GRID_BRIGHT);
 
     lc = (lc == _song->getSongResolution()*_zoom->getZoomlevelFactor()) ? 1 : lc+1;
   }
 
   if ((action == SHORTEN || action == SCALE)  && (amountOfGridcellsToDraw < _xPositionCapacity)) {
-    _screen->fillRect((amountOfGridcellsToDraw)*15+1, _screen->AREA_CONTENT.y1+1, _screen->AREA_SCREEN.x2-(amountOfGridcellsToDraw*15)+2, 121, _screen->C_BLACK);
+    _screen->fillRect((amountOfGridcellsToDraw)*_cellWidth+1, _screen->AREA_CONTENT.y1+1, _screen->AREA_SCREEN.x2-(amountOfGridcellsToDraw*_cellWidth)+2, h+1, _screen->C_BLACK);
   }
 
   drawSamples();
 }
-
 
 void SequencerScreen::drawCursorAt(byte channel, uint16_t position, boolean draw) {
   // draw cursor if it is within the viewport and displayed range
@@ -125,7 +130,16 @@ void SequencerScreen::drawCursorAt(byte channel, uint16_t position, boolean draw
 
   if (position >= _xPositionOffset && position < _xPositionOffset+(_xPositionCapacity*_zoom->getZoomlevelOffset()) && position < _song->getSongLength()) {
     offset = static_cast<uint16_t>((position - _xPositionOffset)/_zoom->getZoomlevelOffset());
-    _screen->fillRect(offset*15+1, channel*15+_screen->AREA_CONTENT.y1+2, 14, 14, draw ? _screen->C_TRIM_START : _screen->C_BLACK);
+    _screen->fillRect(offset*_cellWidth+1, channel*_cellHeight+_screen->AREA_CONTENT.y1+2, _cellWidth-1, _cellHeight-1, draw ? _screen->C_CURSOR : _screen->C_BLACK);
+    
+    if (draw) {
+      // save cursor position for cursor background drawing in drawSample
+      _cursorChannel = channel; 
+      _cursorPosition = position;
+    } else {
+      _cursorChannel = -1; 
+      _cursorPosition = -1;      
+    }
   } 
 
   drawSample(channel, position, false);
@@ -134,35 +148,64 @@ void SequencerScreen::drawCursorAt(byte channel, uint16_t position, boolean draw
 
 void SequencerScreen::drawSample(byte channel, uint16_t position, boolean drawBackground) {
   SongStructure::samplePointerStruct sps = _song->getPosition(channel, position);
+  int xRectStart = (position-_xPositionOffset)/_zoom->getZoomlevelOffset()*_cellWidth+3;
+  int yRectStart = channel*_cellHeight+_screen->AREA_CONTENT.y1+4;
+  int w = _cellWidth - 5;
+  int h = _cellHeight - 5;
+  boolean drawCursorInBackground = false;
+
+  if (_cursorChannel == channel && _cursorPosition == position) {
+    drawCursorInBackground = true;
+  }
 
   switch (sps.type) {
     case SongStructure::NOTE_OFF:
         hideSampleInfos();
-        _screen->fillRect((position-_xPositionOffset)/_zoom->getZoomlevelOffset()*15+3, channel*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_WHITE);
-        _screen->fillRect((position-_xPositionOffset)/_zoom->getZoomlevelOffset()*15+5, channel*15+_screen->AREA_CONTENT.y1+6, 6, 6, _screen->C_NOTEOFF_INNER);
+        _screen->fillRect(xRectStart, yRectStart, w, h, _screen->C_WHITE);
+        _screen->fillRect(xRectStart+(w/2)-3, yRectStart+(h/2)-3, 6, 6, _screen->C_NOTEOFF_INNER);
       break;
     case SongStructure::SAMPLE:
-      _screen->fillRect((position-_xPositionOffset)/_zoom->getZoomlevelOffset()*15+3, channel*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_WHITE); 
+      _screen->fillRect(xRectStart, yRectStart, w, h, _screen->C_WHITE); 
+
+      // SWING Indicator
+      if (_song->getSampleFromBucketId(sps.typeIndex).swing != 0) {
+        byte group = _swing->getGroupFromBinarySwingExpression(_song->getSampleFromBucketId(sps.typeIndex).swing);
+        _screen->drawLine(xRectStart+w-3, yRectStart, xRectStart+w-3, yRectStart+h-1, _screen->C_SWING_GROUPS[group]);
+        _screen->drawLine(xRectStart+w-4, yRectStart, xRectStart+w-4, yRectStart+h-1, _screen->C_SWING_GROUPS[group]);
+        _screen->drawLine(xRectStart+w-5, yRectStart, xRectStart+w-5, yRectStart+h-1, _screen->C_SWING_GROUPS[group]);
+      }
+
+      if (_song->getSampleFromBucketId(sps.typeIndex).reverse) {
+        _screen->drawTriangle(xRectStart, yRectStart+(h/2)-1, xRectStart+4, yRectStart, xRectStart, yRectStart, true, drawCursorInBackground ? _screen->C_CURSOR : _screen->C_BLACK);
+        _screen->drawTriangle(xRectStart, yRectStart+(h/2)-1, xRectStart+4, yRectStart+h-1, xRectStart, yRectStart+h-1, true, drawCursorInBackground ? _screen->C_CURSOR : _screen->C_BLACK);
+      }
+
       showSampleInfos(channel, position, true);             
       break;
     case SongStructure::PARAMETER_CHANGE_SAMPLE:
       hideSampleInfos();    
-      _screen->fillRect((position-_xPositionOffset)/_zoom->getZoomlevelOffset()*15+3, channel*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_GRID_BRIGHT);
+      _screen->fillRect(xRectStart, yRectStart, w, h, _screen->C_GRID_BRIGHT);
+
+      if (_song->getParameterChangeFromBucketId(sps.typeIndex).reverse) {
+        _screen->drawTriangle(xRectStart, yRectStart+(h/2)-1, xRectStart+4, yRectStart, xRectStart, yRectStart, true, drawCursorInBackground ? _screen->C_CURSOR : _screen->C_BLACK);
+        _screen->drawTriangle(xRectStart, yRectStart+(h/2)-1, xRectStart+4, yRectStart+h-1, xRectStart, yRectStart+h-1, true, drawCursorInBackground ? _screen->C_CURSOR : _screen->C_BLACK);
+      }
+
       showSampleInfos(channel, position, false);
       break;
     case SongStructure::MIDINOTE:
       hideSampleInfos();
-      _screen->fillRect((position-_xPositionOffset)/_zoom->getZoomlevelOffset()*15+3, channel*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_MIDINOTE); 
+      _screen->fillRect(xRectStart, yRectStart, w, h, _screen->C_MIDINOTE); 
 
       if (_song->getMidiNoteFromBucketId(sps.typeIndex).velocity == 0) {
-          _screen->fillRect((position-_xPositionOffset)/_zoom->getZoomlevelOffset()*15+5, channel*15+_screen->AREA_CONTENT.y1+6, 6, 6, _screen->C_NOTEOFF_INNER);
+          _screen->fillRect(xRectStart+(w/2)-3, yRectStart+(h/2)-3, 6, 6, _screen->C_NOTEOFF_INNER);
       }
       showMidiNoteInfos(channel, position);
       break;      
     default:
       hideSampleInfos();
       if (drawBackground) {
-              _screen->fillRect((position-_xPositionOffset)/_zoom->getZoomlevelOffset()*15+3, channel*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_BLACK);
+              _screen->fillRect(xRectStart, yRectStart, w, h, _screen->C_BLACK);
       }      
       break;
   }
@@ -171,38 +214,65 @@ void SequencerScreen::drawSample(byte channel, uint16_t position, boolean drawBa
 
 void SequencerScreen::drawSamples() {
   SongStructure::samplePointerStruct sps;
+  int xRectStart, yRectStart;
+  int w = _cellWidth - 5;
+  int h = _cellHeight - 5;
 
   for (int c = 0; c < 8; c++) {
     for (int p = 0; p < _amountOfGridCellsToDraw(); p++) {
       sps = _song->getPosition(c, _xPositionOffset + p*_zoom->getZoomlevelOffset());
 
+      xRectStart = p*_cellWidth+3;
+      yRectStart = c*_cellHeight+_screen->AREA_CONTENT.y1+4;
+
       switch (sps.type) {
         case SongStructure::NOTE_OFF:
-          _screen->fillRect(p*15+3, c*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_WHITE);
-          _screen->fillRect(p*15+5, c*15+_screen->AREA_CONTENT.y1+6, 6, 6, _screen->C_NOTEOFF_INNER);
+          _screen->fillRect(xRectStart, yRectStart, w, h, _screen->C_WHITE);
+          _screen->fillRect(xRectStart+(w/2)-3, yRectStart+(h/2)-3, 6, 6, _screen->C_NOTEOFF_INNER);
           break;
         case SongStructure::SAMPLE:
-          _screen->fillRect(p*15+3, c*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_WHITE);    
+          _screen->fillRect(xRectStart, yRectStart, w, h, _screen->C_WHITE);    
+
+          if (_song->getSampleFromBucketId(sps.typeIndex).swing != 0) {
+            byte group = _swing->getGroupFromBinarySwingExpression(_song->getSampleFromBucketId(sps.typeIndex).swing);
+            _screen->drawLine(xRectStart+w-3, yRectStart, xRectStart+w-3, yRectStart+h-1, _screen->C_SWING_GROUPS[group]);
+            _screen->drawLine(xRectStart+w-4, yRectStart, xRectStart+w-4, yRectStart+h-1, _screen->C_SWING_GROUPS[group]);
+            _screen->drawLine(xRectStart+w-5, yRectStart, xRectStart+w-5, yRectStart+h-1, _screen->C_SWING_GROUPS[group]);        
+          }
+
+          if (_song->getSampleFromBucketId(sps.typeIndex).reverse) {
+            _screen->drawTriangle(xRectStart, yRectStart+(h/2)-1, xRectStart+4, yRectStart, xRectStart, yRectStart, true, _screen->C_BLACK);
+            _screen->drawTriangle(xRectStart, yRectStart+(h/2)-1, xRectStart+4, yRectStart+h-1, xRectStart, yRectStart+h-1, true, _screen->C_BLACK);
+          }
+
           break;
         case SongStructure::PARAMETER_CHANGE_SAMPLE:
-          _screen->fillRect(p*15+3, c*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_GRID_BRIGHT);
+          _screen->fillRect(xRectStart, yRectStart, w, h, _screen->C_GRID_BRIGHT);
+
+          if (_song->getParameterChangeFromBucketId(sps.typeIndex).reverse) {
+            _screen->drawTriangle(xRectStart, yRectStart+(h/2)-1, xRectStart+4, yRectStart, xRectStart, yRectStart, true, _screen->C_BLACK);
+            _screen->drawTriangle(xRectStart, yRectStart+(h/2)-1, xRectStart+4, yRectStart+h-1, xRectStart, yRectStart+h-1, true, _screen->C_BLACK);
+          }
+
           break;
 
         case SongStructure::MIDINOTE:
-          _screen->fillRect(p*15+3, c*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_MIDINOTE);    
+          _screen->fillRect(xRectStart, yRectStart, w, h, _screen->C_MIDINOTE);    
           
           if (_song->getMidiNoteFromBucketId(sps.typeIndex).velocity == 0) {
-              _screen->fillRect(p*15+5, c*15+_screen->AREA_CONTENT.y1+6, 6, 6, _screen->C_NOTEOFF_INNER);
+              _screen->fillRect(xRectStart+(w/2)-3, yRectStart+(h/2)-3, 6, 6, _screen->C_NOTEOFF_INNER);
           }
           break;
 
         default:
-          _screen->fillRect(p*15+3, c*15+_screen->AREA_CONTENT.y1+4, 10, 10, _screen->C_BLACK);
+          _screen->fillRect(xRectStart, yRectStart, w, h, _screen->C_BLACK);
           break;
       }
     }
   }  
 }
+
+
 
 uint8_t SequencerScreen::_amountOfGridCellsToDraw() {  
   // calculate the amount of cells to draw for the current zoomlevel
@@ -211,7 +281,6 @@ uint8_t SequencerScreen::_amountOfGridCellsToDraw() {
 
   return rightCellsInCurrentZoomLevel <= _xPositionCapacity ? rightCellsInCurrentZoomLevel : _xPositionCapacity;
 }
-
 
 // returns true, if the grid needs to be repainted
 boolean SequencerScreen::viewportCheckUpdate(byte channel, uint16_t position, LastAction action) {
@@ -252,10 +321,11 @@ boolean SequencerScreen::viewportCheckUpdate(byte channel, uint16_t position, La
   return false;
 }
 
+
 void SequencerScreen::drawPlayStepIndicator(uint16_t position, boolean draw) {
 
   if (!draw) {
-    // delete old indicator.. to save calculation time and plane scrolling bux, just draw a black line over it ;)
+    // delete old indicator.. to save calculation time and plane scrolling box, just draw a black line over it ;)
     _screen->drawFastHLine(_screen->AREA_SCREEN.x1, 23, _screen->AREA_SCREEN.x2, _screen->C_BLACK);
     return;
   }
@@ -270,19 +340,27 @@ void SequencerScreen::drawPlayStepIndicator(uint16_t position, boolean draw) {
       }
 
       // draw new one
-      _screen->drawFastHLine(static_cast<uint16_t>((position - _xPositionOffset)/_zoom->getZoomlevelOffset()) * 15, 23, 15, _screen->C_ORANGE);
+      _screen->drawFastHLine(static_cast<uint16_t>((position - _xPositionOffset)/_zoom->getZoomlevelOffset()) * _cellWidth, 23, _cellWidth, _screen->C_ORANGE);
     } else {
       _screen->drawFastHLine(_screen->AREA_SCREEN.x1, 23, _screen->AREA_SCREEN.x2, _screen->C_BLACK);
     }    
   } 
 }
 
+
+
+// -----------------------------------------------------------------------------------------------------------------------------------------
+// --- Off Grid ----------------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------------------------------------------
+
+
+
 // fullInfo = velocity, panning, pitch, probability
-// !fullInfo = velocity, panning
+// !fullInfo = velocity, panning, pitch
 void SequencerScreen::showSampleInfos(byte channel, uint16_t position, boolean fullInfo) {
   _sampleInfosVisible = true;
 
-  _screen->hr(_screen->AREA_SEQUENCER_OPTIONS_SAMPLENAME, 1, _screen->C_GRID_DARK);
+  //_screen->hr(_screen->AREA_SEQUENCER_OPTIONS_SAMPLENAME, 1, _screen->C_GRID_DARK);
   _screen->vr(_screen->AREA_SEQUENCER_OPTION1, 1, _screen->C_GRID_DARK);  
   _screen->vr(_screen->AREA_SEQUENCER_OPTION2, 1, _screen->C_GRID_DARK);  
   _screen->vr(_screen->AREA_SEQUENCER_OPTION3, 1, _screen->C_GRID_DARK);  
@@ -290,16 +368,18 @@ void SequencerScreen::showSampleInfos(byte channel, uint16_t position, boolean f
   if (fullInfo) {
     SongStructure::samplePointerStruct sps = _song->getPosition(channel, position);
     if (sps.type == SongStructure::SAMPLE) {
-      sprintf(_cBuff3, "%d", _song->getSampleFromBucketId(sps.typeIndex).sampleNumber );
+      sprintf(_cBuff3, "%d", _song->getSampleFromBucketId(sps.typeIndex).sampleNumber);
       _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTIONS_SAMPLENAME, _screen->TEXTPOSITION_LEFT_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff3);
+      
+      drawSwingInfoFromExpression(_song->getSampleFromBucketId(sps.typeIndex).swing);
     }
   }
 
   _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION1, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "vol");
   _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION2, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "pan");
+  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "pitch");
 
-  if (fullInfo) {
-    _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "pitch");
+  if (fullInfo) {    
     _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION4, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "prob");
   }
 
@@ -311,9 +391,9 @@ void SequencerScreen::showSampleInfos(byte channel, uint16_t position, boolean f
 
   updateSampleInfoVolume(channel, position);
   updateSampleInfoPanning(channel, position);
+  updateSampleInfoPitch(channel, position);  
 
-  if (fullInfo) {
-    updateSampleInfoPitch(channel, position);  
+  if (fullInfo) {      
     updateSampleInfoProbability(channel, position);
   }
 }
@@ -355,8 +435,6 @@ void SequencerScreen::updateMidiChannel(byte channel, uint16_t position) {
   }
 }
 
-
-
 void SequencerScreen::updateSampleInfoVolume(byte channel, uint16_t position) {
   // draw volume/velocity bar
   SongStructure::samplePointerStruct sps = _song->getPosition(channel, position);
@@ -372,13 +450,9 @@ void SequencerScreen::updateSampleInfoVolume(byte channel, uint16_t position) {
 
   _screen->fillRect(_screen->AREA_SEQUENCER_OPTION1_VOLUME.x1+1+_tempInt, _screen->AREA_SEQUENCER_OPTION1_VOLUME.y1+1, 63-_tempInt, 7, _screen->C_BLACK);
   _screen->fillRect(_screen->AREA_SEQUENCER_OPTION1_VOLUME.x1+1, _screen->AREA_SEQUENCER_OPTION1_VOLUME.y1+1, _tempInt, 7, _screen->C_TRIM_START);
-    
-//  sprintf(_cBuff5_1, "%d", _pattern->getSampleAt(channel, position).velocity );
-//  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION1_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff5_1);
 };
 
 void SequencerScreen::updateSampleInfoPanning(byte channel, uint16_t position) {
-
   SongStructure::samplePointerStruct sps = _song->getPosition(channel, position);
   if (sps.type == SongStructure::SAMPLE) {
     _tempInt = static_cast<int>(_song->getSampleFromBucketId(sps.typeIndex).stereoPosition/2);
@@ -395,22 +469,22 @@ void SequencerScreen::updateSampleInfoPanning(byte channel, uint16_t position) {
   _screen->hr(_screen->AREA_SEQUENCER_OPTION2_PANNING, 0.5, _screen->C_GRID_BRIGHT);
   _screen->vr(_screen->AREA_SEQUENCER_OPTION2_PANNING, 0.5, _screen->C_GRID_BRIGHT);
   _screen->drawFastVLine(_screen->AREA_SEQUENCER_OPTION2_PANNING.x1+_tempInt, _screen->AREA_SEQUENCER_OPTION2_PANNING.y1, 8, _screen->C_WHITE);
-
-//  sprintf(_cBuff5_2, "%d", _pattern->getSampleAt(channel, position).stereoPosition );  
-//  _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION2_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff5_2);
 };
 
 void SequencerScreen::updateSampleInfoPitch(byte channel, uint16_t position) {
   SongStructure::samplePointerStruct sps = _song->getPosition(channel, position);
   if (sps.type == SongStructure::SAMPLE) {
-    sprintf(_cBuff5_3, "%d", _song->getSampleFromBucketId(sps.typeIndex).pitchedNote);
-    _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff5_3);
+    _keyboard->getMIDINoteName(_song->getSampleFromBucketId(sps.typeIndex).pitchedNote).toCharArray(_cBuff5_4, 4);
+    _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff5_4);    
   }
   if (sps.type == SongStructure::MIDINOTE) {
-    // ToD: translate to note names like C#4
-    sprintf(_cBuff5_3, "%d", _song->getMidiNoteFromBucketId(sps.typeIndex).note);
-    _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff5_3);
+    _keyboard->getMIDINoteName(_song->getMidiNoteFromBucketId(sps.typeIndex).note).toCharArray(_cBuff5_4, 4);
+    _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff5_4);
   }  
+  if (sps.type == SongStructure::PARAMETER_CHANGE_SAMPLE) {
+    sprintf(_cBuff5_4, "%d", _song->getParameterChangeFromBucketId(sps.typeIndex).pitchChange-127);
+    _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff5_4);
+  }
 };
 
 void SequencerScreen::updateSampleInfoProbability(byte channel, uint16_t position) {
@@ -440,5 +514,41 @@ void SequencerScreen::drawExtMemPercentage(byte percent) {
 
 void SequencerScreen::drawBPM(float bpm) {
   sprintf(_cBuff10, "%g BPM", bpm);
-  _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_RIGHT_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff10);
+  _screen->drawTextInArea(_screen->AREA_BPM, _screen->TEXTPOSITION_RIGHT_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff10);
+}
+
+void SequencerScreen::drawSwingInfoFromExpression(byte expression) {
+  byte group = _swing->getGroupFromBinarySwingExpression(expression);
+  byte level = 0;
+  if (group == 0) {
+    level = _swing->getLevelFromBinarySwingExpression(expression);
+  } else {
+    level = _song->getSwingGroupLevel(group);
+  }
+  drawSwingInfo(level, group);
+}
+
+
+void SequencerScreen::drawSwingInfo(byte level, byte group) {
+
+  // raster bar |x|x|x|x| | | | | | | (color == group)
+
+  uint16_t barColor = _screen->C_SWING_GROUPS[group];
+
+  if (level == 0) {
+    _screen->fillArea(_screen->AREA_SEQUENCER_OPTIONS_SWING_LABEL, _screen->C_BLACK);
+    _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTIONS_SWING_LABEL, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "no swing");
+  } else {
+    _screen->fillArea(_screen->AREA_SEQUENCER_OPTIONS_SWING_LABEL, _screen->C_BLACK);
+    _screen->fillArea(_screen->AREA_SEQUENCER_OPTIONS_SWING_BAR, _screen->C_BLACK);
+
+    _screen->vr(_screen->AREA_SEQUENCER_OPTIONS_SWING_BAR, 0.0, _screen->C_WHITE);
+    _screen->vr(_screen->AREA_SEQUENCER_OPTIONS_SWING_BAR, 1.0, _screen->C_WHITE);
+    _screen->hr(_screen->AREA_SEQUENCER_OPTIONS_SWING_BAR, 0.0, _screen->C_WHITE);
+    _screen->hr(_screen->AREA_SEQUENCER_OPTIONS_SWING_BAR, 1.0, _screen->C_WHITE);
+
+    for (int i=0; i<11; i++) {
+      _screen->fillRect(_screen->AREA_SEQUENCER_OPTIONS_SWING_BAR.x1+1+(i*6), _screen->AREA_SEQUENCER_OPTIONS_SWING_BAR.y1+1, 5, 6, i < level ? barColor : _screen->C_BLACK);
+    }
+  }
 }

@@ -150,10 +150,15 @@ class Screen {
         const uint16_t C_MIDINOTE = RGBtoColor(17, 138, 178);
         const uint16_t C_NOTEOFF_INNER = RGBtoColor(255, 0, 0);
 
+        // ToDo: find nicer colors for better visibility and to fit UI
+        const uint16_t C_SWING_GROUPS[9] = {C_ORANGE, RGBtoColor(114, 220, 35), RGBtoColor(35, 207, 220), RGBtoColor(141, 35, 220), RGBtoColor(219, 161, 36), RGBtoColor(220, 48, 35), RGBtoColor(40, 215, 193), RGBtoColor(251, 213, 4), RGBtoColor(120, 120, 120)};
+
+        const uint16_t C_CURSOR = C_ORANGE;
 
         // Area definitions
         Area AREA_SCREEN = { 0, 0, 319, 239, false, C_BLACK};  // Fullscreen
         Area AREA_HEADLINE = { 0, 0, 319, 25, false, C_BLACK}; // Headline
+        Area AREA_BPM = { 230, 0, 319, 25, false, C_BLACK}; // Headline
 
         Area AREA_HEADLINE_STARTOFFSET = { 0, 0, 50, 25, false, C_BLACK}; // Headline
         Area AREA_HEADLINE_ENDOFFSET = { 269, 0, 319, 25, false, C_BLACK}; // Headline
@@ -169,8 +174,8 @@ class Screen {
         Area AREA_BOTTOM_MENU_ITEM2 = {AREA_BOTTOM_MENU_ITEM1.x2, AREA_BOTTOM_MENU.y1, static_cast<int>(AREA_BOTTOM_MENU.x2*0.66), AREA_BOTTOM_MENU.y2, false, C_BLACK};
         Area AREA_BOTTOM_MENU_ITEM3 = {AREA_BOTTOM_MENU_ITEM2.x2, AREA_BOTTOM_MENU.y1, AREA_BOTTOM_MENU.x2, AREA_BOTTOM_MENU.y2, false, C_BLACK};
 
-
         Area AREA_BLACK_KEY_MENU = {0, AREA_SCREEN.y2-12, AREA_SCREEN.x2, AREA_SCREEN.y2, false, C_BLACK};
+        Area AREA_PIANO_ROLL = {0, AREA_SCREEN.y2-12, AREA_SCREEN.x2, AREA_SCREEN.y2, false, C_BLACK};
         
         Area AREA_BLACK_KEY_MENU_ITEM1 = {1, AREA_BLACK_KEY_MENU.y1+1, 26, AREA_BLACK_KEY_MENU.y2, false, C_BLACK};
         Area AREA_BLACK_KEY_MENU_ITEM2 = {27, AREA_BLACK_KEY_MENU.y1+1, 52, AREA_BLACK_KEY_MENU.y2, false, C_BLACK};
@@ -188,8 +193,9 @@ class Screen {
 
 
         Area AREA_SEQUENCER_OPTIONS = {AREA_SCREEN.x1, AREA_CONTENT.y1+125, AREA_SCREEN.x2, AREA_BOTTOM_MENU.y1, false, C_BLACK}; 
-        Area AREA_SEQUENCER_OPTIONS_SAMPLENAME = {AREA_SEQUENCER_OPTIONS.x1, AREA_SEQUENCER_OPTIONS.y1, AREA_SEQUENCER_OPTIONS.x2, AREA_SEQUENCER_OPTIONS.y1+25, false, C_BLACK};
+        Area AREA_SEQUENCER_OPTIONS_SAMPLENAME = {AREA_SEQUENCER_OPTIONS.x1, AREA_SEQUENCER_OPTIONS.y1, AREA_SEQUENCER_OPTIONS.x2/2, AREA_SEQUENCER_OPTIONS.y1+25, false, C_BLACK};
         
+
         Area AREA_SEQUENCER_OPTION1 = {AREA_SEQUENCER_OPTIONS.x1, AREA_SEQUENCER_OPTIONS_SAMPLENAME.y2+2, 80, AREA_SEQUENCER_OPTIONS.y2, true, C_BLACK};
         
         uint16_t optionheight = static_cast<int>(AREA_SEQUENCER_OPTION1.y1+2+((AREA_SEQUENCER_OPTION1.y2 - AREA_SEQUENCER_OPTION1.y1)/2));
@@ -207,7 +213,11 @@ class Screen {
         
         Area AREA_SEQUENCER_OPTION4 = {AREA_SEQUENCER_OPTION3.x2, AREA_SEQUENCER_OPTIONS_SAMPLENAME.y2+2, AREA_SEQUENCER_OPTIONS.x2, AREA_SEQUENCER_OPTIONS.y2, true, C_BLACK};
         Area AREA_SEQUENCER_OPTION4_BAR = {AREA_SEQUENCER_OPTION3_BAR.x2+1, AREA_SEQUENCER_OPTION1.y1, AREA_SEQUENCER_OPTIONS.x2, optionheight , false, C_BLACK};
-
+        
+        int sampleNameAreaVCenterY = AREA_SEQUENCER_OPTIONS_SAMPLENAME.y1 + ((AREA_SEQUENCER_OPTIONS_SAMPLENAME.y2-AREA_SEQUENCER_OPTIONS_SAMPLENAME.y1)/2);
+        int option4HCenterX = AREA_SEQUENCER_OPTION4.x1 + ((AREA_SEQUENCER_OPTION4.x2 - AREA_SEQUENCER_OPTION4.x1)/2);
+        Area AREA_SEQUENCER_OPTIONS_SWING_BAR = {option4HCenterX-34, sampleNameAreaVCenterY - 4, option4HCenterX+33, sampleNameAreaVCenterY + 3, true, C_BLACK};
+        Area AREA_SEQUENCER_OPTIONS_SWING_LABEL = {option4HCenterX-34, sampleNameAreaVCenterY - 10, option4HCenterX+34, sampleNameAreaVCenterY + 8, true, C_BLACK};
 
     private:
         Adafruit_ST7789 *_tft;

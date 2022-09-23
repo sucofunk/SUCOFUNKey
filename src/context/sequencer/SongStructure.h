@@ -33,6 +33,7 @@
 
 #include <Arduino.h>
 #include <SD.h>
+#include "Swing.h"
 
 class SongStructure {
     public:
@@ -55,17 +56,20 @@ class SongStructure {
 
         typedef struct  {
             byte sampleNumber = 255; // sample, 255 == nothing, 254 == stop sample playback, 253 = change velocity/panning
-            //char displayText[4] = "---";
             byte stereoPosition = 64; // 0 = 100% left | 64 = center | 127 = 100% right 
-            byte velocity = 64;      // 0..127 -> standard: 64, as defined in midi standard for keyboards without velocity            
-            byte baseMidiNote = 60;
+            byte velocity = 64;      // 0..127 -> standard: 64, as defined in midi standard for keyboards without velocity
+            byte baseMidiNote = 60; // ToDo: move definition of base note to sampler and add it as meta data to save about 10k of RAM
             byte pitchedNote = 60;
             byte probability = 100; // probability of sample to play 0..100
+            byte swing = 0; // level -> 0..11 for 1/12 of a playback tick (64th note) AND Swing group combined in one byte (4 Bit Level | 4 Bit Group) -> Level = 2, Group = 8 => 0010|1000
+            byte reverse = false;
         } sampleStruct;
 
         typedef struct  {
             byte stereoPosition = 64; // 0 = 100% left | 64 = center | 127 = 100% right 
             byte velocity = 64;      // 0..127 -> standard: 64, as defined in midi standard for keyboards without velocity
+            byte pitchChange = 127; // 0..254 -> 0..127 = negative pitch 127..254 positive pitch; 127 relates to no pitch change at all
+            boolean reverse = false;
         } parameterChangeSampleStruct;
 
         typedef struct  {
@@ -127,6 +131,13 @@ class SongStructure {
         void decreaseProbability(uint8_t channel, uint16_t position);
         void setProbability(uint8_t channel, uint16_t position, byte probability);
 
+        void swingLevelUp(uint8_t channel, uint16_t position);
+        void swingLevelDown(uint8_t channel, uint16_t position);
+        void swingGroupUp(uint8_t channel, uint16_t position);
+        void swingGroupDown(uint8_t channel, uint16_t position);
+
+        void reverseSamplePlayback(uint8_t channel, uint16_t position);
+
         void setSongLength(uint16_t songLength);
         uint16_t getSongLength();
         void changeSongLengthByTick(boolean increase, byte tickAmount); // true = increase pattern lenght by tickAmount (depending on zoomlevel); false = decrease by ..
@@ -147,6 +158,9 @@ class SongStructure {
         void setPlayBackSpeed(float bpm);
         float getPlayBackSpeed();
 
+        byte getSwingGroupLevel(byte group);
+        void setSwingGroupLevel(byte group, byte level);
+
         boolean loadFromSD(char *songPath);
         boolean saveToSD(char *songPath);
 
@@ -158,6 +172,7 @@ class SongStructure {
         void debugInfos();
 
     private:
+        Swing _swing;
         uint8_t BLOCKSIZE = 128;
 
         enum closestPointerType {
@@ -200,7 +215,7 @@ class SongStructure {
 
         // list of up to 72 snippets.. each snippet corresponds to a note key
         snippetStruct _snippets[72];
-        blockStruct   _blocks[300];
+        blockStruct   _blocks[100];
 
 
         // this struct holds all the meta information needed to restore an old song status, the same way it was saved.. we just save to struct to file ;)
@@ -221,7 +236,9 @@ class SongStructure {
             uint16_t songLength = 64; // 1, 2, 3, 4 .. * 16 steps = 64 steps = 1 time
             byte     songResolution = 4; // resulution at Zoomlevel NORMAL
             
-            float    playbackSpeed = 80.0; // BPM
+            float    playbackSpeed = 85.0; // BPM
+
+            byte     swingGroupLevels[9] = {0, 4, 4, 4, 4, 4, 4, 4, 4};
         } MetaInfos;
 
         MetaInfos _meta;
@@ -231,9 +248,9 @@ class SongStructure {
         uint16_t _getNextParameterChangeBucketIndex();
         uint16_t _getNextMidiNoteBucketIndex();
 
-        samplePointerStruct _samplePointers[10000];
-        sampleStruct _sampleBucket[5000];
-        parameterChangeSampleStruct _parameterChangeSampleBucket[5000];
+        samplePointerStruct _samplePointers[5000];
+        sampleStruct _sampleBucket[2500];
+        parameterChangeSampleStruct _parameterChangeSampleBucket[2500];
         midiNoteStruct _midiNoteBucket[500];
 
         uint16_t _maxSongLength = sizeof(_blocks)/sizeof(blockStruct) * BLOCKSIZE; // amount of buckets * blocksize

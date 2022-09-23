@@ -74,7 +74,7 @@ void Home::handleEvent(Sucofunkey::keyQueueStruct event) {
               } else {
                 _bottomMenu.showMenu(true);
               }
-              break;                    
+              break;
       }
 
       if (event.type == Sucofunkey::EVENT_APPLICATION) {

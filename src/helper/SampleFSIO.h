@@ -36,7 +36,6 @@
 #include <SD.h>
 #include <Audio.h>
 #include "../gui/Screen.h"
-#include "audio-extensions/synth_wavetable_suco.h"
 
 class SampleFSIO {
 
@@ -68,7 +67,6 @@ class SampleFSIO {
 
         void generateInstrument(byte sampleNumber, int baseNote);
         void changeInstrumentParameters(byte sampleNumber, boolean loop, uint8_t delay_count, uint8_t attack_count, uint8_t hold_count, uint8_t decay_count, uint8_t release_count, uint8_t sustain_mult, uint8_t vibrato_delay, uint8_t vibrato_increment);
-        AudioSynthWavetableSUCO::instrument_data getInstrumentDataBySample(byte sampleNumber);
 
         boolean sampleBanksStatus[3][24] = {{false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
                                             {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
@@ -80,51 +78,7 @@ class SampleFSIO {
 
         void setSongPath(char *songPath);
         char * getSongPath();
-
-/*        struct sample_data {
-            // SAMPLE VALUES
-            int16_t* sample;
-            bool LOOP;
-            int INDEX_BITS;
-            float PER_HERTZ_PHASE_INCREMENT;
-            uint32_t MAX_PHASE;
-            uint32_t LOOP_PHASE_END;
-            uint32_t LOOP_PHASE_LENGTH;
-            uint16_t INITIAL_ATTENUATION_SCALAR;
-            
-            // VOLUME ENVELOPE VALUES
-            uint32_t DELAY_COUNT;
-            uint32_t ATTACK_COUNT;
-            uint32_t HOLD_COUNT;
-            uint32_t DECAY_COUNT;
-            uint32_t RELEASE_COUNT;
-            int32_t SUSTAIN_MULT;
-
-            // VIRBRATO VALUES
-            uint32_t VIBRATO_DELAY;
-            uint32_t VIBRATO_INCREMENT;
-            float VIBRATO_PITCH_COEFFICIENT_INITIAL;
-            float VIBRATO_PITCH_COEFFICIENT_SECOND;
-
-            // MODULATION VALUES
-            uint32_t MODULATION_DELAY;
-            uint32_t MODULATION_INCREMENT;
-            float MODULATION_PITCH_COEFFICIENT_INITIAL;
-            float MODULATION_PITCH_COEFFICIENT_SECOND;
-            int32_t MODULATION_AMPLITUDE_INITIAL_GAIN;
-            int32_t MODULATION_AMPLITUDE_SECOND_GAIN;
-        };
-
-        struct instrument_data {
-            uint8_t sample_count;
-            uint8_t* sample_note_ranges;
-            sample_data* samples;
-        };
-
-        sample_data sampleData[1];
-        uint8_t ranges[1] = {127};
-        instrument_data instrument{1, ranges, sampleData};
-*/        
+   
         void generateWaveFormBufferForSample(byte bank0, byte sampleId0);
         void clearWaveFormBufferById(byte sampleId72);
         boolean isRecodingAvailable();
@@ -150,10 +104,6 @@ class SampleFSIO {
 
         long _nextOffset = 0;
         long _sampleOffsets[72] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
-
-        uint8_t _completeRange[1] = {127};
-        AudioSynthWavetableSUCO::sample_data _sampleData[72][1]{};
-        AudioSynthWavetableSUCO::instrument_data _instrumentData[72]{};
 };
 
 #endif

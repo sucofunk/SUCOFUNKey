@@ -46,7 +46,6 @@
 #include "context/check/Check.h"
 #include <Audio.h>
 #include <MIDI.h>
-
 #include <Adafruit_ST7789.h>
 
 // PINs on the Teensy 4.1 to receive Interrupts from the 5 MCP23017 chips used as port expanders to receive updated from the 36 Buttons and 4 rotary encoders
@@ -144,7 +143,7 @@ Check systemCheckContext(&keyboard, &screen);
 // --- START Audio Connections
 // unfortunately this is not initializable in the AudioResources class?!?
 
-AudioConnection          patchCord1(audioResources.wavetable1, 0, audioResources.mixerWav1L, 0);
+/*AudioConnection          patchCord1(audioResources.wavetable1, 0, audioResources.mixerWav1L, 0);
 AudioConnection          patchCord2(audioResources.wavetable1, 0, audioResources.mixerWav1R, 0);
 AudioConnection          patchCord3(audioResources.wavetable2, 0, audioResources.mixerWav1L, 1);
 AudioConnection          patchCord4(audioResources.wavetable2, 0, audioResources.mixerWav1R, 1);
@@ -160,7 +159,7 @@ AudioConnection          patchCord9(audioResources.wavetable7, 0, audioResources
 AudioConnection          patchCord10(audioResources.wavetable7, 0, audioResources.mixerWav2R, 2);
 AudioConnection          patchCord11(audioResources.wavetable8, 0, audioResources.mixerWav2L, 3);
 AudioConnection          patchCord12(audioResources.wavetable8, 0, audioResources.mixerWav2R, 3);
-
+*/
 AudioConnection          patchCord17(audioResources.playMem1, 0, audioResources.mixerMem1L, 0);
 AudioConnection          patchCord18(audioResources.playMem1, 0, audioResources.mixerMem1R, 0);
 AudioConnection          patchCord23(audioResources.playMem2, 0, audioResources.mixerMem1L, 1);
@@ -192,12 +191,10 @@ AudioConnection          patchCord41(audioResources.recordMixer, audioResources.
 AudioConnection          patchCord42(audioResources.recordMixer, audioResources.peak1);
 
 
-
 AudioConnection          patchCord33(audioResources.audioInput, 0, audioResources.recordMixer, 0);
 AudioConnection          patchCord34(audioResources.audioInput, 0, audioResources.mixerOutL, 0);
 AudioConnection          patchCord35(audioResources.audioInput, 1, audioResources.recordMixer, 1);
 AudioConnection          patchCord36(audioResources.audioInput, 1, audioResources.mixerOutR, 0);
-
 
 AudioConnection          patchCord47(audioResources.mixerMem1L, 0, audioResources.mixerMemL, 0);
 AudioConnection          patchCord48(audioResources.mixerMem1R, 0, audioResources.mixerMemR, 0);
@@ -227,13 +224,13 @@ AudioConnection          patchCord60(audioResources.mixerPreOutR, 0, audioResour
 AudioConnection          patchCord61(audioResources.mixerOutL, 0, audioResources.audioOutput, 0);
 AudioConnection          patchCord62(audioResources.mixerOutR, 0, audioResources.audioOutput, 1);
 
-AudioConnection          patchCord68(audioResources.wavetableSynth1, 0, audioResources.mixerSynth1, 0);
+/*AudioConnection          patchCord68(audioResources.wavetableSynth1, 0, audioResources.mixerSynth1, 0);
 AudioConnection          patchCord66(audioResources.wavetableSynth2, 0, audioResources.mixerSynth1, 1);
 AudioConnection          patchCord67(audioResources.wavetableSynth3, 0, audioResources.mixerSynth1, 2);
 AudioConnection          patchCord65(audioResources.wavetableSynth4, 0, audioResources.mixerSynth1, 3);
 AudioConnection          patchCord63(audioResources.wavetableSynth5, 0, audioResources.mixerSynth2, 0);
 AudioConnection          patchCord64(audioResources.wavetableSynth6, 0, audioResources.mixerSynth2, 1);
-
+*/
 AudioConnection          patchCord71(audioResources.mixerSynth, 0, audioResources.mixerPreOutL, 3);
 AudioConnection          patchCord72(audioResources.mixerSynth, 0, audioResources.mixerPreOutR, 3);
 
@@ -469,8 +466,8 @@ void setup() {
   keyboard.setBank(0);
 
   AudioMemoryUsageMaxReset();
-  AudioMemory(50);
-
+  AudioMemory(100);
+  
   // Enable the audio shield, select input and enable output
   audioResources.audioShield.enable();
 
@@ -721,6 +718,7 @@ void handleKeyboardEventQueue() {
 
   while(keyboard.hasEvents()) {
     Sucofunkey::keyQueueStruct event = keyboard.getNextEvent();
+
 /*
     Serial.print(event.index);
     Serial.print("::");

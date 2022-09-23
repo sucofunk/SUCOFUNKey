@@ -28,46 +28,39 @@
 
    ---------------------------------------------------------------------------------------------- */
    
-#ifndef Synth_h
-#define Synth_h
+#ifndef PianoKeyboard_h
+#define PianoKeyboard_h
 
-#include "../../hardware/Sucofunkey.h"
-#include "../../gui/Screen.h"
-#include "../../helper/AudioResources.h"
-#include "../../helper/SampleFSIO.h"
-#include "../../helper/FSIO.h"
-#include "../../gui/screens/components/BottomMenu.h"
-#include <MIDI.h>
+#include <Arduino.h>
+#include "../../../hardware/Sucofunkey.h"
+#include "../../Screen.h"
 
-class Synth {
+class PianoKeyboard {
     public:
-        Synth(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *sfsio, unsigned int *extmemArray, AudioResources *audioResources);
-        void setActive(boolean active);
+        PianoKeyboard();
+        PianoKeyboard(Sucofunkey *keyboard, Screen *screen);
+        
         void handleEvent(Sucofunkey::keyQueueStruct event);
-        void receiveMidiData(midi::MidiType type, int d1, int d2);
+        void show();
+        void hide();
+
+        boolean isVisible();
+        
+        // position on grid to "copy" when moving to an empty cell in piano mode
+        void setOriginReference(byte channel, int position);
+        byte getOriginChannel();
+        int getOriginPosition();
+        void removeOriginReference();
+        boolean hasOrigin();
 
     private:
         Sucofunkey *_keyboard;
         Screen *_screen;
-        FSIO *_fsio;
-        SampleFSIO *_sfsio;
-        unsigned int *_extmemArray;
-        AudioResources *_audioResources;
-        boolean _isActive = false;
-        byte _activeBank = 1;
-
-        BottomMenu _bottomMenu;
-
-        void _selectSample(byte bank1, byte sampleId1);
-        void _playNextFreeWavetable(byte note, boolean play);        
-
-        // queue for polyphonic events. each entry corresponds to a waveTableSynth1..6
-        // 0 = not playing 1..24 -> corresponding note is playing 
-        byte _polyKeyIDs[6] = {0, 0, 0, 0, 0, 0};
+        boolean _visible = false;
         
-        boolean _loop = false;
-        byte _currentInstrumentId = 255;
-
+        byte _originChannel = 127;
+        int _originPosition = -1;
+        byte _lastBank;
 };
 
 #endif

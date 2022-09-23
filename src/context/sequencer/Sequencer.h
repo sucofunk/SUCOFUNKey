@@ -43,6 +43,8 @@
 #include "../sampler/Sampler.h"
 #include "../../gui/screens/SequencerScreen.h"
 #include "../../gui/screens/components/BlackKeyMenu.h"
+#include "../../gui/screens/components/PianoKeyboard.h"
+#include "Swing.h"
 
 class Sequencer {
     public:
@@ -100,21 +102,19 @@ class Sequencer {
         unsigned int *_extmemArray;
         Sampler *_sampler;
         AudioResources *_audioResources;
+        Swing _swing;
 
         SongStructure _song = SongStructure();
 
         SequencerScreen _sequencerScreen;
         BlackKeyMenu _blackKeyMenu;
+        PianoKeyboard _pianoKeyboard;
 
-        AudioPlayMemory *_playMemory;
+        AudioPlayMemorySUCO *_playMemory;
         AudioMixer4 *_playMemoryMixerL;
         AudioMixer4 *_playMemoryMixerR;
-        AudioSynthWavetableSUCO *_playWavetable;
-        AudioMixer4 *_playWavetableMixerL;
-        AudioMixer4 *_playWavetableMixerR;
 
         int _playMemoryMixerGain;
-        int _playWavetableMixerGain;
 
         boolean _isActive = false;
         byte _activeBank = 1;
