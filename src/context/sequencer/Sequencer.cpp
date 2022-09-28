@@ -443,8 +443,9 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::BLACKKEY_NAV_ITEM10:
           if (_currentSequencerState == SELECTION) {
             // clear selection
-            _song.clearSelection(_selection.getNormalizedSelection().startY, _selection.getNormalizedSelection().startX, _selection.getNormalizedSelection().endY, _selection.getNormalizedSelection().endX+zoom.getZoomlevelOffset()-1);
+            _song.clearSelection(_selection, zoom.getZoomlevelOffset()-1);
             _sequencerScreen.drawGrid(_sequencerScreen.INIT);
+            _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
           } else {
             // CLS -> deletes all notes from song
             setSequencerState(CONFIRM_CLS); 

@@ -34,6 +34,7 @@
 #include <Arduino.h>
 #include <SD.h>
 #include "Swing.h"
+#include "Selection.h"
 
 class SongStructure {
     public:
@@ -164,7 +165,12 @@ class SongStructure {
         boolean loadFromSD(char *songPath);
         boolean saveToSD(char *songPath);
 
+        void clearSelection(Selection selection, int endOffsetX);
         void clearSelection(uint8_t startChannel, uint16_t startPosition, uint8_t endChannel, uint16_t endPosition);
+
+        void saveSelectionAsSnippet(Selection selection, byte slot); // 1..24
+        Selection::SelectionStruct getSnippet(byte slot); // 1..24
+        boolean isSnippetSlotFree(byte slot); // 1..24
 
         void test();
         void testLog();
@@ -195,26 +201,12 @@ class SongStructure {
         } blockStruct;
 
         typedef struct  {
-            // TopDo: snippetName and id
-            uint16_t startColumn;
-            uint16_t endColumn;
-            uint8_t startChannel;
-            uint8_t endChannel; 
-        } snippetStruct;
-
-        typedef struct  {
-            uint8_t snippetIndex;   // reference to the index of _snippets
-            boolean isOriginal;     // original == true, reference to a snippet (non editable) == false
-        } snippetReferenceStartpoint;
-
-
-        typedef struct  {
             uint16_t samplePointerIndex;
             closestPointerType type;
         } closestPointer;
 
-        // list of up to 72 snippets.. each snippet corresponds to a note key
-        snippetStruct _snippets[72];
+        // list of up to 24 snippets.. each snippet corresponds to a note key, just one octave
+        Selection::SelectionStruct _snippets[24];
         blockStruct   _blocks[100];
 
 

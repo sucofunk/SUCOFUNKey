@@ -1511,16 +1511,13 @@ uint16_t SongStructure::_getNextSamplePointerIndex() {
 };
 
 
+void SongStructure::clearSelection(Selection selection, int endOffsetX) {
+    clearSelection(selection.getNormalizedSelection().startY, selection.getNormalizedSelection().startX, selection.getNormalizedSelection().endY, selection.getNormalizedSelection().endX + endOffsetX);
+};
+
 void SongStructure::clearSelection(uint8_t startChannel, uint16_t startPosition, uint8_t endChannel, uint16_t endPosition) {
-    Serial.println("clear selection");
-    Serial.print(startChannel);    
-    Serial.print(startPosition);
-    Serial.print(endChannel);
-    Serial.println(endPosition);
     for (uint16_t p=startPosition; p<=endPosition; p++) {
         for (uint8_t c=startChannel; c<=endChannel; c++) {
-            Serial.print("deleted::");
-            Serial.println(p);
             removePosition(c, p);
         }
     }
@@ -1528,9 +1525,24 @@ void SongStructure::clearSelection(uint8_t startChannel, uint16_t startPosition,
 
 
 
+ // 1..24
+void SongStructure::saveSelectionAsSnippet(Selection selection, byte slot) {
+    _snippets[slot-1].startX = selection.getNormalizedSelection().startX;
+    _snippets[slot-1].endX = selection.getNormalizedSelection().endX;
+    _snippets[slot-1].startY = selection.getNormalizedSelection().startY;
+    _snippets[slot-1].endY = selection.getNormalizedSelection().endY;
+};
 
+// 1..24
+Selection::SelectionStruct SongStructure::getSnippet(byte slot) {
+    return _snippets[slot-1];
+}; 
 
-
+// 1..24
+boolean SongStructure::isSnippetSlotFree(byte slot) {
+    if (_snippets[slot-1].startX == -1) return true;
+    return false;
+}; 
 
 
 

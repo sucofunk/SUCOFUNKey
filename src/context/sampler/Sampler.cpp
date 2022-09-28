@@ -174,19 +174,19 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
     // handle note keys
     if (event.type == Sucofunkey::KEY_NOTE) {
       byte sampleId = _keyboard->getSampleIdByEventKey(event.index);      
-      
+
       // select a sample and play it
-      if (!_blackKeyMenu.isVisible() && (Sampler::currentState == SAMPLE_SELECTED || Sampler::currentState == SAMPLE_NOTHING || Sampler::currentState == SAMPLE_SELECTED_EMPTY)) {
+      if (!_blackKeyMenu.isVisible() && Sampler::currentState != SAMPLER_DELETE_CONFIRMED && (Sampler::currentState == SAMPLE_SELECTED || Sampler::currentState == SAMPLE_NOTHING || Sampler::currentState == SAMPLE_SELECTED_EMPTY)) {
         _activeSampleSlot = sampleId;
 
         if (event.pressed) {
-
           _blinkSampleSlot(sampleId, true);
           _tempBank = _keyboard->getBank();
           currentState = SAMPLE_SELECTED;
           
           // is there a sample in this slot?
           if (!_sfsio->sampleBanksStatus[_activeBank-1][_activeSampleSlot-1]) {
+
             // hide the bottom menu if the selected sampleSlot is empty
             _blackKeyMenu.hideMenu();
 
@@ -201,6 +201,17 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
           }
         } else {
           _audioResources->playSdRaw.stop();
+        }
+      } else {
+        // we need this to ignore the key release and not to set the note behind the menu black key as active
+        if(currentState == SAMPLER_DELETE_CONFIRMED) {
+          if (_activeSampleSlot != 0) {
+            currentState = SAMPLE_SELECTED_EMPTY;
+          } else {
+            _samplerScreen.showEmptyScreen();
+            _activeSampleSlot = 0;
+            currentState = SAMPLE_NOTHING;            
+          }
         }
       }
 
@@ -550,12 +561,15 @@ void Sampler::deleteActiveSample() {
   _sfsio->waveFormBufferLength[sample72] = 0;
   
   _blackKeyMenu.hideMenu();
-  _samplerScreen.showNoSampleInfo();
-  currentState = SAMPLE_SELECTED_EMPTY;
+
+  currentState = SAMPLER_DELETE_CONFIRMED;
 
   // remove sample from extmem, if it is loaded
   if (sample72 < 72) {
     _sfsio->removeSampleFromMemory(sample72);
+
+    _samplerScreen.showNoSampleInfo();
+    _blinkSampleSlot(_activeSampleSlot, true);
   }
 }
 
