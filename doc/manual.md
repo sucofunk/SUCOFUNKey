@@ -17,7 +17,7 @@ Below the encoders is a row of 12 so called function buttons. These are:
     FUNK        The function key, to be used in combination with other keys to reveal more options
     MENU        This button will open a menu on the bottom of the screen 
     SET         This is the key to confirm or enter something
-    SWITCH      Can be used to switch the white keys to act as a piano roll or just as buttons
+    SWITCH      Can be used to switch the white keys to act as a piano keyboard or just as buttons
                 In some cases it is used to show dialogs to select something
     PLAY        You guessed it..
     STOP        I guess you guessed this one as well
@@ -25,8 +25,8 @@ Below the encoders is a row of 12 so called function buttons. These are:
     INPUT       Lets you select the input source for recording (see LEDs aside)
     CURSOR      Four cursor keys as on a normal conputer keyboard
 
-Below this row are 24 white keys. The correspond to two octaves on a piano roll. In this manual they are sometimes called **Note keys**.
-The black keys of a piano roll are not black in our case. They are white. If this manual is refering to black keys, the upper row of the white keys should be considered as black keys.
+Below this row are 24 white keys. The correspond to two octaves on a piano keyboard. In this manual they are sometimes called **Note keys**.
+The black keys of a piano keyboard are not black in our case. They are white. If this manual is refering to black keys, the upper row of the white keys should be considered as black keys.
 
 Whenever you need to enter alphanumerical characters, you use the Note Keys. The white keys correspond to letters, the black keys to numbers and special characters. It is a bit like writing with an old T9 input from a mobile phone (e.g. F -> A/B, G -> C/D and so on).
 
@@ -70,7 +70,7 @@ There are two different kind of menus. When hitting the MENU key they both open 
 The most simple menu opens up to three menu points. Swith between them with the LEFT and RIGHT keys. Use SET to select the highlighted menu item.
 
 ### Black keys menu
-The black keys menu shows up to ten tree-letter abbreviations. They are clustered in four bundles with three or two abbreviations. As the name says, these abbreviations correspond to the black keys of the piano roll.
+The black keys menu shows up to ten tree-letter abbreviations. They are clustered in four bundles with three or two abbreviations. As the name says, these abbreviations correspond to the black keys of the piano keyboard.
 Whenever the black key menu is open, the white keys do not act as sample- or note selector. Hit MENU again to hide the menu and the Note keys can be used as expected.
 Some operations lock the menu, until the operation is finished - e.g. deleting a sample; you need to hit the delete option again to confirm the delete process.
 

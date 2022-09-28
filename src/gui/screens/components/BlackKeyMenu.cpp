@@ -98,60 +98,74 @@ void BlackKeyMenu::setExclusiveAction(byte position, boolean activated) {
         _exclusivePosition = 0;
         _redrawOption(position);
         _keyboard->setLEDState(_ledPINs[position-1], false);
+
+        for (int i=0; i<10; i++) {
+            _allowedToExclusive[i] = false;
+        }
     }
 };
+
+// 1..10
+void BlackKeyMenu::allowAdditionalToExclusive(byte position) {
+    _allowedToExclusive[position-1] = true;    
+};
+
+// 1..10
+boolean BlackKeyMenu::_isAllowed(byte position) {
+    return _allowedToExclusive[position-1];
+}
 
 
 void BlackKeyMenu::handleEvent(Sucofunkey::keyQueueStruct event) {
     if (event.pressed && event.type == Sucofunkey::KEY_NOTE) {
         switch(event.index) {
             case Sucofunkey::FS_1:
-                if (_exclusivePosition == 0 || _exclusivePosition == 1) { 
+                if (_exclusivePosition == 0 || _exclusivePosition == 1 || _isAllowed(1)) { 
                     _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM1);
                 }
                 break;
             case Sucofunkey::GS_1:
-                if (_exclusivePosition == 0 || _exclusivePosition == 2) { 
+                if (_exclusivePosition == 0 || _exclusivePosition == 2 || _isAllowed(2)) { 
                     _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM2);
                 }
                 break;
             case Sucofunkey::AS_1:
-                if (_exclusivePosition == 0 || _exclusivePosition == 3) { 
+                if (_exclusivePosition == 0 || _exclusivePosition == 3 || _isAllowed(3)) { 
                     _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM3);
                 }
                 break;
             case Sucofunkey::CS_1:
-                if (_exclusivePosition == 0 || _exclusivePosition == 4) { 
+                if (_exclusivePosition == 0 || _exclusivePosition == 4 || _isAllowed(4)) { 
                     _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM4);
                 }
                 break;
             case Sucofunkey::DS_1:
-                if (_exclusivePosition == 0 || _exclusivePosition == 5) { 
+                if (_exclusivePosition == 0 || _exclusivePosition == 5 || _isAllowed(5)) { 
                     _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM5);
                 }
                 break;
             case Sucofunkey::FS_2:
-                if (_exclusivePosition == 0 || _exclusivePosition == 6) { 
+                if (_exclusivePosition == 0 || _exclusivePosition == 6 || _isAllowed(6)) { 
                     _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM6);
                 }
                 break;
             case Sucofunkey::GS_2:
-                if (_exclusivePosition == 0 || _exclusivePosition == 7) { 
+                if (_exclusivePosition == 0 || _exclusivePosition == 7 || _isAllowed(7)) { 
                     _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM7);
                 }
                 break;
             case Sucofunkey::AS_2:
-                if (_exclusivePosition == 0 || _exclusivePosition == 8) { 
+                if (_exclusivePosition == 0 || _exclusivePosition == 8 || _isAllowed(8)) { 
                     _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM8);
                 }
                 break;
             case Sucofunkey::CS_2:
-                if (_exclusivePosition == 0 || _exclusivePosition == 9) { 
+                if (_exclusivePosition == 0 || _exclusivePosition == 9 || _isAllowed(9)) { 
                     _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM9);
                 }
                 break;
             case Sucofunkey::DS_2:
-                if (_exclusivePosition == 0 || _exclusivePosition == 10) { 
+                if (_exclusivePosition == 0 || _exclusivePosition == 10 || _isAllowed(10)) { 
                     _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM10);
                 }
                 break;

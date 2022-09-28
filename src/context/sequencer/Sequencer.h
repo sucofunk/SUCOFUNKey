@@ -45,6 +45,7 @@
 #include "../../gui/screens/components/BlackKeyMenu.h"
 #include "../../gui/screens/components/PianoKeyboard.h"
 #include "Swing.h"
+#include "Selection.h"
 
 class Sequencer {
     public:
@@ -62,7 +63,8 @@ class Sequencer {
             NORMAL = 0,
             MOVE_CELL = 1,
             DOUBLE_CELL = 2,
-            CONFIRM_CLS = 3
+            CONFIRM_CLS = 3,
+            SELECTION = 4
         };
 
         enum Direction {
@@ -71,6 +73,7 @@ class Sequencer {
             DOWN = 3,
             LEFT = 4
         };
+
 
         long receiveTimerTick();
 
@@ -83,6 +86,7 @@ class Sequencer {
         void setActive(boolean active);
         void handleEvent(Sucofunkey::keyQueueStruct event);
         void loadSetPlay(byte bank, byte sample, byte channel, int position);
+        void playSelection();
         void playSong();
         void playMixedSample(byte channel, uint16_t position);
         void stopSong();
@@ -109,6 +113,8 @@ class Sequencer {
         SequencerScreen _sequencerScreen;
         BlackKeyMenu _blackKeyMenu;
         PianoKeyboard _pianoKeyboard;
+
+        Selection _selection;
 
         AudioPlayMemorySUCO *_playMemory;
         AudioMixer4 *_playMemoryMixerL;

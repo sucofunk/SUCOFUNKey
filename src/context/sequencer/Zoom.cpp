@@ -57,8 +57,8 @@ void Zoom::setZoomLevel(Zoomlevel level) {
   _currentZoomLevel = level;
   
   // redraw Grid
-  Serial.print("ZoomLevel Change::");
-  Serial.println(_currentZoomLevel);
+  //Serial.print("ZoomLevel Change::");
+  //Serial.println(_currentZoomLevel);
 };
 
 Zoom::Zoomlevel Zoom::getZoomlevel() {

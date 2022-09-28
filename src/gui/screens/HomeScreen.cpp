@@ -93,7 +93,7 @@ void HomeScreen::showGeneralInformation() {
     // draw the left arrowhead
     _screen->drawTriangle(text1.x2-12, text1.y1, text1.x2-12, text1.y2, text1.x2+8, 110, true, _screen->C_ORANGE);    
 
-    _screen->drawText("Sampler   Sequencer   Instruments   Live", _screen->AREA_SCREEN.x1 + 5, 115, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE);
+    _screen->drawText("   sample     sketch     arrange     play", _screen->AREA_SCREEN.x1 + 5, 115, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE);
 };
 
 

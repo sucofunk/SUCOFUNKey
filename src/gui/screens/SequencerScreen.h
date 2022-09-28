@@ -40,6 +40,7 @@
 #include "../../context/sequencer/SongStructure.h"
 #include "../../context/sequencer/Swing.h"
 #include "../../context/sequencer/Zoom.h"
+#include "../../context/sequencer/Selection.h"
 
 class SequencerScreen {
     public:
@@ -57,7 +58,8 @@ class SequencerScreen {
                 APPEND = 7,
                 SHORTEN = 8,
                 RESOLUTION = 9,
-                SCALE = 10
+                SCALE = 10,
+                SELECTION = 11
         };
 
         void initializeGrid(SongStructure *pattern, uint16_t cursorPosition, Swing *swing); 
@@ -83,6 +85,8 @@ class SequencerScreen {
         void drawSwingInfo(byte level, byte group);
         void drawExtMemPercentage(byte percent);
 
+        void drawSelection(Selection *selection);
+
     private:
         Sucofunkey *_keyboard;
         Screen *_screen;
@@ -91,6 +95,7 @@ class SequencerScreen {
         AudioResources *_audioResources;
 
         Zoom *_zoom;
+        Selection *_selection;
 
         char _cBuff3[3];
         char _cBuff2[2];
@@ -120,6 +125,8 @@ class SequencerScreen {
 
         uint8_t _amountOfGridCellsToDraw();
         boolean _sampleInfosVisible = false;
+
+        void _drawSelection();
 };
 
 #endif

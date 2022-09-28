@@ -51,8 +51,10 @@ Sequencer::Sequencer(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSI
     zoom = Zoom();
     _sequencerScreen = SequencerScreen(_keyboard, _screen, _sfsio, _audioResources, &zoom);
 
+    _selection = Selection();
+
     _blackKeyMenu = BlackKeyMenu(_keyboard, _screen);
-    //_blackKeyMenu.setOption(1, "SEL");
+    _blackKeyMenu.setOption(1, "SEL");
     _blackKeyMenu.setOption(2, "MOV");
     _blackKeyMenu.setOption(3, "DBL");
 
@@ -153,7 +155,13 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::PLAY:
               _calculatePlaybackTickSpeed();
               _checkIfAllSamplesAreLoaded();
-              playSong();
+              
+              if (_selection.isActive()) {
+                playSelection();
+              } else {
+                playSong();
+              }
+                            
               break;
         case Sucofunkey::PAUSE:
               stopSong();
@@ -291,7 +299,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
             if (event.pressed && _sequencerScreen.viewportCheckUpdate(_cursorChannel, _cursorPosition, _sequencerScreen.SCROLL_RIGHT)) _sequencerScreen.drawGrid(_sequencerScreen.SCROLL_RIGHT);
             if (!event.pressed && _sequencerScreen.viewportCheckUpdate(_cursorChannel, _cursorPosition, _sequencerScreen.SCROLL_LEFT)) _sequencerScreen.drawGrid(_sequencerScreen.SCROLL_LEFT);            
             
-            _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);            
+            _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
           break;
 
         case Sucofunkey::FN_ENCODER_4:
@@ -381,7 +389,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
     if (event.type == Sucofunkey::EVENT_APPLICATION) {
       switch (event.index) {
         case Sucofunkey::BLACKKEY_NAV_ITEM1:
-          //Serial.println("SELECT");
+              setSequencerState(SELECTION);
           break;
         case Sucofunkey::BLACKKEY_NAV_ITEM2:
               setSequencerState(MOVE_CELL);
@@ -433,8 +441,14 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
           // loadFromSD(true);
           break;          
         case Sucofunkey::BLACKKEY_NAV_ITEM10:
-          // CLS -> deletes all notes from song
-          setSequencerState(CONFIRM_CLS); 
+          if (_currentSequencerState == SELECTION) {
+            // clear selection
+            _song.clearSelection(_selection.getNormalizedSelection().startY, _selection.getNormalizedSelection().startX, _selection.getNormalizedSelection().endY, _selection.getNormalizedSelection().endX+zoom.getZoomlevelOffset()-1);
+            _sequencerScreen.drawGrid(_sequencerScreen.INIT);
+          } else {
+            // CLS -> deletes all notes from song
+            setSequencerState(CONFIRM_CLS); 
+          }          
           break;                    
         default:
         break;
@@ -470,6 +484,14 @@ void Sequencer::moveCursor(Direction direction) {
 
   _song.setCurrentPosition(_cursorChannel, _cursorPosition, false);
   _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+
+  // are we creating a selection? change end position
+  if (_selection.isActive()) {
+    _selection.setEnd(_cursorPosition, _cursorChannel);
+
+    // draw frame of selection
+    _sequencerScreen.drawSelection(&_selection);
+  }
 };
 
 
@@ -537,7 +559,7 @@ void Sequencer::setSequencerState(SequencerState state) {
           }
           _blackKeyMenu.setExclusiveAction(2, false);
           _currentSequencerState = NORMAL;
-        break;
+          break;
       case DOUBLE_CELL:
           // drop it...
           if (_savedCursorEqualsCurrent()) {
@@ -565,8 +587,15 @@ void Sequencer::setSequencerState(SequencerState state) {
           _blackKeyMenu.setExclusiveAction(10, false);
           _currentSequencerState = NORMAL;            
           break;
+      case SELECTION:
+          _selection.setEnd(_cursorPosition + zoom.getZoomlevelOffset()-1, _cursorChannel);
+          _selection.setSelectionActive(false);
+          _blackKeyMenu.setExclusiveAction(1, false);
+          _currentSequencerState = NORMAL;
+          _sequencerScreen.drawSelection(&_selection); // clears the selection and redraws the grid
+          break;
       default:
-        break;
+          break;
     }
   } else {
     // time for some kind of constructor for the new state
@@ -595,6 +624,15 @@ void Sequencer::setSequencerState(SequencerState state) {
       case CONFIRM_CLS:
           _blackKeyMenu.setExclusiveAction(10, true);
           _currentSequencerState = CONFIRM_CLS;
+        break;
+      case SELECTION:
+        _blackKeyMenu.setExclusiveAction(1, true);  
+        _blackKeyMenu.allowAdditionalToExclusive(10); // allow clearing the selection
+        _selection.setStart(_cursorPosition, _cursorChannel);
+        _selection.setEnd(_cursorPosition + zoom.getZoomlevelOffset()-1, _cursorChannel);
+        _selection.setSelectionActive(true);
+        _currentSequencerState = SELECTION;        
+        _sequencerScreen.drawSelection(&_selection);
         break;
       default:
         _currentSequencerState = NORMAL;
@@ -667,6 +705,18 @@ void Sequencer::setActive(boolean active) {
 }
 
 
+void Sequencer::playSelection() {
+   _isPlaying = !_isPlaying;
+
+  if (!_isPlaying) {
+    stopAllChannels();    
+  } else {
+    _playerPosition = _selection.getNormalizedSelection().startX;
+    _blinkPosition = _playerPosition;
+  }
+}
+
+
 void Sequencer::playSong() {
    _isPlaying = !_isPlaying;
 
@@ -715,7 +765,23 @@ void Sequencer::_playNext() {
 
     SongStructure::samplePointerStruct sps;
 
-    for (byte c=0; c < 8; c++) {
+    int channelStart = 0;
+    int channelEnd = 7;
+    int positionStart = 0;
+    int positionEnd = _song.getSongLength()-1;
+    Selection::SelectionStruct _normalizedSelection;
+
+    // play only selection, if we are selecting something
+    if (_selection.isActive()) {
+      _normalizedSelection = _selection.getNormalizedSelection();      
+      channelStart = _normalizedSelection.startY;
+      channelEnd = _normalizedSelection.endY;
+      positionStart = _normalizedSelection.startX;
+      // add the rest that is underlying.. e.g. 1...2...3...4... -> Selection on 3 -> 3... needs to be selected to have a full gridcell.. depending on zoom level.
+      positionEnd = _normalizedSelection.endX + zoom.getZoomlevelOffset()-1;
+    }
+
+    for (int c=channelStart; c <= channelEnd; c++) {
       sps = _song.getPosition(c, _playerPosition); 
       if (sps.type == SongStructure::MIDINOTE) {
         
@@ -733,8 +799,9 @@ void Sequencer::_playNext() {
       } 
     }
 
-    if (_playerPosition == _song.getSongLength()-1) { 
-      _playerPosition = 0;
+//    if (_playerPosition == _song.getSongLength()-1) { 
+    if (_playerPosition == positionEnd) {   
+      _playerPosition = positionStart;
     } else {
       _playerPosition++;
     }    

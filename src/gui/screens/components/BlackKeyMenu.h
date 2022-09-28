@@ -44,6 +44,7 @@ class BlackKeyMenu {
         void setOption(uint8_t option, char const *label);
 
         void setExclusiveAction(byte position, boolean activated); // disables all other options and highlights the one at position
+        void allowAdditionalToExclusive(byte position);
 
         void handleEvent(Sucofunkey::keyQueueStruct event);
         void showMenu();
@@ -68,12 +69,15 @@ class BlackKeyMenu {
         char const *_label10 = "   ";
 
         int _ledPINs[10] = { _keyboard->LED_FS_1, _keyboard->LED_GS_1, _keyboard->LED_AS_1, _keyboard->LED_CS_1, _keyboard->LED_DS_1, _keyboard->LED_FS_2, _keyboard->LED_GS_2, _keyboard->LED_AS_2, _keyboard->LED_CS_2, _keyboard->LED_DS_2};
-    
+        boolean _allowedToExclusive[10] = {false, false, false, false, false, false, false, false, false, false};
+
         byte _exclusivePosition = 0;
 
         void _redrawMenu();
         void _redrawFrame();
         void _redrawOption(uint8_t option);
+
+        boolean _isAllowed(byte position);
 };
 
 #endif

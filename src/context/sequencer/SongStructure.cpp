@@ -1512,8 +1512,15 @@ uint16_t SongStructure::_getNextSamplePointerIndex() {
 
 
 void SongStructure::clearSelection(uint8_t startChannel, uint16_t startPosition, uint8_t endChannel, uint16_t endPosition) {
-    for (uint16_t p=startPosition; p<endPosition; p++) {
+    Serial.println("clear selection");
+    Serial.print(startChannel);    
+    Serial.print(startPosition);
+    Serial.print(endChannel);
+    Serial.println(endPosition);
+    for (uint16_t p=startPosition; p<=endPosition; p++) {
         for (uint8_t c=startChannel; c<=endChannel; c++) {
+            Serial.print("deleted::");
+            Serial.println(p);
             removePosition(c, p);
         }
     }

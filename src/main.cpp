@@ -39,7 +39,7 @@
 #include "context/home/Home.h" 
 #include "context/sampler/Sampler.h" 
 #include "context/sequencer/Sequencer.h"
-#include "context/synth/Synth.h"
+#include "context/arrange/Arrange.h"
 #include "context/live/Live.h"
 #include "context/settings/Settings.h"
 #include "context/recorder/Recorder.h"
@@ -81,7 +81,7 @@ void handleKeyboardEventQueue(void);
 void changeContext(byte context);
 
 enum AppContext {
-  HOME = 0, SAMPLER = 1, SEQUENCER = 2, SYNTH = 3, LIVE = 4, SETTINGS = 5, STARTUP = 6, RECORDER = 7, SYSTEMCHECK = 8
+  HOME = 0, SAMPLER = 1, SEQUENCER = 2, SYNTH = 3, LIVE = 4, SETTINGS = 5, STARTUP = 6, RECORDER = 7, SYSTEMCHECK = 8, ARRANGE = 9
 };
 
 AppContext currentAppContext; // stores the current active "module" context (HOME|SAMPLER|...)
@@ -131,7 +131,7 @@ Sampler samplerContext(&keyboard, &screen, &fsio, &sfsio, &audioResources);
 Recorder recorderContext(&keyboard, &screen, &fsio, &sfsio, &audioResources);
 Sequencer sequencerContext(&keyboard, &screen, &fsio, &sfsio, extmemArray, &audioResources);
 
-Synth synthContext(&keyboard, &screen, &fsio, &sfsio, extmemArray, &audioResources);
+Arrange arrangeContext(&keyboard, &screen, &fsio, &sfsio, extmemArray, &audioResources);
 Live liveContext(&keyboard, &screen, &fsio, &sfsio, extmemArray, &audioResources);
 
 Settings settingsContext(&keyboard, &screen);
@@ -518,8 +518,11 @@ void sendEventToActiveContext(Sucofunkey::keyQueueStruct event) {
     case AppContext::SEQUENCER:
             sequencerContext.handleEvent(event);
             break;
-    case AppContext::SYNTH:
-            synthContext.handleEvent(event);
+//    case AppContext::SYNTH:
+//            synthContext.handleEvent(event);
+//            break;
+    case AppContext::ARRANGE:
+            arrangeContext.handleEvent(event);
             break;
     case AppContext::LIVE:
             liveContext.handleEvent(event);
@@ -639,10 +642,10 @@ void loop() {
     Serial.println(currentAppContext);
     Serial.println(MIDI.getChannel());
 
-    if ((MIDI.getChannel() == MIDI_channel_Synth || MIDI.getChannel() == 0) && currentAppContext == SYNTH) {
+/*    if ((MIDI.getChannel() == MIDI_channel_Synth || MIDI.getChannel() == 0) && currentAppContext == SYNTH) {
       synthContext.receiveMidiData(MIDI.getType(), MIDI.getData1(), MIDI.getData2());
     }
-
+*/
     if (MIDI.getChannel() == MIDI_channel_Live) {
       liveContext.receiveMidiData(MIDI.getType(), MIDI.getData1(), MIDI.getData2());
     }
@@ -664,7 +667,7 @@ void changeContext(AppContext context) {
       sequencerContext.setActive(false);
     }
         
-    synthContext.setActive(false);
+    arrangeContext.setActive(false);
     liveContext.setActive(false);
     settingsContext.setActive(false);
     recorderContext.setActive(false);
@@ -687,9 +690,13 @@ void changeContext(AppContext context) {
                   sequencerContext.setActive(true);
                   currentAppContext = SEQUENCER;
                   break;
-      case  AppContext::SYNTH: 
+/*      case  AppContext::SYNTH: 
                   synthContext.setActive(true);
                   currentAppContext = SYNTH;
+                  break; */
+      case  AppContext::ARRANGE: 
+                  arrangeContext.setActive(true);
+                  currentAppContext = ARRANGE;
                   break;
       case  AppContext::LIVE: 
                   liveContext.setActive(true);
@@ -790,7 +797,7 @@ void handleKeyboardEventQueue() {
               break;             
         case Sucofunkey::ENCODER_3_PUSH:  
         case Sucofunkey::MENU_ENCODER_3_PUSH:        
-              changeContext(SYNTH);
+              changeContext(ARRANGE);
               preCheck = true;
               break; 
         case Sucofunkey::ENCODER_4_PUSH:

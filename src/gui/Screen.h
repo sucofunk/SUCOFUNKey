@@ -154,6 +154,7 @@ class Screen {
         const uint16_t C_SWING_GROUPS[9] = {C_ORANGE, RGBtoColor(114, 220, 35), RGBtoColor(35, 207, 220), RGBtoColor(141, 35, 220), RGBtoColor(219, 161, 36), RGBtoColor(220, 48, 35), RGBtoColor(40, 215, 193), RGBtoColor(251, 213, 4), RGBtoColor(120, 120, 120)};
 
         const uint16_t C_CURSOR = C_ORANGE;
+        const uint16_t C_SELECTION = ST77XX_YELLOW; // RGBtoColor(255, 255, 255);
 
         // Area definitions
         Area AREA_SCREEN = { 0, 0, 319, 239, false, C_BLACK};  // Fullscreen

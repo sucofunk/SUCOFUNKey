@@ -84,7 +84,6 @@ void SequencerScreen::initializeGrid(SongStructure *song, uint16_t cursorPositio
 
 
 void SequencerScreen::drawGrid(LastAction action) {
-  //uint16_t maxWidth = _screen->AREA_SCREEN.x2-2;
   uint16_t maxWidth = _cellWidth*_xPositionCapacity+1;
 
   if ((_song->getSongLength()/_zoom->getZoomlevelOffset()) <= _xPositionCapacity) {
@@ -121,7 +120,13 @@ void SequencerScreen::drawGrid(LastAction action) {
     _screen->fillRect((amountOfGridcellsToDraw)*_cellWidth+1, _screen->AREA_CONTENT.y1+1, _screen->AREA_SCREEN.x2-(amountOfGridcellsToDraw*_cellWidth)+2, h+1, _screen->C_BLACK);
   }
 
-  drawSamples();
+  if (action != SELECTION) {
+    drawSamples();
+  
+    if (_selection->isActive()) {
+      _drawSelection();
+    }
+  } 
 }
 
 void SequencerScreen::drawCursorAt(byte channel, uint16_t position, boolean draw) {
@@ -335,7 +340,8 @@ void SequencerScreen::drawPlayStepIndicator(uint16_t position, boolean draw) {
     if (draw && position >= _xPositionOffset && position < _xPositionOffset + (_xPositionCapacity * _zoom->getZoomlevelOffset())) {
       
       // delete old indicator..
-      if (position == 0) {
+      // normal play start || playing selection from start 
+      if (position == 0 || (_selection->isActive() && position == _selection->getNormalizedSelection().startX)) {
         _screen->drawFastHLine(_screen->AREA_SCREEN.x1, 23, _screen->AREA_SCREEN.x2, _screen->C_BLACK);
       }
 
@@ -551,4 +557,106 @@ void SequencerScreen::drawSwingInfo(byte level, byte group) {
       _screen->fillRect(_screen->AREA_SEQUENCER_OPTIONS_SWING_BAR.x1+1+(i*6), _screen->AREA_SEQUENCER_OPTIONS_SWING_BAR.y1+1, 5, 6, i < level ? barColor : _screen->C_BLACK);
     }
   }
+}
+
+
+void SequencerScreen::drawSelection(Selection *selection) {
+  _selection = selection;
+  _drawSelection();
+};
+
+void SequencerScreen::_drawSelection() {
+  drawGrid(SELECTION);
+  
+  if (!_selection->isActive()) return;
+
+  int vpStart = _xPositionOffset;
+  int vpEnd = (_zoom->getZoomlevelOffset()*(_xPositionCapacity-1)) + _xPositionOffset;
+
+  boolean startIsLeftOfVP = false;
+  boolean startIsInVP = false;
+  boolean startIsRightOfVP = false;
+  boolean endIsLeftOfVP = false;
+  boolean endIsInVP = false;
+  boolean endIsRightOfVP = false;
+
+  // check if in viewport
+  // options: 1. complete in viewport
+  //          2. starts left from vp and ends in vp
+  //          3. starts in vp and ends right of viewport
+  //          4. starts left from vp and ends right from vp
+
+  if (_selection->getNormalizedSelection().startX >= vpStart && _selection->getNormalizedSelection().startX <= vpEnd) {
+    startIsInVP = true;
+  } else {
+    if(_selection->getNormalizedSelection().startX < vpStart) startIsLeftOfVP = true;
+    if(_selection->getNormalizedSelection().startX > vpEnd) startIsRightOfVP = true;
+  }
+
+  if (_selection->getNormalizedSelection().endX >= vpStart && _selection->getNormalizedSelection().endX <= vpEnd) {
+    endIsInVP = true;
+  } else {
+    if(_selection->getNormalizedSelection().endX < vpStart) endIsLeftOfVP = true;
+    if(_selection->getNormalizedSelection().endX > vpEnd) endIsRightOfVP = true; // irgendwie mit zomm offset arbeiten..
+  }
+
+/*  Serial.println("LIR LIR");
+  Serial.print(startIsLeftOfVP);
+  Serial.print(startIsInVP);
+  Serial.print(startIsRightOfVP);
+  Serial.print(" ");
+  Serial.print(endIsLeftOfVP);
+  Serial.print(endIsInVP);
+  Serial.println(endIsRightOfVP);*/
+  
+  // not in viewport? dismiss and return
+  if (startIsLeftOfVP && endIsLeftOfVP) return;
+  if (startIsRightOfVP && endIsRightOfVP) return;  
+
+  // start drawing one of the possible cases..
+  int upperLeftX = ((_selection->getNormalizedSelection().startX-_xPositionOffset)/_zoom->getZoomlevelOffset())*_cellWidth;
+  int upperLeftY = _selection->getNormalizedSelection().startY*_cellHeight+_screen->AREA_CONTENT.y1+1;
+  
+  int height = (_selection->getNormalizedSelection().endY-_selection->getNormalizedSelection().startY+1)*_cellHeight;
+  int width = ((_selection->getNormalizedSelection().endX - _selection->getNormalizedSelection().startX + _zoom->getZoomlevelOffset())/_zoom->getZoomlevelOffset())*_cellWidth;
+
+  if (startIsInVP && endIsInVP) {
+    // draw rect top border
+    _screen->drawFastHLine(upperLeftX, upperLeftY,  width, _screen->C_SELECTION);
+
+    // draw rect bottom border
+    _screen->drawFastHLine(upperLeftX, upperLeftY+height,  width, _screen->C_SELECTION);
+
+    // draw rect left border
+    _screen->drawFastVLine(upperLeftX, upperLeftY, height, _screen->C_SELECTION);
+
+    // draw rect right border
+    _screen->drawFastVLine(upperLeftX+width, upperLeftY, height, _screen->C_SELECTION);
+  }
+
+  if (startIsInVP && endIsRightOfVP) {    
+    // top and bottom border start to end of grid
+    _screen->drawFastHLine(upperLeftX, upperLeftY, (_xPositionCapacity*_cellWidth)-upperLeftX+1, _screen->C_SELECTION);
+    _screen->drawFastHLine(upperLeftX, upperLeftY+height, (_xPositionCapacity*_cellWidth)-upperLeftX+1, _screen->C_SELECTION);
+
+    // draw rect left border
+    _screen->drawFastVLine(upperLeftX, upperLeftY, height, _screen->C_SELECTION);
+  }
+
+  if (startIsLeftOfVP && endIsInVP) {
+    // top and votom from 0 to end of selection
+    width = ((_selection->getNormalizedSelection().endX-_xPositionOffset)/_zoom->getZoomlevelOffset()+1)*_cellWidth;
+    _screen->drawFastHLine(0, upperLeftY,  width, _screen->C_SELECTION);
+    _screen->drawFastHLine(0, upperLeftY+height,  width, _screen->C_SELECTION);
+
+    // right border
+    _screen->drawFastVLine(width, upperLeftY, height, _screen->C_SELECTION);    
+  }
+
+  if (startIsLeftOfVP && endIsRightOfVP) {
+    // top and bottom from 0 to end of grid
+    _screen->drawFastHLine(0, upperLeftY, _xPositionCapacity*_cellWidth+1, _screen->C_SELECTION);
+    _screen->drawFastHLine(0, upperLeftY+height, _xPositionCapacity*_cellWidth+1, _screen->C_SELECTION);   
+  }
+
 }
