@@ -446,6 +446,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
             _song.clearSelection(_selection, zoom.getZoomlevelOffset()-1);
             _sequencerScreen.drawGrid(_sequencerScreen.INIT);
             _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+            setSequencerState(SELECTION); // to deselect the selection..
           } else {
             // CLS -> deletes all notes from song
             setSequencerState(CONFIRM_CLS); 
@@ -586,12 +587,12 @@ void Sequencer::setSequencerState(SequencerState state) {
       case CONFIRM_CLS:
           _clearSong();
           _blackKeyMenu.setExclusiveAction(10, false);
-          _currentSequencerState = NORMAL;            
+          _currentSequencerState = NORMAL;
           break;
       case SELECTION:
           _selection.setEnd(_cursorPosition + zoom.getZoomlevelOffset()-1, _cursorChannel);
           _selection.setSelectionActive(false);
-          _blackKeyMenu.setExclusiveAction(1, false);
+          _blackKeyMenu.setExclusiveAction(1, false);          
           _currentSequencerState = NORMAL;
           _sequencerScreen.drawSelection(&_selection); // clears the selection and redraws the grid
           break;

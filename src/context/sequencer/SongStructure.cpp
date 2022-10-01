@@ -1332,6 +1332,26 @@ boolean SongStructure::loadFromSD(char *songPath) {
 
     readFile.close();
 
+
+    // read _snippets
+    strcpy(buff, songPath);
+    strcat(buff, "/PATTERN/SNIPPETS.DAT");
+
+    readFile = SD.open(buff, FILE_READ);
+
+    for (uint16_t i=0; i<sizeof(_snippets)/sizeof(Selection::SelectionStruct); i++) {
+        bufferBlocks = (byte *) &_snippets[i];
+
+        for (uint16_t j=0; j<sizeof(Selection::SelectionStruct); j++) {
+            if (readFile.available()) {
+                *(bufferBlocks + j) = readFile.read();
+            }
+        }            
+    }
+
+    readFile.close();
+
+
     return true;
 };
 
@@ -1373,7 +1393,7 @@ boolean SongStructure::saveToSD(char *songPath) {
  
     writeFile.close();
 
-    delay(100); // still needed?
+    delay(100);
 
 
     // write _samplePointers
@@ -1446,6 +1466,25 @@ boolean SongStructure::saveToSD(char *songPath) {
     }
  
     writeFile.close();
+
+
+    delay(100);
+
+    // write _snippets
+    strcpy(buff, songPath);
+    strcat(buff, "/PATTERN/SNIPPETS.DAT");
+
+    if (SD.exists(buff)) { SD.remove(buff); }
+
+    writeFile = SD.open(buff, FILE_WRITE);
+
+    for (uint16_t i=0; i<sizeof(_snippets)/sizeof(Selection::SelectionStruct); i++) {
+        bufferBlocks = (byte *) &_snippets[i];
+        writeFile.write(bufferBlocks, sizeof(_snippets[i]));
+    }
+ 
+    writeFile.close();
+
 
     return true;
 };

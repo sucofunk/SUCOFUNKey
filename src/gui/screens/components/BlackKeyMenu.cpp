@@ -92,22 +92,25 @@ void BlackKeyMenu::setOption(uint8_t option, char const *label) {
 void BlackKeyMenu::setExclusiveAction(byte position, boolean activated) {
     if (activated) {
         _exclusivePosition = position;
-        _redrawOption(position);
         _keyboard->setLEDState(_ledPINs[position-1], true);
     } else {
         _exclusivePosition = 0;
-        _redrawOption(position);
         _keyboard->setLEDState(_ledPINs[position-1], false);
 
         for (int i=0; i<10; i++) {
             _allowedToExclusive[i] = false;
         }
     }
+
+    for (int i=1; i<=10; i++) {
+        _redrawOption(i);
+    }
 };
 
 // 1..10
 void BlackKeyMenu::allowAdditionalToExclusive(byte position) {
-    _allowedToExclusive[position-1] = true;    
+    _allowedToExclusive[position-1] = true;
+    _redrawOption(position);    
 };
 
 // 1..10
@@ -186,9 +189,10 @@ void BlackKeyMenu::hideMenu() {
     _visible = false;
     _screen->fillArea(_screen->AREA_BLACK_KEY_MENU, _screen->C_BLACK);
 
-    // turn all LEDs off, if one is on
+    // turn all LEDs off, if one is on AND delete all exclusive exceptions
     for (int i=0; i<10; i++) {
         _keyboard->setLEDState(_ledPINs[i], false);
+        _allowedToExclusive[i] = false;
     }
     
     // stop exclusive position -> hiding the menu is like canceling an option
@@ -248,43 +252,43 @@ void BlackKeyMenu::_redrawOption(uint8_t option) {
     switch(option) {
         case 1:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM1, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM1, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 1 ? _screen->C_ORANGE : _screen->C_WHITE, _label1);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM1, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 1 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[0]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label1);
             break;
         case 2:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM2, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM2, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 2 ? _screen->C_ORANGE : _screen->C_WHITE, _label2);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM2, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 2 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[1]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label2);
             break;            
         case 3:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM3, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM3, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 3 ? _screen->C_ORANGE : _screen->C_WHITE, _label3);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM3, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 3 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[2]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label3);
             break;
         case 4:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM4, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM4, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 4 ? _screen->C_ORANGE : _screen->C_WHITE, _label4);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM4, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 4 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[3]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label4);
             break;                
         case 5:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM5, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM5, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 5 ? _screen->C_ORANGE : _screen->C_WHITE, _label5);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM5, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 5 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[4]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label5);
             break;            
         case 6:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM6, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM6, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 6 ? _screen->C_ORANGE : _screen->C_WHITE, _label6);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM6, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 6 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[5]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label6);
             break;
         case 7:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM7, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM7, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 7 ? _screen->C_ORANGE : _screen->C_WHITE, _label7);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM7, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 7 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[6]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label7);
             break;
         case 8:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM8, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM8, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 8 ? _screen->C_ORANGE : _screen->C_WHITE, _label8);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM8, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 8 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[7]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label8);
             break;
         case 9:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM9, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM9, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 9 ? _screen->C_ORANGE : _screen->C_WHITE, _label9);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM9, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 9 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[8]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label9);
             break;
         case 10:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM10, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM10, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 10 ? _screen->C_ORANGE : _screen->C_WHITE, _label10);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM10, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 10 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[9]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label10);
             break;                                                            
     }
 };

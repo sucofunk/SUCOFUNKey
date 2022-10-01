@@ -65,6 +65,7 @@ int PIN_SCREEN_DC = 39;
 int PIN_SCREEN_RST = 37;
 int PIN_SCREEN_BL = 36;
 
+
 // Analog PIN where volume potentiometer is connected to
 int PIN_VOLUME = 22;
 float volumeValue = 0;
