@@ -113,6 +113,14 @@ void BlackKeyMenu::allowAdditionalToExclusive(byte position) {
     _redrawOption(position);    
 };
 
+void BlackKeyMenu::disableExceptions() {
+    for (int i=0; i<10; i++) {        
+        _allowedToExclusive[i] = false;
+        _redrawOption(i+1);
+    }        
+}
+
+
 // 1..10
 boolean BlackKeyMenu::_isAllowed(byte position) {
     return _allowedToExclusive[position-1];

@@ -307,11 +307,14 @@ class Sucofunkey {
         void switchLEDsOff();
 
         byte getSampleIdByEventKey(byte eventKey);
+        byte getWhiteKeyByEventKey(byte eventKey);
         byte getLEDPinBySampleId(byte sampleId1);
         byte getLEDPinByEventKey(byte eventKey);
+        byte getLEDPinByWhiteKey(byte whiteKey); // 1..14
         char getCharByEventKey(byte eventKey, byte index);        
         char getFilenameCharByEventKey(byte eventKey, byte index);    
-        boolean isEventBlackKey(byte eventKey); // a black key from the piano roll.. false does not mean that it is a white key.. might be anything else
+        boolean isEventBlackKey(byte eventKey); // a black key from the piano keyboard.. false does not mean that it is a white key.. might be anything else
+        boolean isEventWhiteKey(byte eventKey); // a white key from the piano keyboard.. false does not mean that it is a black key.. might be anything else
 
         String getMIDINoteName(byte note);
 
@@ -397,7 +400,14 @@ class Sucofunkey {
             char character[2];
             char filenameCharacter[2];
             byte LED_PIN;
+            byte whiteKeyNr;
         } LookUpTableEntry;
+
+        typedef struct {
+            int noteKeysLookupTableINDEX;
+            byte LED_PIN;            
+        } WhiteKeysTable;
+
 
         typedef struct midiNoteLookUpTableStruct {
             String name;
@@ -417,32 +427,48 @@ class Sucofunkey {
 
 
         const LookUpTableEntry _noteKeysLookUpTable[24] = {
-            {  1, "F1",  {'A', 'B'}, {'A', 'B'}, LED_F_1},
-            {  2, "F#1", {'1', '!'}, {'1', '!'}, LED_FS_1},
-            {  3, "G1",  {'C', 'D'}, {'C', 'D'}, LED_G_1},
-            {  4, "G#1", {'2', '?'}, {'2', '2'}, LED_GS_1},
-            {  5, "A1",  {'E', 'F'}, {'E', 'F'}, LED_A_1},
-            {  6, "A#1", {'3', '-'}, {'3', '-'}, LED_AS_1},
-            {  7, "B1",  {'G', 'H'}, {'G', 'H'}, LED_B_1},
-            {  8, "C1",  {'I', 'J'}, {'I', 'J'}, LED_C_1},
-            {  9, "C#1", {'4', '_'}, {'4', '_'}, LED_CS_1},
-            { 10, "D1",  {'K', 'L'}, {'K', 'L'}, LED_D_1},
-            { 11, "D#1", {'5', '.'}, {'5', '5'}, LED_DS_1},
-            { 12, "E1",  {'M', 'N'}, {'M', 'N'}, LED_E_1},
-            { 13, "F2",  {'O', 'P'}, {'O', 'P'}, LED_F_2},
-            { 14, "F#2", {'6', ','}, {'6', '6'}, LED_FS_2},
-            { 15, "G2",  {'Q', 'R'}, {'Q', 'R'}, LED_G_2},
-            { 16, "G#2", {'7', ':'}, {'7', ':'}, LED_GS_2},
-            { 17, "A2",  {'S', 'T'}, {'S', 'T'}, LED_A_2},
-            { 18, "A#2", {'8', ';'}, {'8', '8'}, LED_AS_2},
-            { 19, "B2",  {'U', 'V'}, {'U', 'V'}, LED_B_2},
-            { 20, "C2",  {'W', 'X'}, {'W', 'X'}, LED_C_2},
-            { 21, "C#2", {'9', '#'}, {'9', '9'}, LED_CS_2},
-            { 22, "D2",  {'Y', 'Z'}, {'Y', 'Z'}, LED_D_2},
-            { 23, "D#2", {'0', '+'}, {'0', '0'}, LED_DS_2},
-            { 24, "E2",  {' ', ' '}, {' ', ' '}, LED_E_2}
+            {  1, "F1",  {'A', 'B'}, {'A', 'B'}, LED_F_1, 1},
+            {  2, "F#1", {'1', '!'}, {'1', '!'}, LED_FS_1, 0},
+            {  3, "G1",  {'C', 'D'}, {'C', 'D'}, LED_G_1, 2},
+            {  4, "G#1", {'2', '?'}, {'2', '2'}, LED_GS_1, 0},
+            {  5, "A1",  {'E', 'F'}, {'E', 'F'}, LED_A_1, 3},
+            {  6, "A#1", {'3', '-'}, {'3', '-'}, LED_AS_1, 0},
+            {  7, "B1",  {'G', 'H'}, {'G', 'H'}, LED_B_1, 4},
+            {  8, "C1",  {'I', 'J'}, {'I', 'J'}, LED_C_1, 5},
+            {  9, "C#1", {'4', '_'}, {'4', '_'}, LED_CS_1, 0},
+            { 10, "D1",  {'K', 'L'}, {'K', 'L'}, LED_D_1, 6},
+            { 11, "D#1", {'5', '.'}, {'5', '5'}, LED_DS_1, 0},
+            { 12, "E1",  {'M', 'N'}, {'M', 'N'}, LED_E_1, 7},
+            { 13, "F2",  {'O', 'P'}, {'O', 'P'}, LED_F_2, 8},
+            { 14, "F#2", {'6', ','}, {'6', '6'}, LED_FS_2, 0},
+            { 15, "G2",  {'Q', 'R'}, {'Q', 'R'}, LED_G_2, 9},
+            { 16, "G#2", {'7', ':'}, {'7', ':'}, LED_GS_2, 0},
+            { 17, "A2",  {'S', 'T'}, {'S', 'T'}, LED_A_2, 10},
+            { 18, "A#2", {'8', ';'}, {'8', '8'}, LED_AS_2, 0},
+            { 19, "B2",  {'U', 'V'}, {'U', 'V'}, LED_B_2, 11},
+            { 20, "C2",  {'W', 'X'}, {'W', 'X'}, LED_C_2, 12},
+            { 21, "C#2", {'9', '#'}, {'9', '9'}, LED_CS_2, 0},
+            { 22, "D2",  {'Y', 'Z'}, {'Y', 'Z'}, LED_D_2, 13},
+            { 23, "D#2", {'0', '+'}, {'0', '0'}, LED_DS_2, 0},
+            { 24, "E2",  {' ', ' '}, {' ', ' '}, LED_E_2, 14}
         };
 
+        const WhiteKeysTable _whiteKeysTable[14] = {
+            {0, LED_F_1},
+            {2, LED_G_1},
+            {4, LED_A_1},
+            {6, LED_B_1},
+            {7, LED_C_1},
+            {9, LED_D_1},
+            {11, LED_E_1},
+            {12, LED_F_2},
+            {14, LED_G_2},
+            {16, LED_A_2},
+            {18, LED_B_2},
+            {19, LED_C_2},
+            {21, LED_D_2},
+            {23, LED_E_2}
+        };
 
         // one entry for each rotary encoder
         uint8_t _encoderTempValues[4] = {0, 0, 0, 0};

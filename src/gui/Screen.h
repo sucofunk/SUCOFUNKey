@@ -155,6 +155,7 @@ class Screen {
 
         const uint16_t C_CURSOR = C_ORANGE;
         const uint16_t C_SELECTION = ST77XX_YELLOW; // RGBtoColor(255, 255, 255);
+        const uint16_t C_SNIPPET = ST77XX_GREEN; 
 
         // Area definitions
         Area AREA_SCREEN = { 0, 0, 319, 239, false, C_BLACK};  // Fullscreen

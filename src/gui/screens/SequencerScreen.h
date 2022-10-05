@@ -59,7 +59,8 @@ class SequencerScreen {
                 SHORTEN = 8,
                 RESOLUTION = 9,
                 SCALE = 10,
-                SELECTION = 11
+                SELECTION = 11,
+                SNIPPET_DELETE = 12
         };
 
         void initializeGrid(SongStructure *pattern, uint16_t cursorPosition, Swing *swing); 
@@ -86,6 +87,7 @@ class SequencerScreen {
         void drawExtMemPercentage(byte percent);
 
         void drawSelection(Selection *selection);
+        void drawSnippets();
 
     private:
         Sucofunkey *_keyboard;
@@ -127,6 +129,7 @@ class SequencerScreen {
         boolean _sampleInfosVisible = false;
 
         void _drawSelection();
+        void _drawSnippet(Selection::SelectionStruct snippet);
 };
 
 #endif

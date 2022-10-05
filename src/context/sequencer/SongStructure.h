@@ -168,9 +168,10 @@ class SongStructure {
         void clearSelection(Selection selection, int endOffsetX);
         void clearSelection(uint8_t startChannel, uint16_t startPosition, uint8_t endChannel, uint16_t endPosition);
 
-        void saveSelectionAsSnippet(Selection selection, byte slot); // 1..24
-        Selection::SelectionStruct getSnippet(byte slot); // 1..24
-        boolean isSnippetSlotFree(byte slot); // 1..24
+        void saveSelectionAsSnippet(Selection selection, byte slot); // 1..14
+        Selection::SelectionStruct getSnippet(byte slot); // 1..14
+        boolean isSnippetSlotFree(byte slot); // 1..14
+        boolean setSnippetSlotFree(byte slot); // 1..14
 
         void test();
         void testLog();
@@ -205,8 +206,8 @@ class SongStructure {
             closestPointerType type;
         } closestPointer;
 
-        // list of up to 24 snippets.. each snippet corresponds to a note key, just one octave
-        Selection::SelectionStruct _snippets[24];
+        // list of up to 14 snippets.. each snippet corresponds to a white note key, just one octave        
+        Selection::SelectionStruct _snippets[14];
         blockStruct   _blocks[100];
 
 

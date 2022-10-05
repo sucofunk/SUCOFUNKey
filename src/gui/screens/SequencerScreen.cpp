@@ -127,6 +127,8 @@ void SequencerScreen::drawGrid(LastAction action) {
       _drawSelection();
     }
   } 
+
+  drawSnippets();
 }
 
 void SequencerScreen::drawCursorAt(byte channel, uint16_t position, boolean draw) {
@@ -560,6 +562,8 @@ void SequencerScreen::drawSwingInfo(byte level, byte group) {
 }
 
 
+
+
 void SequencerScreen::drawSelection(Selection *selection) {
   _selection = selection;
   _drawSelection();
@@ -660,3 +664,103 @@ void SequencerScreen::_drawSelection() {
   }
 
 }
+
+
+void SequencerScreen::drawSnippets() {    
+  for (int i=1; i<=14; i++) {
+    if (!_song->isSnippetSlotFree(i)) {
+      _drawSnippet(_song->getSnippet(i));
+    }    
+  }  
+};
+
+void SequencerScreen::_drawSnippet(Selection::SelectionStruct snippet) {
+  int vpStart = _xPositionOffset;
+  int vpEnd = (_zoom->getZoomlevelOffset()*(_xPositionCapacity-1)) + _xPositionOffset;
+
+  boolean startIsLeftOfVP = false;
+  boolean startIsInVP = false;
+  boolean startIsRightOfVP = false;
+  boolean endIsLeftOfVP = false;
+  boolean endIsInVP = false;
+  boolean endIsRightOfVP = false;
+
+  // check if in viewport
+  // options: 1. complete in viewport
+  //          2. starts left from vp and ends in vp
+  //          3. starts in vp and ends right of viewport
+  //          4. starts left from vp and ends right from vp
+
+  if (snippet.startX >= vpStart && snippet.startX <= vpEnd) {
+    startIsInVP = true;
+  } else {
+    if(snippet.startX < vpStart) startIsLeftOfVP = true;
+    if(snippet.startX > vpEnd) startIsRightOfVP = true;
+  }
+
+  if (snippet.endX >= vpStart && snippet.endX <= vpEnd) {
+    endIsInVP = true;
+  } else {
+    if(snippet.endX < vpStart) endIsLeftOfVP = true;
+    if(snippet.endX > vpEnd) endIsRightOfVP = true; // irgendwie mit zomm offset arbeiten..
+  }
+
+/*  Serial.println("LIR LIR");
+  Serial.print(startIsLeftOfVP);
+  Serial.print(startIsInVP);
+  Serial.print(startIsRightOfVP);
+  Serial.print(" ");
+  Serial.print(endIsLeftOfVP);
+  Serial.print(endIsInVP);
+  Serial.println(endIsRightOfVP);*/
+  
+  // not in viewport? dismiss and return
+  if (startIsLeftOfVP && endIsLeftOfVP) return;
+  if (startIsRightOfVP && endIsRightOfVP) return;  
+
+  // start drawing one of the possible cases..
+  int upperLeftX = ((snippet.startX-_xPositionOffset)/_zoom->getZoomlevelOffset())*_cellWidth;
+  int upperLeftY = snippet.startY*_cellHeight+_screen->AREA_CONTENT.y1+1;
+  
+  int height = (snippet.endY - snippet.startY+1)*_cellHeight;
+  int width = ((snippet.endX - snippet.startX + _zoom->getZoomlevelOffset())/_zoom->getZoomlevelOffset())*_cellWidth;
+
+  if (startIsInVP && endIsInVP) {
+    // draw rect top border
+    _screen->drawFastHLine(upperLeftX, upperLeftY,  width, _screen->C_SNIPPET);
+
+    // draw rect bottom border
+    _screen->drawFastHLine(upperLeftX, upperLeftY+height,  width, _screen->C_SNIPPET);
+
+    // draw rect left border
+    _screen->drawFastVLine(upperLeftX, upperLeftY, height, _screen->C_SNIPPET);
+
+    // draw rect right border
+    _screen->drawFastVLine(upperLeftX+width, upperLeftY, height, _screen->C_SNIPPET);
+  }
+
+  if (startIsInVP && endIsRightOfVP) {    
+    // top and bottom border start to end of grid
+    _screen->drawFastHLine(upperLeftX, upperLeftY, (_xPositionCapacity*_cellWidth)-upperLeftX+1, _screen->C_SNIPPET);
+    _screen->drawFastHLine(upperLeftX, upperLeftY+height, (_xPositionCapacity*_cellWidth)-upperLeftX+1, _screen->C_SNIPPET);
+
+    // draw rect left border
+    _screen->drawFastVLine(upperLeftX, upperLeftY, height, _screen->C_SNIPPET);
+  }
+
+  if (startIsLeftOfVP && endIsInVP) {
+    // top and votom from 0 to end of selection
+    width = ((snippet.endX-_xPositionOffset)/_zoom->getZoomlevelOffset()+1)*_cellWidth;
+    _screen->drawFastHLine(0, upperLeftY,  width, _screen->C_SNIPPET);
+    _screen->drawFastHLine(0, upperLeftY+height,  width, _screen->C_SNIPPET);
+
+    // right border
+    _screen->drawFastVLine(width, upperLeftY, height, _screen->C_SNIPPET);    
+  }
+
+  if (startIsLeftOfVP && endIsRightOfVP) {
+    // top and bottom from 0 to end of grid
+    _screen->drawFastHLine(0, upperLeftY, _xPositionCapacity*_cellWidth+1, _screen->C_SNIPPET);
+    _screen->drawFastHLine(0, upperLeftY+height, _xPositionCapacity*_cellWidth+1, _screen->C_SNIPPET);   
+  }  
+};

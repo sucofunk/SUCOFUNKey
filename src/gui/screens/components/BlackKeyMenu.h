@@ -45,6 +45,7 @@ class BlackKeyMenu {
 
         void setExclusiveAction(byte position, boolean activated); // disables all other options and highlights the one at position
         void allowAdditionalToExclusive(byte position);
+        void disableExceptions();
 
         void handleEvent(Sucofunkey::keyQueueStruct event);
         void showMenu();

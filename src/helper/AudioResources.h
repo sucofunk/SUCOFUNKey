@@ -84,16 +84,8 @@ class AudioResources {
         void setInputMic();
         void setInputLine();
 
-/*        AudioSynthWavetableSUCO      wavetable1;
-        AudioSynthWavetableSUCO      wavetable2;
-        AudioSynthWavetableSUCO      wavetable3;
-        AudioSynthWavetableSUCO      wavetable4;
-        AudioSynthWavetableSUCO      wavetable5;
-        AudioSynthWavetableSUCO      wavetable6;
-        AudioSynthWavetableSUCO      wavetable7;
-        AudioSynthWavetableSUCO      wavetable8;
-*/        
         AudioPlayMemorySUCO          playMem;
+
         AudioPlayMemorySUCO          playMem1;
         AudioPlayMemorySUCO          playMem2;
         AudioPlayMemorySUCO          playMem3;
@@ -102,6 +94,14 @@ class AudioResources {
         AudioPlayMemorySUCO          playMem6;
         AudioPlayMemorySUCO          playMem7;
         AudioPlayMemorySUCO          playMem8;
+        AudioPlayMemorySUCO          playMem9;
+        AudioPlayMemorySUCO          playMem10;
+        AudioPlayMemorySUCO          playMem11;
+        AudioPlayMemorySUCO          playMem12;
+        AudioPlayMemorySUCO          playMem13;
+        AudioPlayMemorySUCO          playMem14;
+        AudioPlayMemorySUCO          playMem15;
+        AudioPlayMemorySUCO          playMem16;
 
         AudioPlayMemorySUCO          playMemLive1;
         AudioPlayMemorySUCO          playMemLive2;
@@ -131,17 +131,12 @@ class AudioResources {
         AudioMixer4              mixerSDL;
         AudioMixer4              mixerSDR;
 
-        AudioMixer4              mixerWavL;
-        AudioMixer4              mixerWavR;
-
-        AudioMixer4              mixerWav1L;
-        AudioMixer4              mixerWav1R;
-        AudioMixer4              mixerWav2L;
-        AudioMixer4              mixerWav2R;
-
         AudioMixer4              mixerMemL;
         AudioMixer4              mixerMemR;
-        
+
+        AudioMixer4              mixerMemLiveL;
+        AudioMixer4              mixerMemLiveR;
+
         AudioMixer4              mixerMem1L;
         AudioMixer4              mixerMem1R;
         AudioMixer4              mixerMem2L;
@@ -150,20 +145,10 @@ class AudioResources {
         AudioMixer4              mixerMem3R;
         AudioMixer4              mixerMem4L;
         AudioMixer4              mixerMem4R;
-
-
-        // Synth section
-/*        AudioSynthWavetableSUCO      wavetableSynth5;
-        AudioSynthWavetableSUCO      wavetableSynth6;
-        AudioSynthWavetableSUCO      wavetableSynth4;
-        AudioSynthWavetableSUCO      wavetableSynth2;
-        AudioSynthWavetableSUCO      wavetableSynth3;
-        AudioSynthWavetableSUCO      wavetableSynth1;
-*/        
-        AudioMixer4              mixerSynth1;    
-        AudioMixer4              mixerSynth2;   
-        AudioMixer4              mixerSynth;    
-
+        AudioMixer4              mixerMem5L;
+        AudioMixer4              mixerMem5R;
+        AudioMixer4              mixerMem6L;
+        AudioMixer4              mixerMem6R;
 
 /*
         // from Open Audio for phaseshifter

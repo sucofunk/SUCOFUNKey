@@ -684,6 +684,10 @@ byte Sucofunkey::getSampleIdByEventKey(byte eventKey) {
   return _noteKeysLookUpTable[_eventKeyToLookUpTable[eventKey]].sampleId;
 };
 
+byte Sucofunkey::getWhiteKeyByEventKey(byte eventKey) {
+  return _noteKeysLookUpTable[_eventKeyToLookUpTable[eventKey]].whiteKeyNr;
+};
+
 byte Sucofunkey::getLEDPinBySampleId(byte sampleId1) {
   return _noteKeysLookUpTable[sampleId1-1].LED_PIN;
 }
@@ -691,6 +695,10 @@ byte Sucofunkey::getLEDPinBySampleId(byte sampleId1) {
 byte Sucofunkey::getLEDPinByEventKey(byte eventKey) {
   return _noteKeysLookUpTable[_eventKeyToLookUpTable[eventKey]].LED_PIN;
 }
+
+byte Sucofunkey::getLEDPinByWhiteKey(byte whiteKey) {
+  return _whiteKeysTable[whiteKey-1].LED_PIN;
+};
 
 char Sucofunkey::getCharByEventKey(byte eventKey, byte index) {
   if (eventKey > 100) {
@@ -712,6 +720,17 @@ boolean Sucofunkey::isEventBlackKey(byte eventKey) {
     return false;
   } else {
     if (eventKey == FS_1 || eventKey == GS_1 || eventKey == AS_1 || eventKey == CS_1 || eventKey == DS_1 || eventKey == FS_2 || eventKey == GS_2 || eventKey == AS_2 || eventKey == CS_2 || eventKey == DS_2) {
+      return true;
+    }
+  }
+  return false;
+};
+
+boolean Sucofunkey::isEventWhiteKey(byte eventKey) {  
+  if (eventKey < 20 || eventKey > 78) {
+    return false;
+  } else {
+    if (eventKey == F_1 || eventKey == G_1 || eventKey == A_1 || eventKey == B_1 || eventKey == C_1 || eventKey == D_1 || eventKey == E_1 || eventKey == F_2 || eventKey == G_2 || eventKey == A_2 || eventKey == B_2 || eventKey == C_2 || eventKey == D_2 || eventKey == E_2) {
       return true;
     }
   }

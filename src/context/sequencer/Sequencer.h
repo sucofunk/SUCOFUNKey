@@ -46,10 +46,12 @@
 #include "../../gui/screens/components/PianoKeyboard.h"
 #include "Swing.h"
 #include "Selection.h"
+#include "Snippets.h"
+#include "Play.h"
 
 class Sequencer {
     public:
-        Sequencer(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *sfsio, unsigned int *extmemArray, AudioResources *audioResources);
+        Sequencer(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *sfsio, Play *play);
 
         Zoom zoom;
 
@@ -64,7 +66,9 @@ class Sequencer {
             MOVE_CELL = 1,
             DOUBLE_CELL = 2,
             CONFIRM_CLS = 3,
-            SELECTION = 4
+            SELECTION = 4,
+            SELECT_SNIPPET_SLOT = 5,
+            SNIPPET_WAIT_DELETE = 6
         };
 
         enum Direction {
@@ -106,9 +110,9 @@ class Sequencer {
         unsigned int *_extmemArray;
         Sampler *_sampler;
         AudioResources *_audioResources;
-        Swing _swing;
+        Play *_play;
 
-        SongStructure _song = SongStructure();
+        SongStructure *_song;        
 
         SequencerScreen _sequencerScreen;
         BlackKeyMenu _blackKeyMenu;
@@ -158,6 +162,9 @@ class Sequencer {
 
         void _checkIfAllSamplesAreLoaded();
         void _clearSong();
+
+        Swing _swing = Swing();
+        Snippets _snippets = Snippets(_keyboard, _song);
 };
 
 #endif
