@@ -31,9 +31,7 @@
 #include <Arduino.h>
 #include "Swing.h"
 
-Swing::Swing() { };
-
-void Swing::setTickMicroseconds(long tickMicroseconds) {
+void Swing::setTickMicroseconds(int tickMicroseconds) {
     _microSecondsPerTick = tickMicroseconds;
     _recalculate();
 };
@@ -112,12 +110,10 @@ byte Swing::groupDownInExpression(byte expression) {
 
 void Swing::_recalculate() {
     // 1/1000000 = 1 microsecond
-
     double microsecondsPerSample = 1000000 / 44100.0;
     double subDivisionSamples = _microSecondsPerTick / microsecondsPerSample / 12;
 
     for (int i=0; i<12; i++) {
         _samplesByLevel[i] = (int)(i * subDivisionSamples);
     }
-
 };

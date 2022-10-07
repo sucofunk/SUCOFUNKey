@@ -38,7 +38,10 @@
 
 class SongStructure {
     public:
-        SongStructure();
+        SongStructure() {
+            Serial.print("SongStructure Constructor::");
+            Serial.println(_meta.playbackSpeed);
+        };
 
         enum shiftAction {
             UP = 1,
@@ -137,6 +140,8 @@ class SongStructure {
         void swingGroupUp(uint8_t channel, uint16_t position);
         void swingGroupDown(uint8_t channel, uint16_t position);
 
+        void setSwingTickMicroseconds(int microseconds);
+
         void reverseSamplePlayback(uint8_t channel, uint16_t position);
 
         void setSongLength(uint16_t songLength);
@@ -158,6 +163,10 @@ class SongStructure {
 
         void setPlayBackSpeed(float bpm);
         float getPlayBackSpeed();
+
+        Swing* getSwing() {
+            return &_swing;
+        }
 
         byte getSwingGroupLevel(byte group);
         void setSwingGroupLevel(byte group, byte level);

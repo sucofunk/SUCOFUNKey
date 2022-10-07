@@ -39,6 +39,7 @@
 
 class StartupScreen {
     public:
+        StartupScreen(){};
         StartupScreen(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, char *activeSongName);
         void handleEvent(Sucofunkey::keyQueueStruct event);
         long receiveTimerTick();

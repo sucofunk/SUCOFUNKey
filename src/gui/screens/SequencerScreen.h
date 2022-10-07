@@ -41,11 +41,12 @@
 #include "../../context/sequencer/Swing.h"
 #include "../../context/sequencer/Zoom.h"
 #include "../../context/sequencer/Selection.h"
+#include "../../context/sequencer/Play.h"
 
 class SequencerScreen {
     public:
         SequencerScreen();
-        SequencerScreen(Sucofunkey *keyboard, Screen *screen, SampleFSIO *sfsio, AudioResources *audioResources, Zoom *zoom);
+        SequencerScreen(Sucofunkey* keyboard, Screen* screen, SampleFSIO* sfsio, AudioResources* audioResources, Zoom* zoom, Play* play, Selection* selection);
 
         enum LastAction {
                 INIT = 0,
@@ -63,7 +64,7 @@ class SequencerScreen {
                 SNIPPET_DELETE = 12
         };
 
-        void initializeGrid(SongStructure *pattern, uint16_t cursorPosition, Swing *swing); 
+        void initializeGrid(SongStructure *pattern, uint16_t cursorPosition); 
         void drawGrid(LastAction action);
         void drawCursorAt(byte channel, uint16_t position, boolean draw);
         void drawSample(byte channel, uint16_t position, boolean drawBackground);
@@ -90,14 +91,16 @@ class SequencerScreen {
         void drawSnippets();
 
     private:
-        Sucofunkey *_keyboard;
-        Screen *_screen;
-        FSIO *_fsio;
-        SampleFSIO *_sfsio;
+        Sucofunkey* _keyboard;
+        Screen* _screen;
+        FSIO* _fsio;
+        SampleFSIO* _sfsio;
         AudioResources *_audioResources;
 
-        Zoom *_zoom;
-        Selection *_selection;
+        Zoom* _zoom;
+        Selection* _selection;
+
+        Play* _play;
 
         char _cBuff3[3];
         char _cBuff2[2];
@@ -121,8 +124,8 @@ class SequencerScreen {
         uint8_t _cursorChannel = 0;
         uint16_t _cursorPosition = 0;
 
-        SongStructure *_song;
-        Swing *_swing;
+        SongStructure* _song;
+        Swing* _swing;
         SongStructure::sampleStruct _tempSample;
 
         uint8_t _amountOfGridCellsToDraw();

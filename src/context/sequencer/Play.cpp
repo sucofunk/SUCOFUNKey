@@ -30,11 +30,10 @@
 
 #include "Play.h"
 
-Play::Play(Sucofunkey *keyboard, SongStructure *song, FSIO *fsio, SampleFSIO *sfsio, unsigned int *extmemArray, AudioResources *audioResources) {
-    _keyboard = keyboard;
-    _song = song;
-    _fsio = fsio;
-    _sfsio = sfsio;
-    _extmemArray = extmemArray;
-    _audioResources = audioResources;
+SongStructure* Play::getSong() {
+    return &_song;
+};
+
+Snippets* Play::getSnippets() {
+    return &_snippets;
 }

@@ -35,10 +35,10 @@
 
 class Swing {
     public:
-        Swing();
+        Swing() {};
 
         // set the amount of microseconds the sequencer plays a 64th note
-        void setTickMicroseconds(long tickMicroseconds);
+        void setTickMicroseconds(int tickMicroseconds);
         
         // returns the amount of samples to wait to reach the time-shift for a swing level
         int getShiftSamplesForSwingLevel(byte level);
@@ -61,7 +61,7 @@ class Swing {
         byte groupDownInExpression(byte expression); // returns updated expression
 
     private:
-        long _microSecondsPerTick = 0;
+        int _microSecondsPerTick = 0;
 
         // levels are 0 .. 11 
         // 0 = no delay

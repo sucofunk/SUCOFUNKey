@@ -31,10 +31,6 @@
 #include "SongStructure.h"
 #include "Swing.h"
 
-SongStructure::SongStructure() { 
-    _swing = Swing();
-};
-
 // returns the closest pointer to the given position. it always returns the predecessor, even if a successor is closer, as change the pointed list at the predecessor.
 SongStructure::closestPointer SongStructure::_getClosestPointerIndex(uint8_t channel, uint16_t position) {
     SongStructure::closestPointer closePointer;
@@ -1063,6 +1059,11 @@ void SongStructure::swingGroupDown(uint8_t channel, uint16_t position) {
 };
 
 
+void SongStructure::setSwingTickMicroseconds(int microseconds) {
+    _swing.setTickMicroseconds(microseconds);
+};
+
+
 void SongStructure::reverseSamplePlayback(uint8_t channel, uint16_t position) {
     if (_currentPosition.channel == channel && _currentPosition.position == position) {
         switch(_samplePointers[_currentPosition.samplePointerIndex].type) {
@@ -1602,8 +1603,14 @@ boolean SongStructure::setSnippetSlotFree(byte slot) {
 
 void SongStructure::debugInfos() {
 
+    Serial.println("DEBUG INFOS");
+    Serial.print("_meta.playbackspeed::");
+    Serial.print(_meta.playbackSpeed);
+    Serial.print("::");
+    Serial.println(getPlayBackSpeed());
+
     // DEBUG Information
-    Serial.println("Blocks");
+/*    Serial.println("Blocks");
     for (int i = 0; i<5; i++) {
         for (int j = 0; j<8; j++) {
             Serial.print(_blocks[i].startPointer[j]);
@@ -1637,7 +1644,7 @@ void SongStructure::debugInfos() {
         Serial.print(_sampleBucket[i].sampleNumber);        
         Serial.println();
     }
-
+*/
 }
 
 

@@ -86,7 +86,7 @@ class Sequencer {
         boolean setMenuState(MenuState state);
         void setSequencerState(SequencerState state);
 
-        long bpmToMicroseconds(float bpm, int res);
+        int bpmToMicroseconds(float bpm, int res);
         void setActive(boolean active);
         void handleEvent(Sucofunkey::keyQueueStruct event);
         void loadSetPlay(byte bank, byte sample, byte channel, int position);
@@ -110,8 +110,8 @@ class Sequencer {
         unsigned int *_extmemArray;
         Sampler *_sampler;
         AudioResources *_audioResources;
+        
         Play *_play;
-
         SongStructure *_song;        
 
         SequencerScreen _sequencerScreen;
@@ -133,8 +133,8 @@ class Sequencer {
         MenuState _currentMenuState = MENU_NONE;
         SequencerState _currentSequencerState = NORMAL;
 
-        long _calculatePlaybackTickSpeed();
-        long _playbackTickSpeed = _calculatePlaybackTickSpeed(); // microseconds interval to receive Ticks
+        int _calculatePlaybackTickSpeed();
+        int _playbackTickSpeed = 10000;
         
         volatile boolean _isPlaying = false;
 
@@ -163,8 +163,9 @@ class Sequencer {
         void _checkIfAllSamplesAreLoaded();
         void _clearSong();
 
-        Swing _swing = Swing();
-        Snippets _snippets = Snippets(_keyboard, _song);
+        Snippets* _snippets;
+        Swing* _swing;
+
 };
 
 #endif

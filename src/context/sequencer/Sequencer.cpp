@@ -49,11 +49,9 @@ Sequencer::Sequencer(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSI
     _play = play;
     _extmemArray = _play->_extmemArray;
     _audioResources = _play->_audioResources;
-    _song = _play->_song;
 
     zoom = Zoom();
-    _sequencerScreen = SequencerScreen(_keyboard, _screen, _sfsio, _audioResources, &zoom);
-
+    
     _selection = Selection();
 
     _blackKeyMenu = BlackKeyMenu(_keyboard, _screen);
@@ -71,6 +69,13 @@ Sequencer::Sequencer(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSI
     _blackKeyMenu.setOption(10, "CLS");    
 
     _pianoKeyboard = PianoKeyboard(_keyboard, _screen);
+    
+    _song = _play->getSong();
+    _snippets = _play->getSnippets();
+
+    _sequencerScreen = SequencerScreen(_keyboard, _screen, _sfsio, _audioResources, &zoom, _play, &_selection);
+    
+    _playbackTickSpeed = _calculatePlaybackTickSpeed(); // microseconds interval to receive Ticks
 }
 
 // returns the current tick speed.. as tempo changes are not handled global
@@ -141,12 +146,12 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
 
         case Sucofunkey::FN_CURSOR_UP:
               _cursorPosition = zoom.zoomIn(_cursorPosition);
-              _sequencerScreen.initializeGrid(_song, _cursorPosition, &_swing);
+              _sequencerScreen.initializeGrid(_song, _cursorPosition);
               _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
               break;
         case Sucofunkey::FN_CURSOR_DOWN:
               _cursorPosition = zoom.zoomOut(_cursorPosition);              
-              _sequencerScreen.initializeGrid(_song, _cursorPosition, &_swing);
+              _sequencerScreen.initializeGrid(_song, _cursorPosition);
               _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);              
               break;
                 
@@ -235,13 +240,13 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
         if ((_currentSequencerState == SELECT_SNIPPET_SLOT || _currentSequencerState == SNIPPET_WAIT_DELETE) && _keyboard->isEventWhiteKey(event.index)) {
           if (_selection.isActive()) {
             // save snippet to slot
-            _snippets.saveSelectionToSlot(&_selection, _keyboard->getWhiteKeyByEventKey(event.index));
+            _snippets->saveSelectionToSlot(&_selection, _keyboard->getWhiteKeyByEventKey(event.index));
             setSequencerState(SELECT_SNIPPET_SLOT); // to deselect the snippet option           
           } else {
             // deleting a snippet slot
-            int s = _snippets.cursorInSnippet(_cursorPosition, _cursorChannel);
+            int s = _snippets->cursorInSnippet(_cursorPosition, _cursorChannel);
             if (s != -1 && s == _keyboard->getWhiteKeyByEventKey(event.index)) {
-              if (_snippets.deleteSnippetFromSlot(s)) {
+              if (_snippets->deleteSnippetFromSlot(s)) {
                 setSequencerState(SNIPPET_WAIT_DELETE); // deactivate snippet indicator..
               }              
             }
@@ -580,6 +585,8 @@ boolean Sequencer::setMenuState(MenuState state) {
 
 
 void Sequencer::setSequencerState(SequencerState state) {
+   int s;
+
    if (state == _currentSequencerState) {
     // use this to do something, if the same state is set again (e.g. toggle something)
     switch(state) {
@@ -628,7 +635,7 @@ void Sequencer::setSequencerState(SequencerState state) {
           _sequencerScreen.drawSelection(&_selection); // clears the selection and redraws the grid
           break;
       case SELECT_SNIPPET_SLOT:
-          _snippets.hideFreeSlots();
+          _snippets->hideFreeSlots();
           _currentSequencerState = NORMAL;
           _blackKeyMenu.setExclusiveAction(4, false);
 
@@ -640,7 +647,7 @@ void Sequencer::setSequencerState(SequencerState state) {
           break;
 
       case SNIPPET_WAIT_DELETE:
-          _snippets.hideFreeSlots();
+          _snippets->hideFreeSlots();
           _blackKeyMenu.setExclusiveAction(4, false);
           _currentSequencerState = NORMAL;          
           _sequencerScreen.drawGrid(SequencerScreen::SNIPPET_DELETE);
@@ -659,7 +666,7 @@ void Sequencer::setSequencerState(SequencerState state) {
         }
 
         if (_currentSequencerState == SELECT_SNIPPET_SLOT || _currentSequencerState == SNIPPET_WAIT_DELETE) {
-          _snippets.hideFreeSlots();
+          _snippets->hideFreeSlots();
         }
 
         _currentSequencerState = NORMAL; 
@@ -700,27 +707,22 @@ void Sequencer::setSequencerState(SequencerState state) {
       case SELECT_SNIPPET_SLOT:
         _blackKeyMenu.setExclusiveAction(4, true);
         _blackKeyMenu.disableExceptions();
-        _snippets.showFreeSlots();
+        _snippets->showFreeSlots();
         _currentSequencerState = SELECT_SNIPPET_SLOT;
         break;
       case SNIPPET_WAIT_DELETE:
         
-        int s = _snippets.cursorInSnippet(_cursorPosition, _cursorChannel);
+        s = _snippets->cursorInSnippet(_cursorPosition, _cursorChannel);
         if (s != -1) {
           _blackKeyMenu.setExclusiveAction(4, true);
           _blackKeyMenu.disableExceptions();
           // highlight snippet LED
-          _snippets.highlightSnippetSlot(s, true);
+          _snippets->highlightSnippetSlot(s, true);
           _currentSequencerState = SNIPPET_WAIT_DELETE;
         } else {
           _currentSequencerState = NORMAL;
-          _snippets.hideFreeSlots();
+          _snippets->hideFreeSlots();
         };
-
-                  // oben auswahl zum löschen
-
-                  // hier: - menüpunkt exklusiv
-                  //       - abrechen durch SNI einbauen
 
         break;
       default:
@@ -778,7 +780,7 @@ void Sequencer::setActive(boolean active) {
     _keyboard->setBank(_activeBank);     
     
     _screen->clearAreaRTL(_screen->AREA_SCREEN, _screen->C_BLACK, 0);
-    _sequencerScreen.initializeGrid(_song, _cursorPosition, &_swing);
+    _sequencerScreen.initializeGrid(_song, _cursorPosition);
     _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
 
     _song->setCurrentPosition(_cursorChannel, _cursorPosition, true);
@@ -969,8 +971,8 @@ void Sequencer::playMixedSample(byte channel, uint16_t position) {
         sampleNumber = _song->getSampleFromBucketId(sps.typeIndex).sampleNumber;
         
         swingExpression = _song->getSampleFromBucketId(sps.typeIndex).swing;
-        swingLevel = _swing.getLevelFromBinarySwingExpression(swingExpression);
-        swingGroup = _swing.getGroupFromBinarySwingExpression(swingExpression);    
+        swingLevel = _song->getSwing()->getLevelFromBinarySwingExpression(swingExpression);
+        swingGroup = _song->getSwing()->getGroupFromBinarySwingExpression(swingExpression);    
         reverse =  _song->getSampleFromBucketId(sps.typeIndex).reverse;   
         break;
 
@@ -1003,7 +1005,7 @@ void Sequencer::playMixedSample(byte channel, uint16_t position) {
       if (swingGroup != 0) {
         swingLevel = _song->getSwingGroupLevel(swingGroup);
       }
-      shiftSamples = _swing.getShiftSamplesForSwingLevel(swingLevel);
+      shiftSamples = _song->getSwing()->getShiftSamplesForSwingLevel(swingLevel);
 
       // do not play a sample, if position is a parameter change .. but check if sample is in EXTMEM
       if (_song->getPosition(channel, position).type == SongStructure::SAMPLE && _sfsio->getExtmemOffset(_song->getSampleFromBucketId(_song->getPosition(channel, position).typeIndex).sampleNumber) != -1)  {
@@ -1040,7 +1042,7 @@ void Sequencer::loadFromSD(boolean drawGrid) {
 
   // redraw the grid
   if (drawGrid) {
-    _sequencerScreen.initializeGrid(_song, _cursorPosition, &_swing);
+    _sequencerScreen.initializeGrid(_song, _cursorPosition);
     _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
 
     // set right position in song structure
@@ -1064,14 +1066,21 @@ void Sequencer::debugInfos() {
 };
 
 
-long Sequencer::bpmToMicroseconds(float bpm, int res) {
+int Sequencer::bpmToMicroseconds(float bpm, int res) {
+  if (bpm < 1.0) {
+    // some kind of nasty fallback to prevent division by 0, if bpm is 0
+    return 10000;
+  }
+
   return floor((60000000.0/bpm/res));
 }
 
-long Sequencer::_calculatePlaybackTickSpeed() {  
+int Sequencer::_calculatePlaybackTickSpeed() {  
   _playbackTickSpeed = bpmToMicroseconds(_song->getPlayBackSpeed(), _song->getSongResolution()*4);
+  
   // recalculate swing delays
-  _swing.setTickMicroseconds(_playbackTickSpeed);
+  _song->setSwingTickMicroseconds(_playbackTickSpeed);
+  
   return _playbackTickSpeed;
 }
 
@@ -1105,7 +1114,7 @@ void Sequencer::_clearSong() {
   _cursorPosition = 0;
   _cursorChannel = 0;
 
-  _sequencerScreen.initializeGrid(_song, _cursorPosition, &_swing);
+  _sequencerScreen.initializeGrid(_song, _cursorPosition);
   _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
   _song->setCurrentPosition(_cursorChannel, _cursorPosition, true);       
   _sequencerScreen.drawExtMemPercentage(_sfsio->getExtmemUsagePercent());

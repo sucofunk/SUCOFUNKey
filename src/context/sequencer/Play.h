@@ -43,23 +43,43 @@
 
 class Play {
     public:
-        Play(Sucofunkey *keyboard, SongStructure *song, FSIO *fsio, SampleFSIO *sfsio, unsigned int *extmemArray, AudioResources *audioResources);
+        Play(Sucofunkey *keyboard, FSIO *fsio, SampleFSIO *sfsio, unsigned int *extmemArray, AudioResources *audioResources) {
+            _keyboard = keyboard;
+            _fsio = fsio;
+            _sfsio = sfsio;
+            _extmemArray = extmemArray;
+            _audioResources = audioResources;
+
+            _swing = _song.getSwing();
+            _snippets = Snippets(_keyboard, &_song);
+            _initialized = true;
+        };
+
+        boolean isInitialized() {
+            return _initialized;
+        }
 
         unsigned int *_extmemArray;
         AudioResources *_audioResources;
-        SongStructure *_song;
+
+        SongStructure* getSong();
+        Snippets* getSnippets();
 
 
     private:
-        Sucofunkey *_keyboard;
-        SampleFSIO *_sfsio;
-        FSIO *_fsio;
+        Sucofunkey* _keyboard;
+        SampleFSIO* _sfsio;
+        FSIO* _fsio;
+        
+        SongStructure _song;
+        Snippets _snippets;
+        Swing* _swing;
 
-
+        boolean _initialized = false;
 
         boolean playMemsInUse[16] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
         int playingSnippets[4] = {-1, -1, -1, -1};
-        byte snippetChannels[4][8] = {{0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}};
+        byte snippetChannels[4][8] = {{0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}};        
 };
 
 #endif

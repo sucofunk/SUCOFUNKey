@@ -32,12 +32,16 @@
 
 SequencerScreen::SequencerScreen(){};
 
-SequencerScreen::SequencerScreen(Sucofunkey *keyboard, Screen *screen, SampleFSIO *sfsio, AudioResources *audioResources, Zoom *zoom) {
+SequencerScreen::SequencerScreen(Sucofunkey* keyboard, Screen* screen, SampleFSIO* sfsio, AudioResources* audioResources, Zoom* zoom, Play* play, Selection* selection) {
     _keyboard = keyboard;
     _screen = screen;    
     _sfsio = sfsio;
     _audioResources = audioResources;
     _zoom = zoom;
+    _play = play;
+    _song = _play->getSong();
+    _swing = _song->getSwing();
+    _selection = selection;
 }
 
 
@@ -46,9 +50,7 @@ SequencerScreen::SequencerScreen(Sucofunkey *keyboard, Screen *screen, SampleFSI
 // -----------------------------------------------------------------------------------------------------------------------------------------
 
 
-void SequencerScreen::initializeGrid(SongStructure *song, uint16_t cursorPosition, Swing *swing) {
-  _song = song;
-  _swing = swing;
+void SequencerScreen::initializeGrid(SongStructure *song, uint16_t cursorPosition) {
   _screen->fillArea(_screen->AREA_CONTENT, _screen->C_BLACK);
   
   // calculate xPositionOffset for the current cursorPosition at the given zoomLevel
@@ -59,7 +61,7 @@ void SequencerScreen::initializeGrid(SongStructure *song, uint16_t cursorPositio
   // case 2: cursor is somewhere in the middle, but the whole grid does not fill the entire screen
   //          - adjust xpositionoffset and center cursor at the middle of the screen
   if ((_song->getSongLength()-cursorPosition)/_zoom->getZoomlevelOffset() > _xPositionCapacity) {
-    // move grid to cursor position at left side of the screen
+    // move grid to cursor position at left side of the screen    
     _xPositionOffset = cursorPosition;
 
     // check if centering is possible and center
@@ -73,7 +75,7 @@ void SequencerScreen::initializeGrid(SongStructure *song, uint16_t cursorPositio
   // case 3: cursor is somewhere at the end and the rest of the grid from cursor position to end does not fill the entire screen
   //         - xpositionoffset will be adjusted to a level where the end of the grid will be the end of the screen. cursor will be somewhere on the screen
   if ((_song->getSongLength()-cursorPosition)/_zoom->getZoomlevelOffset() <= _xPositionCapacity) {
-    int tempOffset = _song->getSongLength() - (_xPositionCapacity*_zoom->getZoomlevelOffset());
+    int tempOffset = _song->getSongLength() - (_xPositionCapacity*_zoom->getZoomlevelOffset());    
     _xPositionOffset = tempOffset > 0 ? tempOffset : 0;
   }
 
@@ -120,9 +122,10 @@ void SequencerScreen::drawGrid(LastAction action) {
     _screen->fillRect((amountOfGridcellsToDraw)*_cellWidth+1, _screen->AREA_CONTENT.y1+1, _screen->AREA_SCREEN.x2-(amountOfGridcellsToDraw*_cellWidth)+2, h+1, _screen->C_BLACK);
   }
 
+
   if (action != SELECTION) {
     drawSamples();
-  
+
     if (_selection->isActive()) {
       _drawSelection();
     }
@@ -564,7 +567,7 @@ void SequencerScreen::drawSwingInfo(byte level, byte group) {
 
 
 
-void SequencerScreen::drawSelection(Selection *selection) {
+void SequencerScreen::drawSelection(Selection* selection) {
   _selection = selection;
   _drawSelection();
 };

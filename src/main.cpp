@@ -40,6 +40,7 @@
 #include "context/sampler/Sampler.h" 
 #include "context/sequencer/Sequencer.h"
 #include "context/sequencer/Play.h"
+#include "context/sequencer/Snippets.h"
 #include "context/arrange/Arrange.h"
 #include "context/live/Live.h"
 #include "context/settings/Settings.h"
@@ -128,13 +129,12 @@ DMAMEM FSIO::LibrarySample librarySamples[500];
 
 SampleFSIO sfsio(extmemArray, sizeof(extmemArray), &screen);
 
-SongStructure song = SongStructure();
-Play play(&keyboard, &song, &fsio, &sfsio, extmemArray, &audioResources);
+Play playContext(&keyboard, &fsio, &sfsio, extmemArray, &audioResources);
 
 Home  homeContext(&keyboard, &screen, activeSongPath, activeSongName);
 Sampler samplerContext(&keyboard, &screen, &fsio, &sfsio, &audioResources);
 Recorder recorderContext(&keyboard, &screen, &fsio, &sfsio, &audioResources);
-Sequencer sequencerContext(&keyboard, &screen, &fsio, &sfsio, &play);
+Sequencer sequencerContext(&keyboard, &screen, &fsio, &sfsio, &playContext);
 
 Arrange arrangeContext(&keyboard, &screen, &fsio, &sfsio, extmemArray, &audioResources);
 Live liveContext(&keyboard, &screen, &fsio, &sfsio, extmemArray, &audioResources);
@@ -495,6 +495,7 @@ void setup() {
   }
 
   MIDI.begin(MIDI_CHANNEL_OMNI);
+  Serial.println("setup done");
 }
 
 
@@ -717,8 +718,8 @@ void handleKeyboardEventQueue() {
   while(keyboard.hasEvents()) {
     Sucofunkey::keyQueueStruct event = keyboard.getNextEvent();
 
-/*
-    Serial.print(event.index);
+
+/*    Serial.print(event.index);
     Serial.print("::");
     Serial.print(event.pressed);
     Serial.print("::");
