@@ -52,12 +52,15 @@ class Play {
 
             _swing = _song.getSwing();
             _snippets = Snippets(_keyboard, &_song);
-            _initialized = true;
         };
 
-        boolean isInitialized() {
-            return _initialized;
-        }
+        typedef struct {
+            AudioPlayMemorySUCO* playMemory;
+            AudioMixer4* playMemoryMixerL;
+            AudioMixer4* playMemoryMixerR;
+            int playMemoryMixerGain;
+        } MixerSamplePlayMemory;
+
 
         unsigned int *_extmemArray;
         AudioResources *_audioResources;
@@ -66,6 +69,20 @@ class Play {
         Snippets* getSnippets();
 
 
+        boolean loadSetPlay(byte bank1, byte sample1, byte channel, int position);
+        void stopAllChannels();
+        MixerSamplePlayMemory prepareMixerRouting(byte channel);
+        void playMixedSample(byte channel, uint16_t position, int snippetSlot); // sequencer -> snippet = -1 --> take channel as in sequencer
+
+        int bpmToMicroseconds(float bpm, int res);
+        int calculatePlaybackTickSpeed();
+        void checkIfAllSamplesAreLoaded();
+        
+        boolean queueSnippet(int slot, boolean allowMultiple, boolean loop);
+        void unqueueSnippet(int slot);
+        void snippetsPlayNext();
+        void removeLoopFlagFromSnippet(int slot);
+
     private:
         Sucofunkey* _keyboard;
         SampleFSIO* _sfsio;
@@ -73,13 +90,23 @@ class Play {
         
         SongStructure _song;
         Snippets _snippets;
-        Swing* _swing;
+        Swing* _swing;        
 
-        boolean _initialized = false;
+        int _playbackTickSpeed = 10000;
 
-        boolean playMemsInUse[16] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
-        int playingSnippets[4] = {-1, -1, -1, -1};
-        byte snippetChannels[4][8] = {{0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}};        
+        boolean _playMemsInUse[16] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
+        
+        // up to four snippets can play in parallel.. the slots are listed in here
+        int _playingSnippets[4] = {-1, -1, -1, -1};
+        boolean _loopPlayingSnippets[4] = {false, false, false, false};
+        int _playPositionSnippets[4] = {-1, -1, -1, -1};
+        
+        // {channel1, channel2, .. channel8} <- channels in sequencer filled with index to _playmems
+        byte _snippetChannels[4][8] = {{0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}};
+
+        byte _getFreeChannel();
+        void _setChannelFree(byte channel);
+        int _freeChannelCount();
 };
 
 #endif

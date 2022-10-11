@@ -86,13 +86,12 @@ class Sequencer {
         boolean setMenuState(MenuState state);
         void setSequencerState(SequencerState state);
 
-        int bpmToMicroseconds(float bpm, int res);
         void setActive(boolean active);
         void handleEvent(Sucofunkey::keyQueueStruct event);
         void loadSetPlay(byte bank, byte sample, byte channel, int position);
         void playSelection();
+        void playSnippet(byte slot);
         void playSong();
-        void playMixedSample(byte channel, uint16_t position);
         void stopSong();
         void stopAllChannels();
 
@@ -120,12 +119,6 @@ class Sequencer {
 
         Selection _selection;
 
-        AudioPlayMemorySUCO *_playMemory;
-        AudioMixer4 *_playMemoryMixerL;
-        AudioMixer4 *_playMemoryMixerR;
-
-        int _playMemoryMixerGain;
-
         boolean _isActive = false;
         byte _activeBank = 1;
         boolean _keyboardMode = false;
@@ -133,15 +126,15 @@ class Sequencer {
         MenuState _currentMenuState = MENU_NONE;
         SequencerState _currentSequencerState = NORMAL;
 
-        int _calculatePlaybackTickSpeed();
         int _playbackTickSpeed = 10000;
         
         volatile boolean _isPlaying = false;
+        boolean _isSnippetPlaying = false;
+        byte _playingSnippet;
 
         int _playerPosition = 0;
         volatile int _blinkPosition = 0;
 
-        void _prepareMixerRouting(byte channel);
         void _playNext();
         byte _activeNoteLEDPin = 0;
 
@@ -160,7 +153,6 @@ class Sequencer {
         // if true, play will start from cursor position, false will play from start
         boolean _nextPlayStartAtCursor = false;
 
-        void _checkIfAllSamplesAreLoaded();
         void _clearSong();
 
         Snippets* _snippets;

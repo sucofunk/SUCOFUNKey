@@ -51,11 +51,6 @@ class Snippets {
     private:
         Sucofunkey *_keyboard;
         SongStructure *_song;
-
-        boolean playMemsInUse[16] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
-        int playingSnippets[4] = {-1, -1, -1, -1};
-        byte snippetChannels[4][8] = {{0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}};
-
 };
 
 #endif

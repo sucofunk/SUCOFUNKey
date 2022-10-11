@@ -75,7 +75,7 @@ Sequencer::Sequencer(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSI
 
     _sequencerScreen = SequencerScreen(_keyboard, _screen, _sfsio, _audioResources, &zoom, _play, &_selection);
     
-    _playbackTickSpeed = _calculatePlaybackTickSpeed(); // microseconds interval to receive Ticks
+    _playbackTickSpeed = _play->calculatePlaybackTickSpeed(); // microseconds interval to receive Ticks
 }
 
 // returns the current tick speed.. as tempo changes are not handled global
@@ -98,6 +98,28 @@ long Sequencer::receiveTimerTick() {
   }
   
   return _playbackTickSpeed;
+}
+
+
+void Sequencer::setActive(boolean active) {
+  if (active) {
+    _isActive = true;
+    _keyboard->setBank(_activeBank);     
+    
+    _screen->clearAreaRTL(_screen->AREA_SCREEN, _screen->C_BLACK, 0);
+    _sequencerScreen.initializeGrid(_song, _cursorPosition);
+    _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+
+    _song->setCurrentPosition(_cursorChannel, _cursorPosition, true);
+    _sequencerScreen.drawExtMemPercentage(_sfsio->getExtmemUsagePercent());
+    setSequencerState(NORMAL);
+    setMenuState(MENU_NONE);
+  }
+  else {
+      _isActive = false;      
+      _keyboard->switchLEDsOff();
+      _keyboard->setBank(0);
+    }
 }
 
 
@@ -161,17 +183,14 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               break;
 
         case Sucofunkey::PLAY:
-              _calculatePlaybackTickSpeed();
-              _checkIfAllSamplesAreLoaded();
+              _playbackTickSpeed = _play->calculatePlaybackTickSpeed();
+              _play->checkIfAllSamplesAreLoaded();
               
               if (_selection.isActive()) {
                 playSelection();
               } else {
-                if (_currentSequencerState == SNIPPET_WAIT_DELETE) {
-                  // ToDo: Play Snippet
-
-                  Serial.println("Play Snippet");
-
+                if (_currentSequencerState == SNIPPET_WAIT_DELETE) {                  
+                  playSnippet(_snippets->cursorInSnippet(_cursorPosition, _cursorChannel));
                 } else {
                   playSong();
                 }                
@@ -185,7 +204,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               break;
         case Sucofunkey::FN_PLAY:
                 // play current sample, if one is selected
-              if (!_isPlaying) { playMixedSample(_cursorChannel, _cursorPosition); }                
+              if (!_isPlaying) { _play->playMixedSample(_cursorChannel, _cursorPosition, -1); }                
               break;   
         case Sucofunkey::FN_SET:
               // delete whatever is at the current position
@@ -202,7 +221,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
                 _song->setVelocity(_cursorChannel, _cursorPosition, static_cast<byte>(_keyboard->getFaderValue(1, 127)));
                 _sequencerScreen.updateSampleInfoVolume(_cursorChannel, _cursorPosition);
                 
-                if (!_isPlaying) { playMixedSample(_cursorChannel, _cursorPosition); }   
+                if (!_isPlaying) { _play->playMixedSample(_cursorChannel, _cursorPosition, -1); }   
             }
           break;
         // set panning from fader          
@@ -211,7 +230,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
                 _song->setStereoPosition(_cursorChannel, _cursorPosition, static_cast<byte>(_keyboard->getFaderValue(1, 127)));
                 _sequencerScreen.updateSampleInfoPanning(_cursorChannel, _cursorPosition);
 
-                if (!_isPlaying) { playMixedSample(_cursorChannel, _cursorPosition); }   
+                if (!_isPlaying) { _play->playMixedSample(_cursorChannel, _cursorPosition, -1); }   
             }
           break;
         // set pitch from fader          
@@ -220,7 +239,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
                 _song->setPitchByMidiNote(_cursorChannel, _cursorPosition, static_cast<byte>(_keyboard->getFaderValue(35, 85)));                
                 _sequencerScreen.updateSampleInfoPitch(_cursorChannel, _cursorPosition);
 
-                if (!_isPlaying) { playMixedSample(_cursorChannel, _cursorPosition); }
+                if (!_isPlaying) { _play->playMixedSample(_cursorChannel, _cursorPosition, -1); }
             }
             break;            
         // set probability from fader          
@@ -240,7 +259,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
         if ((_currentSequencerState == SELECT_SNIPPET_SLOT || _currentSequencerState == SNIPPET_WAIT_DELETE) && _keyboard->isEventWhiteKey(event.index)) {
           if (_selection.isActive()) {
             // save snippet to slot
-            _snippets->saveSelectionToSlot(&_selection, _keyboard->getWhiteKeyByEventKey(event.index));
+            _snippets->saveSelectionToSlot(&_selection, _keyboard->getWhiteKeyByEventKey(event.index));            
             setSequencerState(SELECT_SNIPPET_SLOT); // to deselect the snippet option           
           } else {
             // deleting a snippet slot
@@ -268,7 +287,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
           if (_song->getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE) {
             _pianoKeyboard.setOriginReference(_cursorChannel, _cursorPosition);
             _song->setPitchByMidiNote(_pianoKeyboard.getOriginChannel(), _pianoKeyboard.getOriginPosition(), (_keyboard->getBank()*24)+sampleId1+4);          
-            playMixedSample(_pianoKeyboard.getOriginChannel(), _pianoKeyboard.getOriginPosition());
+            _play->playMixedSample(_pianoKeyboard.getOriginChannel(), _pianoKeyboard.getOriginPosition(), -1);
             _sequencerScreen.updateSampleInfoPitch(_cursorChannel, _cursorPosition);
           }
           // ToDo: add for midi 
@@ -278,14 +297,18 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
           if (_pianoKeyboard.hasOrigin()) {
             _song->copyPosition(_pianoKeyboard.getOriginChannel(), _pianoKeyboard.getOriginPosition(), _cursorChannel, _cursorPosition, false);
             _song->setPitchByMidiNote(_cursorChannel, _cursorPosition, (_keyboard->getBank()*24)+sampleId1+4);
-            playMixedSample(_cursorChannel, _cursorPosition);
+            _play->playMixedSample(_cursorChannel, _cursorPosition, -1);
             _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
           }
         }
 
       } else {
-        // set sample at cursor position
-        loadSetPlay(_keyboard->getBank(), sampleId1, _cursorChannel, _cursorPosition);
+        // set sample at cursor position        
+        if (_play->loadSetPlay(_keyboard->getBank(), sampleId1, _cursorChannel, _cursorPosition)) {
+          _sequencerScreen.drawExtMemPercentage(_sfsio->getExtmemUsagePercent());
+          _sequencerScreen.drawSample(_cursorChannel, _cursorPosition, false);
+        }
+
       }
     }
 
@@ -309,7 +332,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::FN_ENCODER_1:
             if (_isPlaying) {
               _song->setPlayBackSpeed(_song->getPlayBackSpeed() + (event.pressed ? 0.5 : -0.5));
-              _calculatePlaybackTickSpeed();
+              _playbackTickSpeed = _play->calculatePlaybackTickSpeed();
               _sequencerScreen.drawBPM(_song->getPlayBackSpeed());
             } else {
               moveCursor(event.pressed ? DOWN : UP);
@@ -363,7 +386,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
             } else {
               // change playback speed (BPM) when nothing is selected.. same as FN+ENCODER_1 while playing
               _song->setPlayBackSpeed(_song->getPlayBackSpeed() + (event.pressed ? 0.5 : -0.5));
-              _calculatePlaybackTickSpeed();
+              _playbackTickSpeed = _play->calculatePlaybackTickSpeed();
               _sequencerScreen.drawBPM(_song->getPlayBackSpeed());
             }
             break;
@@ -525,7 +548,7 @@ void Sequencer::moveCursor(Direction direction) {
 
   // are we creating a selection? change end position
   if (_selection.isActive()) {
-    _selection.setEnd(_cursorPosition, _cursorChannel);
+    _selection.setEnd(_cursorPosition + zoom.getZoomlevelOffset()-1, _cursorChannel);
 
     // draw frame of selection
     _sequencerScreen.drawSelection(&_selection);
@@ -745,55 +768,10 @@ boolean Sequencer::_savedCursorEqualsCurrent() {
     }
 }
 
-void Sequencer::loadSetPlay(byte bank1, byte sample1, byte channel, int position) {
-  if (_sfsio->sampleBanksStatus[bank1-1][sample1-1]) {
-    _audioResources->playMem.stop();
 
-    SongStructure::sampleStruct s;
-    s.baseMidiNote = 60;
-    s.pitchedNote = 60;
-    s.probability = 100;
-    s.sampleNumber = (bank1-1)*24+sample1;
-    s.stereoPosition = 64;
-    s.velocity = 80;
-
-    _song->setSample(channel, position, s);
-
-    // load Sample if not in extmem yet
-    if(_sfsio->addSampleToMemory(bank1, sample1, false)) {
-      // success.. there was enough memory ;)
-      _sequencerScreen.drawExtMemPercentage(_sfsio->getExtmemUsagePercent());
-      _audioResources->playMem.play(_extmemArray + _sfsio->getExtmemOffset((bank1-1)*24+sample1));
-      _sequencerScreen.drawSample(channel, position, false);
-    } else {
-      // failed, because there is not enough memory left
-      _song->removePosition(channel, position);
-      Serial.println("out of memory");
-    }   
-  }
-}
-
-
-void Sequencer::setActive(boolean active) {
-  if (active) {
-    _isActive = true;
-    _keyboard->setBank(_activeBank);     
-    
-    _screen->clearAreaRTL(_screen->AREA_SCREEN, _screen->C_BLACK, 0);
-    _sequencerScreen.initializeGrid(_song, _cursorPosition);
-    _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
-
-    _song->setCurrentPosition(_cursorChannel, _cursorPosition, true);
-    _sequencerScreen.drawExtMemPercentage(_sfsio->getExtmemUsagePercent());
-    setSequencerState(NORMAL);
-    setMenuState(MENU_NONE);
-  }
-  else {
-      _isActive = false;
-      _keyboard->setBank(0);
-      // ToDo: turn off any Note LEDs
-    }
-}
+// ------------------------------------------------------------------------------------------------------------------------------------
+// --- PLAY ---------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 
 void Sequencer::playSelection() {
@@ -803,6 +781,21 @@ void Sequencer::playSelection() {
     stopAllChannels();    
   } else {
     _playerPosition = _selection.getNormalizedSelection().startX;
+    _blinkPosition = _playerPosition;
+  }
+}
+
+void Sequencer::playSnippet(byte slot) {
+   _isPlaying = !_isPlaying;
+
+  if (!_isPlaying) {
+    stopAllChannels();
+    _isSnippetPlaying = false;
+  } else {
+    _isSnippetPlaying = true;
+    _playingSnippet = slot;
+    _playerPosition = _song->getSnippet(slot).startX;
+    //_playerPosition = _selection.getNormalizedSelection().startX;
     _blinkPosition = _playerPosition;
   }
 }
@@ -839,15 +832,15 @@ void Sequencer::playSong() {
 void Sequencer::stopSong() {
   if (_isPlaying) {
     _isPlaying = false;
-    stopAllChannels();
     _sequencerScreen.drawPlayStepIndicator(_playerPosition, false);
     _keyboard->setLEDState(Sucofunkey::LED_PLAY, false);
   } else {
     // ToDo: draw cursor somewhere ;)
-    stopAllChannels();
   }
+  stopAllChannels();
   _nextPlayStartAtCursor = false;
   _playerPosition = 0;
+  _isSnippetPlaying = false;
 }
 
 
@@ -869,8 +862,16 @@ void Sequencer::_playNext() {
       channelEnd = _normalizedSelection.endY;
       positionStart = _normalizedSelection.startX;
       // add the rest that is underlying.. e.g. 1...2...3...4... -> Selection on 3 -> 3... needs to be selected to have a full gridcell.. depending on zoom level.
-      positionEnd = _normalizedSelection.endX + zoom.getZoomlevelOffset()-1;
+      positionEnd = _normalizedSelection.endX;
+    } else {
+      if (_isSnippetPlaying && _playingSnippet > 0 && _playingSnippet <= 14) {
+        channelStart =  _song->getSnippet(_playingSnippet).startY;
+        channelEnd = _song->getSnippet(_playingSnippet).endY;
+        positionStart = _song->getSnippet(_playingSnippet).startX;
+        positionEnd = _song->getSnippet(_playingSnippet).endX;
+      }
     }
+
 
     for (int c=channelStart; c <= channelEnd; c++) {
       sps = _song->getPosition(c, _playerPosition); 
@@ -885,12 +886,11 @@ void Sequencer::_playNext() {
         }        
       } else {
         if (sps.type != SongStructure::UNDEFINED) {
-          playMixedSample(c, _playerPosition);    
+          _play->playMixedSample(c, _playerPosition, -1);    
         }      
       } 
     }
 
-//    if (_playerPosition == _song->getSongLength()-1) { 
     if (_playerPosition == positionEnd) {   
       _playerPosition = positionStart;
     } else {
@@ -898,141 +898,17 @@ void Sequencer::_playNext() {
     }    
 }
 
-void Sequencer::_prepareMixerRouting(byte channel) {
-  if (channel <= 3) {
-      _playMemoryMixerL = &_audioResources->mixerMem1L;
-      _playMemoryMixerR = &_audioResources->mixerMem1R;
-      _playMemoryMixerGain = channel;
-  } else {
-      _playMemoryMixerL = &_audioResources->mixerMem2L;
-      _playMemoryMixerR = &_audioResources->mixerMem2R;
-      _playMemoryMixerGain = channel-4;
-  }
-
-  switch (channel) {
-    case 0:
-      _playMemory = &_audioResources->playMem1;
-      break;
-    case 1:
-      _playMemory = &_audioResources->playMem2;
-      break;
-    case 2:
-      _playMemory = &_audioResources->playMem3;
-      break;
-    case 3:
-      _playMemory = &_audioResources->playMem4;
-      break;
-    case 4:
-      _playMemory = &_audioResources->playMem5;
-      break;
-    case 5:
-      _playMemory = &_audioResources->playMem6;
-      break;
-    case 6:
-      _playMemory = &_audioResources->playMem7;
-      break;
-    case 7:
-      _playMemory = &_audioResources->playMem8;
-      break;
-  }
-}
-
-
-void Sequencer::playMixedSample(byte channel, uint16_t position) {
-  _prepareMixerRouting(channel);
-
-  SongStructure::samplePointerStruct sps = _song->getPosition(channel, position);
-
-  if (sps.type == SongStructure::NOTE_OFF) {
-    _playMemory->stop();
-  } else {
-
-    byte velocity = 64;
-    byte stereoPosition = 64;
-    byte probability = 100;
-    byte pitchedNote = 0;
-    byte baseMidiNote = 0;
-    byte sampleNumber = 0;
-    byte pitchChange = 0;
-    byte swingLevel = 0;
-    byte swingGroup = 0;
-    int shiftSamples = 0;
-    boolean reverse = false;
-
-    byte swingExpression;
-
-    switch (sps.type) {
-      case SongStructure::SAMPLE:
-        velocity = _song->getSampleFromBucketId(sps.typeIndex).velocity;
-        stereoPosition = _song->getSampleFromBucketId(sps.typeIndex).stereoPosition;
-        probability = _song->getSampleFromBucketId(sps.typeIndex).probability;
-        pitchedNote = _song->getSampleFromBucketId(sps.typeIndex).pitchedNote;
-        baseMidiNote = _song->getSampleFromBucketId(sps.typeIndex).baseMidiNote;
-        sampleNumber = _song->getSampleFromBucketId(sps.typeIndex).sampleNumber;
-        
-        swingExpression = _song->getSampleFromBucketId(sps.typeIndex).swing;
-        swingLevel = _song->getSwing()->getLevelFromBinarySwingExpression(swingExpression);
-        swingGroup = _song->getSwing()->getGroupFromBinarySwingExpression(swingExpression);    
-        reverse =  _song->getSampleFromBucketId(sps.typeIndex).reverse;   
-        break;
-
-      case SongStructure::PARAMETER_CHANGE_SAMPLE:
-        velocity = _song->getParameterChangeFromBucketId(sps.typeIndex).velocity;
-        stereoPosition = _song->getParameterChangeFromBucketId(sps.typeIndex).stereoPosition;
-        pitchChange = _song->getParameterChangeFromBucketId(sps.typeIndex).pitchChange;
-        reverse = _song->getParameterChangeFromBucketId(sps.typeIndex).reverse;
-        break;
-
-      default:
-        break;
-    }
-
-    // is there something to do? -> sample probability OK or a parameter change. then go!
-    if (random(100) <= probability || sps.type == SongStructure::PARAMETER_CHANGE_SAMPLE) {
-      if (stereoPosition < 64) {
-        _playMemoryMixerL->gain(_playMemoryMixerGain, (velocity/127.0)*1.0);
-        _playMemoryMixerR->gain(_playMemoryMixerGain, (velocity/127.0)*(stereoPosition/64.0));
-      } else {
-        _playMemoryMixerL->gain(_playMemoryMixerGain, (velocity/127.0)*((127-stereoPosition)/64.0));
-        _playMemoryMixerR->gain(_playMemoryMixerGain, (velocity/127.0)*1.0);
-      }
-  
-      if (sps.type == SongStructure::PARAMETER_CHANGE_SAMPLE) {
-        _playMemory->adjustFrequencyByTick(pitchChange-127);
-        if (reverse) _playMemory->reversePlayback();        
-      }
-
-      if (swingGroup != 0) {
-        swingLevel = _song->getSwingGroupLevel(swingGroup);
-      }
-      shiftSamples = _song->getSwing()->getShiftSamplesForSwingLevel(swingLevel);
-
-      // do not play a sample, if position is a parameter change .. but check if sample is in EXTMEM
-      if (_song->getPosition(channel, position).type == SongStructure::SAMPLE && _sfsio->getExtmemOffset(_song->getSampleFromBucketId(_song->getPosition(channel, position).typeIndex).sampleNumber) != -1)  {
-        _playMemory->playPitched(_extmemArray + _sfsio->getExtmemOffset(sampleNumber), 60, pitchedNote, shiftSamples, reverse);
-      }
-    }
-  }
-}
 
 void Sequencer::stopAllChannels() {
   _playLEDon = false;
-  _audioResources->playMem.stop();
-  _audioResources->playSdRaw.stop();
-  
-  _audioResources->playMem1.stop();
-  _audioResources->playMem2.stop();
-  _audioResources->playMem3.stop();
-  _audioResources->playMem4.stop();
-  _audioResources->playMem5.stop();
-  _audioResources->playMem6.stop();
-  _audioResources->playMem7.stop();
-  _audioResources->playMem8.stop();
+  _play->stopAllChannels();
 }
 
 boolean Sequencer::isPlaying() {
   return _isPlaying;
 }
+
+
 
 
 void Sequencer::loadFromSD(boolean drawGrid) {
@@ -1065,39 +941,6 @@ void Sequencer::debugInfos() {
   _song->debugInfos();
 };
 
-
-int Sequencer::bpmToMicroseconds(float bpm, int res) {
-  if (bpm < 1.0) {
-    // some kind of nasty fallback to prevent division by 0, if bpm is 0
-    return 10000;
-  }
-
-  return floor((60000000.0/bpm/res));
-}
-
-int Sequencer::_calculatePlaybackTickSpeed() {  
-  _playbackTickSpeed = bpmToMicroseconds(_song->getPlayBackSpeed(), _song->getSongResolution()*4);
-  
-  // recalculate swing delays
-  _song->setSwingTickMicroseconds(_playbackTickSpeed);
-  
-  return _playbackTickSpeed;
-}
-
-// checks if the used samples in the song are available on disk and already loaded into extmem. if not, do so..
-void Sequencer::_checkIfAllSamplesAreLoaded() {
-  boolean *sampleArray = _song->getSamplesUsed();
-
-  for (byte b=0; b<3; b++) {
-    for (byte s=0; s<24; s++) {
-      if (sampleArray[b*24+s]) {
-        if (_sfsio->sampleAvailable(b*24+s) && !_sfsio->sampleInMemory(b*24+s)) {
-          _sfsio->addSampleToMemory(b+1, s+1, true);
-        }
-      }
-    }
-  }
-}
 
 
 void Sequencer::_clearSong() {

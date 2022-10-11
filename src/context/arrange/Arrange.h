@@ -37,37 +37,30 @@
 #include "../../helper/SampleFSIO.h"
 #include "../../helper/FSIO.h"
 #include "../../gui/screens/components/BottomMenu.h"
+#include "../sequencer/Play.h"
 #include <MIDI.h>
 
 class Arrange {
     public:
-        Arrange(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *sfsio, unsigned int *extmemArray, AudioResources *audioResources);
+        Arrange(Sucofunkey* keyboard, Screen* screen, FSIO* fsio, SampleFSIO* sfsio, unsigned int* extmemArray, AudioResources* audioResources, Play* play);
+        long receiveTimerTick();
         void setActive(boolean active);
         void handleEvent(Sucofunkey::keyQueueStruct event);
-        void receiveMidiData(midi::MidiType type, int d1, int d2);
 
     private:
-        Sucofunkey *_keyboard;
-        Screen *_screen;
-        FSIO *_fsio;
-        SampleFSIO *_sfsio;
-        unsigned int *_extmemArray;
-        AudioResources *_audioResources;
+        Sucofunkey* _keyboard;
+        Screen* _screen;
+        FSIO* _fsio;
+        SampleFSIO* _sfsio;
+        unsigned int* _extmemArray;
+        AudioResources* _audioResources;
+        Play* _play;
         boolean _isActive = false;
         byte _activeBank = 1;
-
-        BottomMenu _bottomMenu;
-
-        void _selectSample(byte bank1, byte sampleId1);
-        void _playNextFreeWavetable(byte note, boolean play);        
-
-        // queue for polyphonic events. each entry corresponds to a waveTableSynth1..6
-        // 0 = not playing 1..24 -> corresponding note is playing 
-        byte _polyKeyIDs[6] = {0, 0, 0, 0, 0, 0};
-        
-        boolean _loop = false;
-        byte _currentInstrumentId = 255;
-
+        int _playbackTickSpeed = 10000;
+        boolean _playLEDon = false;
+        boolean _isInitialized = false;
+        boolean _LEDHighlightSlots[14] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false};
 };
 
 #endif

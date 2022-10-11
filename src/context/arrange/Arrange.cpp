@@ -33,55 +33,72 @@
 #include "../../gui/Screen.h"
 #include "Arrange.h"
 
-Arrange::Arrange(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *sfsio, unsigned int *extmemArray, AudioResources *audioResources) {
+Arrange::Arrange(Sucofunkey* keyboard, Screen* screen, FSIO* fsio, SampleFSIO* sfsio, unsigned int* extmemArray, AudioResources* audioResources, Play* play) {
     _keyboard = keyboard;    
     _screen = screen;
     _fsio = fsio;
     _sfsio = sfsio;
     _extmemArray = extmemArray;
     _audioResources = audioResources;    
-    _bottomMenu = BottomMenu(_keyboard, _screen);
+    _play = play;
+    _playbackTickSpeed = _play->calculatePlaybackTickSpeed();
+}
+
+// returns the current tick speed.. as tempo changes are not handled global
+long Arrange::receiveTimerTick() {
+  if (_isInitialized) {
+    _play->snippetsPlayNext();
+  }
+  
+  _playLEDon = !_playLEDon;  
+  //_keyboard->setLEDState(Sucofunkey::LED_PLAY, _playLEDon);
+  return _playbackTickSpeed;
 }
 
 
 void Arrange::handleEvent(Sucofunkey::keyQueueStruct event) {
-    if (event.pressed) {
-      switch(event.index) {
-        case Sucofunkey::CURSOR_LEFT:
-              _keyboard->setBankDown();
-              break;
-        case Sucofunkey::CURSOR_RIGHT:
-              _keyboard->setBankUp();
-              break;
-        case Sucofunkey::SET:
-              _loop = !_loop;
-              break;
-      }
+  int wk;
+
+  if (event.pressed) {
+    switch(event.index) {
+      case Sucofunkey::CURSOR_LEFT:
+            _keyboard->setBankDown();
+            break;
+      case Sucofunkey::CURSOR_RIGHT:
+            _keyboard->setBankUp();
+            break;
+      case Sucofunkey::PLAY:
+            _play->snippetsPlayNext();
+            break;
     }
+  }
 
-    if (event.type == Sucofunkey::KEY_FN_NOTE) {      
-      if (event.pressed) {
-        byte sampleId0 = _keyboard->getSampleIdByEventKey(event.index)-1;
-        
-        if (_sfsio->sampleBanksStatus[_keyboard->getBank()-1][sampleId0]) {
-          _selectSample(_keyboard->getBank(), sampleId0+1);
-        }
-      } else {
+  if (event.type == Sucofunkey::KEY_NOTE && event.pressed && _keyboard->isEventWhiteKey(event.index)) {
+    wk = _keyboard->getWhiteKeyByEventKey(event.index);
 
-      }
+    if (_LEDHighlightSlots[wk-1] == true) {
+      _LEDHighlightSlots[wk-1] = false;
+      _keyboard->setLEDState(_keyboard->getLEDPinByWhiteKey(wk), false);
+      _play->unqueueSnippet(wk);
+    } else {
+      _play->queueSnippet(wk, true, false);
     }
+  }
 
-    if (event.type == Sucofunkey::KEY_NOTE) {      
-      byte note = 29+((_keyboard->getBank()-1)*24)+_keyboard->getSampleIdByEventKey(event.index)-1;
+  if (event.type == Sucofunkey::KEY_FN_NOTE && event.pressed && _keyboard->isEventWhiteKey(event.index-100)) {
+    wk = _keyboard->getWhiteKeyByEventKey(event.index-100);
 
-      if (event.pressed && _currentInstrumentId != 255) {
-          _playNextFreeWavetable(note, true);
-        }
-        else {                
-          _playNextFreeWavetable(note, false);
-          _audioResources->playMem.stop();
-      }
-    }   
+    if (_LEDHighlightSlots[wk-1] == false) {
+      _play->queueSnippet(wk, false, true);
+      _LEDHighlightSlots[wk-1] = true;
+      _keyboard->setLEDState(_keyboard->getLEDPinByWhiteKey(wk), true);
+    } else {
+      _LEDHighlightSlots[wk-1] = false;
+      _keyboard->setLEDState(_keyboard->getLEDPinByWhiteKey(wk), false);
+      _play->removeLoopFlagFromSnippet(wk);
+    }
+  }    
+
 }
 
 void Arrange::setActive(boolean active) {
@@ -89,103 +106,16 @@ void Arrange::setActive(boolean active) {
     _isActive = true;
     _keyboard->setBank(_activeBank);
     Serial.println("Arrange mode");
-    _screen->testBild("Arranger");
+    _screen->testBild("Arranger");    
+    // might have changed in sequencer
+    _play->checkIfAllSamplesAreLoaded();
+    _isInitialized = true;
+    _playbackTickSpeed = _play->calculatePlaybackTickSpeed();
   } else {
     _isActive = false;
     _keyboard->setBank(0);
+    _isInitialized = false;
   }
 }
 
 
-void Arrange::receiveMidiData(midi::MidiType type, int d1, int d2) {
-  switch (type) {
-    case  midi::MidiType::NoteOn:
-     // d2 = velocity
-      _playNextFreeWavetable(d1, true);
-      break;
-    case  midi::MidiType::NoteOff:
-      _playNextFreeWavetable(d1, false);    
-      break;
-    
-    default:
-      break;
-  }
-}
-
-
-void Arrange::_playNextFreeWavetable(byte note, boolean play) {
-  //_sfsio->debugInfos();
-
-  // No sample as instrument selected? -> ingnore..
-  if (_currentInstrumentId == 255) return;
-
-  if (play) {    
-    // search next free wavetable and play..
-    for (int i=0; i<6; i++) {
-      if (_polyKeyIDs[i] == 0) {
-          _polyKeyIDs[i] = note;
-
-        // play pitched note: bankstart(1:29|2:53|3:77)+sampleId1-1 if in keyboard mode      
-        switch(i) {
-          case 0:
-            _audioResources->playMem1.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false);
-            break;
-          case 1:
-            _audioResources->playMem2.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false);
-            break;
-          case 2:
-            _audioResources->playMem3.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false);
-            break;
-          case 3:
-            _audioResources->playMem4.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false);
-            break;
-          case 4:
-            _audioResources->playMem5.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false);
-            break;
-          case 5:
-            _audioResources->playMem6.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false);
-            break;                                                
-        }
-
-        return;
-      }
-    }  
-  } else {
-    // stop wavetable
-    for (int i=0; i<6; i++) {
-      if (_polyKeyIDs[i] == note) {
-          _polyKeyIDs[i] = 0;
-
-          switch(i) {
-            case 0:
-              _audioResources->playMem1.stop();
-              break;
-            case 1:
-              _audioResources->playMem2.stop();
-              break;
-            case 2:
-              _audioResources->playMem3.stop();
-              break;
-            case 3:
-              _audioResources->playMem4.stop();
-              break;
-            case 4:
-              _audioResources->playMem5.stop();
-              break;
-            case 5:
-              _audioResources->playMem6.stop();
-              break;
-          }
-
-        return;
-      }
-    }  
-  }
-};
-
-
-void Arrange::_selectSample(byte bank1, byte sampleId1) {
-  _sfsio->addSampleToMemory(bank1, sampleId1, false);  
-  _currentInstrumentId = (bank1-1)*24+sampleId1;
-  _audioResources->playMem.play(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId));
-}

@@ -136,7 +136,7 @@ Sampler samplerContext(&keyboard, &screen, &fsio, &sfsio, &audioResources);
 Recorder recorderContext(&keyboard, &screen, &fsio, &sfsio, &audioResources);
 Sequencer sequencerContext(&keyboard, &screen, &fsio, &sfsio, &playContext);
 
-Arrange arrangeContext(&keyboard, &screen, &fsio, &sfsio, extmemArray, &audioResources);
+Arrange arrangeContext(&keyboard, &screen, &fsio, &sfsio, extmemArray, &audioResources, &playContext);
 Live liveContext(&keyboard, &screen, &fsio, &sfsio, extmemArray, &audioResources);
 
 Settings settingsContext(&keyboard, &screen);
@@ -564,6 +564,8 @@ void sendTickToActiveContext() {
     case  AppContext::SYSTEMCHECK:
            globalTickIntervalNew = systemCheckContext.receiveTimerTick();
           break;
+    case  AppContext::ARRANGE:
+          globalTickIntervalNew = arrangeContext.receiveTimerTick();
     default:
           break;
   }    

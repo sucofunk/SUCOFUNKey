@@ -38,10 +38,7 @@
 
 class SongStructure {
     public:
-        SongStructure() {
-            Serial.print("SongStructure Constructor::");
-            Serial.println(_meta.playbackSpeed);
-        };
+        SongStructure() {};
 
         enum shiftAction {
             UP = 1,
