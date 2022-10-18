@@ -538,18 +538,20 @@ void Sucofunkey::setBank(byte nr) {
   }
 }
 
-void Sucofunkey::setBankUp() {
+byte Sucofunkey::setBankUp() {
   if (_activeBank < 3 && _activeBank > 0) {
     _activeBank++;
   }
   setBank(_activeBank);
+  return _activeBank;
 }
 
-void Sucofunkey::setBankDown() {
+byte Sucofunkey::setBankDown() {
   if (_activeBank > 1) {
     _activeBank--;
   }
   setBank(_activeBank);  
+  return _activeBank;
 }
 
 byte Sucofunkey::getBank() {
@@ -658,7 +660,11 @@ void Sucofunkey::updateContinuousFaderValue() {
 int Sucofunkey::getFaderValue(int scaleMin, int scaleMax) {
   // subtract one, as the left side of the fader very often is not 0, but a little up
   int retVal = static_cast<int>(floor(scaleMin+(((scaleMax-scaleMin)/948.0)*(_faderReading > 512 ? _faderReading-75 : _faderReading))))-1;
-  return retVal >= 0 ? retVal : 0;
+  
+  if (retVal < scaleMin) retVal = scaleMin;
+  if (retVal > scaleMax) retVal = scaleMax;
+  
+  return retVal;
 };
 
 

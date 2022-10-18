@@ -59,7 +59,7 @@ class SongStructure {
             byte sampleNumber = 255; // sample, 255 == nothing, 254 == stop sample playback, 253 = change velocity/panning
             byte stereoPosition = 64; // 0 = 100% left | 64 = center | 127 = 100% right 
             byte velocity = 64;      // 0..127 -> standard: 64, as defined in midi standard for keyboards without velocity
-            byte baseMidiNote = 60; // ToDo: move definition of base note to sampler and add it as meta data to save about 10k of RAM
+            byte baseMidiNote = 60; // ToDo: move definition of base note to sampler and add it as meta data to save  RAM
             byte pitchedNote = 60;
             byte probability = 100; // probability of sample to play 0..100
             byte swing = 0; // level -> 0..11 for 1/12 of a playback tick (64th note) AND Swing group combined in one byte (4 Bit Level | 4 Bit Group) -> Level = 2, Group = 8 => 0010|1000

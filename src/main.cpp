@@ -137,7 +137,7 @@ Recorder recorderContext(&keyboard, &screen, &fsio, &sfsio, &audioResources);
 Sequencer sequencerContext(&keyboard, &screen, &fsio, &sfsio, &playContext);
 
 Arrange arrangeContext(&keyboard, &screen, &fsio, &sfsio, extmemArray, &audioResources, &playContext);
-Live liveContext(&keyboard, &screen, &fsio, &sfsio, extmemArray, &audioResources);
+Live liveContext(&keyboard, &screen, &fsio, &sfsio, &playContext);
 
 Settings settingsContext(&keyboard, &screen);
 StartupScreen startupContext(&keyboard, &screen, &fsio, activeSongName);
@@ -566,6 +566,8 @@ void sendTickToActiveContext() {
           break;
     case  AppContext::ARRANGE:
           globalTickIntervalNew = arrangeContext.receiveTimerTick();
+    case  AppContext::LIVE:
+          globalTickIntervalNew = liveContext.receiveTimerTick();
     default:
           break;
   }    
@@ -633,8 +635,8 @@ void loop() {
   if (MIDI.read()) { 
     // route midi messages for MIDI_channel_Synth and system messages to the synth
 
-    Serial.println(currentAppContext);
-    Serial.println(MIDI.getChannel());
+//    Serial.println(currentAppContext);
+//    Serial.println(MIDI.getChannel());
 
 /*    if ((MIDI.getChannel() == MIDI_channel_Synth || MIDI.getChannel() == 0) && currentAppContext == SYNTH) {
       synthContext.receiveMidiData(MIDI.getType(), MIDI.getData1(), MIDI.getData2());

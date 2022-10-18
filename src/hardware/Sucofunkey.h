@@ -83,8 +83,8 @@ class Sucofunkey {
         void setLEDState(int led, bool state);
 
         void setBank(byte nr);
-        void setBankUp();
-        void setBankDown();
+        byte setBankUp();
+        byte setBankDown();
         byte getBank();
 
         void setInput(byte nr);

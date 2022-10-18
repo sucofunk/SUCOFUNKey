@@ -62,6 +62,43 @@ class Play {
         } MixerSamplePlayMemory;
 
 
+        enum LiveSlotType {
+            EMPTY = 0,
+            SNIPPET = 1,
+            SAMPLE = 2
+        };
+
+        enum LiveSamplePlayType {
+            COMPLETE = 0,
+            STOPONRELEASE = 1,
+            HOLDFADER = 2,
+            PIANO = 3,
+            LOOP = 4
+        };
+
+        typedef struct {
+            LiveSlotType type = EMPTY;
+            
+            int snippet = -1;
+            boolean loopSnippet = false;
+
+            boolean immediateStopOnRelease = false;
+
+            byte sampleNumber = 255; // sample, 255 == nothing, 254 == stop sample playback, 253 = change velocity/panning
+            byte stereoPosition = 64; // 0 = 100% left | 64 = center | 127 = 100% right 
+            byte velocity = 64;      // 0..127 -> standard: 64, as defined in midi standard for keyboards without velocity
+            byte baseMidiNote = 60;
+            byte pitchedNote = 60;
+            byte reverse = false;
+
+            byte midiChannel = 1;
+            byte midiNote = 0;
+
+            byte pianoMidiChannel = 2;
+
+        } LiveSlotDefinitionStruct;
+
+
         unsigned int *_extmemArray;
         AudioResources *_audioResources;
 
@@ -76,12 +113,19 @@ class Play {
 
         int bpmToMicroseconds(float bpm, int res);
         int calculatePlaybackTickSpeed();
+        int calculatePlaybackTickSpeed(float bpm);
         void checkIfAllSamplesAreLoaded();
         
         boolean queueSnippet(int slot, boolean allowMultiple, boolean loop);
         void unqueueSnippet(int slot);
         void snippetsPlayNext();
         void removeLoopFlagFromSnippet(int slot);
+
+        // playing samples in live mode..
+        void playNextFreeMemory(byte sample1, byte velocity, boolean play);
+        void handlePolyphonicAftertouch(byte sample1, byte value);
+        void polyChangeVelocity(byte polymem, byte velocity);
+
 
     private:
         Sucofunkey* _keyboard;
@@ -107,6 +151,11 @@ class Play {
         byte _getFreeChannel();
         void _setChannelFree(byte channel);
         int _freeChannelCount();
+
+        // queue for polyphonic events. each entry corresponds to a playMemLive1..6
+        // 0 = not playing 1..72 -> corresponding sample is playing 
+        byte _polyMemIDs[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+        float _tempVelocity = 0.0;
 };
 
 #endif

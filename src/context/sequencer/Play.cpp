@@ -299,6 +299,16 @@ int Play::calculatePlaybackTickSpeed() {
   return _playbackTickSpeed;
 }
 
+int Play::calculatePlaybackTickSpeed(float bpm) {  
+  _playbackTickSpeed = bpmToMicroseconds(bpm, _song.getSongResolution()*4);
+  
+  // recalculate swing delays
+  _song.setSwingTickMicroseconds(_playbackTickSpeed);
+  
+  return _playbackTickSpeed;
+}
+
+
 
 // checks if the used samples in the song are available on disk and already loaded into extmem. if not, do so..
 void Play::checkIfAllSamplesAreLoaded() {
@@ -314,6 +324,7 @@ void Play::checkIfAllSamplesAreLoaded() {
     }
   }
 }
+
 
 
 // -----------------------------------------------------------------------------------------------------------------
@@ -382,6 +393,7 @@ void Play::unqueueSnippet(int slot) {
 };
 
 void Play::snippetsPlayNext() {
+  
   // ToDo: don't forget MIDI!
 
   int snippetLength = 0;
@@ -448,3 +460,165 @@ int Play::_freeChannelCount() {
 
   return retVal;
 };
+
+
+
+
+
+// -----------------------------------------------------------------------------------------------------------------
+// --- Live --------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------------------
+
+void Play::playNextFreeMemory(byte sample1, byte velocity, boolean play) {
+
+  // check if sample in extmem.. if not, load it now!
+  if (!_sfsio->addSampleToMemory((sample1/24)+1, (sample1%24), false)) return;
+
+  // sample still playing?
+  if (!_audioResources->playMemLive1.isPlaying()) { _polyMemIDs[0] = 0; }
+  if (!_audioResources->playMemLive2.isPlaying()) { _polyMemIDs[1] = 0; }  
+  if (!_audioResources->playMemLive3.isPlaying()) { _polyMemIDs[2] = 0; }
+  if (!_audioResources->playMemLive4.isPlaying()) { _polyMemIDs[3] = 0; }
+  if (!_audioResources->playMemLive5.isPlaying()) { _polyMemIDs[4] = 0; }    
+  if (!_audioResources->playMemLive6.isPlaying()) { _polyMemIDs[5] = 0; }
+  if (!_audioResources->playMemLive7.isPlaying()) { _polyMemIDs[6] = 0; }
+  if (!_audioResources->playMemLive8.isPlaying()) { _polyMemIDs[7] = 0; }
+
+  if (play) {    
+    // search next free playmem and play..
+    for (int i=0; i<8; i++) {
+
+      if (_polyMemIDs[i] == 0) {
+          _polyMemIDs[i] = sample1;
+        
+        switch(i) {
+          case 0:
+            polyChangeVelocity(i, velocity);
+            _audioResources->playMemLive1.play(_extmemArray + _sfsio->getExtmemOffset(sample1));
+            break;
+          case 1:
+            polyChangeVelocity(i, velocity);          
+            _audioResources->playMemLive2.play(_extmemArray + _sfsio->getExtmemOffset(sample1));
+            break;
+          case 2:
+            polyChangeVelocity(i, velocity);          
+            _audioResources->playMemLive3.play(_extmemArray + _sfsio->getExtmemOffset(sample1));
+            break;
+          case 3:
+            polyChangeVelocity(i, velocity);          
+            _audioResources->playMemLive4.play(_extmemArray + _sfsio->getExtmemOffset(sample1));
+            break;
+          case 4:
+            polyChangeVelocity(i, velocity);          
+            _audioResources->playMemLive5.play(_extmemArray + _sfsio->getExtmemOffset(sample1));
+            break;
+          case 5:
+            polyChangeVelocity(i, velocity);          
+            _audioResources->playMemLive6.play(_extmemArray + _sfsio->getExtmemOffset(sample1));
+            break;
+          case 6:
+            polyChangeVelocity(i, velocity);          
+            _audioResources->playMemLive7.play(_extmemArray + _sfsio->getExtmemOffset(sample1));
+            break;
+          case 7:
+            polyChangeVelocity(i, velocity);          
+            _audioResources->playMemLive8.play(_extmemArray + _sfsio->getExtmemOffset(sample1));
+            break;                                                                        
+        }
+
+        return;
+      }
+    }  
+  } else {
+    // stop wavetable
+    for (int i=0; i<6; i++) {
+      if (_polyMemIDs[i] == sample1) {
+          _polyMemIDs[i] = 0;
+
+          switch(i) {
+            case 0:
+              _audioResources->playMemLive1.stop();
+              break;
+            case 1:
+              _audioResources->playMemLive2.stop();
+              break;
+            case 2:
+              _audioResources->playMemLive3.stop();
+              break;
+            case 3:
+              _audioResources->playMemLive4.stop();
+              break;
+            case 4:
+              _audioResources->playMemLive5.stop();
+              break;
+            case 5:
+              _audioResources->playMemLive6.stop();
+              break;
+            case 6:
+              _audioResources->playMemLive7.stop();
+              break;
+            case 7:
+              _audioResources->playMemLive8.stop();
+              break;
+          }
+
+        return;
+      }
+    }  
+  }
+}
+
+void Play::polyChangeVelocity(byte polymem, byte velocity) {
+
+  _tempVelocity = (velocity/127.0)*1.0;
+
+  switch(polymem) {
+    case 0:
+      _audioResources->mixerMem5L.gain(0, _tempVelocity);
+      _audioResources->mixerMem5R.gain(0, _tempVelocity);
+      break;
+    case 1:
+      _audioResources->mixerMem5L.gain(1, _tempVelocity);
+      _audioResources->mixerMem5R.gain(1, _tempVelocity);
+      break;
+    case 2:
+      _audioResources->mixerMem5L.gain(2, _tempVelocity);
+      _audioResources->mixerMem5R.gain(2, _tempVelocity);
+      break;
+    case 3:
+      _audioResources->mixerMem5L.gain(3, _tempVelocity);
+      _audioResources->mixerMem5R.gain(3, _tempVelocity);
+      break;
+    case 4:
+      _audioResources->mixerMem6L.gain(0, _tempVelocity);
+      _audioResources->mixerMem6R.gain(0, _tempVelocity);
+      break;
+    case 5:
+      _audioResources->mixerMem6L.gain(1, _tempVelocity);
+      _audioResources->mixerMem6R.gain(1, _tempVelocity);
+      break;
+    case 6:
+      _audioResources->mixerMem6L.gain(2, _tempVelocity);
+      _audioResources->mixerMem6R.gain(2, _tempVelocity);
+      break;
+    case 7:
+      _audioResources->mixerMem6L.gain(3, _tempVelocity);
+      _audioResources->mixerMem6R.gain(3, _tempVelocity);
+      break;
+  }
+}
+
+
+void Play::handlePolyphonicAftertouch(byte sample1, byte value) {
+/*  Serial.print("Poly Aftertouch::");
+  Serial.print(sample1);
+  Serial.print("::");
+  Serial.println(value);
+*/
+  for (int i=0; i<8; i++) {
+    if (_polyMemIDs[i] == sample1) {
+      polyChangeVelocity(i, value);
+      return;
+    }
+  }
+}

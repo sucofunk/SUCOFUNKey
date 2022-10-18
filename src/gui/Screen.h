@@ -109,6 +109,7 @@ class Screen {
         const uint16_t C_WHITE = RGBtoColor(255, 255, 255);
         const uint16_t C_BLACK = RGBtoColor(0, 0, 0);
         
+        const uint16_t C_GREEN = RGBtoColor(0, 255, 0);        
         const uint16_t C_ORANGE = ST77XX_ORANGE;
 
         const uint16_t C_PEAK_OVER = RGBtoColor(255, 0, 0);
@@ -156,6 +157,9 @@ class Screen {
         const uint16_t C_CURSOR = C_ORANGE;
         const uint16_t C_SELECTION = ST77XX_YELLOW; // RGBtoColor(255, 255, 255);
         const uint16_t C_SNIPPET = ST77XX_GREEN; 
+
+        const uint16_t C_LIVE_SNIPPET = RGBtoColor(80, 227, 194);
+        const uint16_t C_LIVE_SAMPLE = C_ORANGE;
 
         // Area definitions
         Area AREA_SCREEN = { 0, 0, 319, 239, false, C_BLACK};  // Fullscreen
