@@ -61,8 +61,10 @@ class LiveScreen {
 
         void drawMIDIinWaitForTraining(boolean show);
 
-//        void showSelectSample();
-//        void showSampleConfig(Play::LiveSlotDefinitionStruct* slot);
+        void showSelectSample(Play::LiveSlotDefinitionStruct slot, boolean initial);
+        void showSampleConfig(Play::LiveSlotDefinitionStruct slot);
+        void updateSampleConfig(Play::LiveSlotDefinitionStruct slot, int encoder, Options option); // encoder: 1..4 and 5..8 (with FN hold)
+
 
     private:
         Sucofunkey *_keyboard;

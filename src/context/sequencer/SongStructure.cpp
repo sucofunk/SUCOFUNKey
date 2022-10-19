@@ -1377,7 +1377,7 @@ boolean SongStructure::saveToSD(char *songPath) {
     writeFile.write(bufferBlocks, sizeof(MetaInfos));
  
     writeFile.close();
-
+ 
 
     // write _blocks
     strcpy(buff, songPath);

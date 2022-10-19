@@ -84,7 +84,7 @@ class Play {
 
             boolean immediateStopOnRelease = false;
 
-            byte sampleNumber = 255; // sample, 255 == nothing, 254 == stop sample playback, 253 = change velocity/panning
+            byte sampleNumber = 255; // sample, 1..72 -> 255 == nothing
             byte stereoPosition = 64; // 0 = 100% left | 64 = center | 127 = 100% right 
             byte velocity = 64;      // 0..127 -> standard: 64, as defined in midi standard for keyboards without velocity
             byte baseMidiNote = 60;
@@ -122,7 +122,8 @@ class Play {
         void removeLoopFlagFromSnippet(int slot);
 
         // playing samples in live mode..
-        void playNextFreeMemory(byte sample1, byte velocity, boolean play);
+        //void playNextFreeMemory(byte sample1, byte velocity, boolean play);
+        void playNextFreeMemory(byte sample1, byte velocity, byte panning, byte baseNote, byte note, boolean reverse, boolean play);
         void handlePolyphonicAftertouch(byte sample1, byte value);
         void polyChangeVelocity(byte polymem, byte velocity);
 

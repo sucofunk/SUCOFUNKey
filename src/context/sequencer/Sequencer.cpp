@@ -283,7 +283,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
         // ToDo: basenote setzen FP+NoteKey? -> eher in sampler??? -> da wird dann ja auch ADSR Hüllkurve gesetzt..
 
         if (_song->isSomethingAt(_cursorChannel, _cursorPosition)) {
-          // is it a sample? -> set reference as origin in piano roll
+          // is it a sample? -> set reference as origin in piano keyboard
           if (_song->getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE) {
             _pianoKeyboard.setOriginReference(_cursorChannel, _cursorPosition);
             _song->setPitchByMidiNote(_pianoKeyboard.getOriginChannel(), _pianoKeyboard.getOriginPosition(), (_keyboard->getBank()*24)+sampleId1+4);          

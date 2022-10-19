@@ -347,3 +347,46 @@ void LiveScreen::drawMIDIinWaitForTraining(boolean show) {
         _screen->drawTextInArea(_screen->AREA_BOTTOM_MENU, Screen::TEXTPOSITION_HCENTER_VCENTER, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WARNING, "hit a note on channel 1");
     }        
 };
+
+
+
+void LiveScreen::showSelectSample(Play::LiveSlotDefinitionStruct slot, boolean initial) {
+    if (initial) _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);    
+    _screen->drawTextInArea(_slotTypeSelectionAreaLeft, Screen::TEXTPOSITION_RIGHT_BOTTOM, false, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "Sample");
+
+    sprintf(_cBuff3, "%d", slot.sampleNumber);
+    _screen->drawTextInArea(_slotTypeSelectionAreaRight, Screen::TEXTPOSITION_LEFT_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, slot.sampleNumber == -1 ? "NONE" : _cBuff3);
+};
+
+void LiveScreen::showSampleConfig(Play::LiveSlotDefinitionStruct slot) {
+    _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);
+
+    sprintf(_cBuff10, "Sample %d", slot.sampleNumber);
+    _screen->drawTextInArea(_snippetNameArea, Screen::TEXTPOSITION_HCENTER_VCENTER, false, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff10);
+
+
+    sprintf(_cBuff10, "%d Note", slot.midiNote);
+    _screen->drawTextInArea(_slotTypeSelectionAreaRight, Screen::TEXTPOSITION_RIGHT_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE , _cBuff10);
+
+    updateSampleConfig(slot, 1, NONE);
+    updateSampleConfig(slot, 2, NONE);
+    updateSampleConfig(slot, 4, NONE);
+};
+
+// encoder: 1..4 and 5..8 (with FN hold)
+void LiveScreen::updateSampleConfig(Play::LiveSlotDefinitionStruct slot, int encoder, Options option) {
+    switch (encoder) {
+        case 1:
+        _screen->drawTextInArea(_snippetsCompleteArea, Screen::TEXTPOSITION_LEFT_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, slot.immediateStopOnRelease ? "while hold" : "play complete");
+        break;
+
+        case 2:
+        _screen->drawTextInArea(_snippetsLoopArea, Screen::TEXTPOSITION_HCENTER_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, slot.reverse ? "REVERSE" : "FORWARD");
+        break;
+        
+        case 4:
+        sprintf(_cBuff10, "%d Note", slot.midiNote);
+        _screen->drawTextInArea(_slotTypeSelectionAreaRight, Screen::TEXTPOSITION_RIGHT_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, option == NONE ? _screen->C_WHITE : option == MIDI_NOTE_FREE ? _screen->C_GREEN : _screen->C_WARNING , _cBuff10);
+        break;
+    }
+}; 

@@ -392,6 +392,7 @@ void Play::unqueueSnippet(int slot) {
   }
 };
 
+
 void Play::snippetsPlayNext() {
   
   // ToDo: don't forget MIDI!
@@ -469,7 +470,7 @@ int Play::_freeChannelCount() {
 // --- Live --------------------------------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------------------------------------
 
-void Play::playNextFreeMemory(byte sample1, byte velocity, boolean play) {
+void Play::playNextFreeMemory(byte sample1, byte velocity, byte panning, byte baseNote, byte note, boolean reverse, boolean play) {
 
   // check if sample in extmem.. if not, load it now!
   if (!_sfsio->addSampleToMemory((sample1/24)+1, (sample1%24), false)) return;
@@ -494,35 +495,35 @@ void Play::playNextFreeMemory(byte sample1, byte velocity, boolean play) {
         switch(i) {
           case 0:
             polyChangeVelocity(i, velocity);
-            _audioResources->playMemLive1.play(_extmemArray + _sfsio->getExtmemOffset(sample1));
+            _audioResources->playMemLive1.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
             break;
           case 1:
             polyChangeVelocity(i, velocity);          
-            _audioResources->playMemLive2.play(_extmemArray + _sfsio->getExtmemOffset(sample1));
+            _audioResources->playMemLive2.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
             break;
           case 2:
             polyChangeVelocity(i, velocity);          
-            _audioResources->playMemLive3.play(_extmemArray + _sfsio->getExtmemOffset(sample1));
+            _audioResources->playMemLive3.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
             break;
           case 3:
             polyChangeVelocity(i, velocity);          
-            _audioResources->playMemLive4.play(_extmemArray + _sfsio->getExtmemOffset(sample1));
+            _audioResources->playMemLive4.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
             break;
           case 4:
             polyChangeVelocity(i, velocity);          
-            _audioResources->playMemLive5.play(_extmemArray + _sfsio->getExtmemOffset(sample1));
+            _audioResources->playMemLive5.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
             break;
           case 5:
             polyChangeVelocity(i, velocity);          
-            _audioResources->playMemLive6.play(_extmemArray + _sfsio->getExtmemOffset(sample1));
+            _audioResources->playMemLive6.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
             break;
           case 6:
             polyChangeVelocity(i, velocity);          
-            _audioResources->playMemLive7.play(_extmemArray + _sfsio->getExtmemOffset(sample1));
+            _audioResources->playMemLive7.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
             break;
           case 7:
             polyChangeVelocity(i, velocity);          
-            _audioResources->playMemLive8.play(_extmemArray + _sfsio->getExtmemOffset(sample1));
+            _audioResources->playMemLive8.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
             break;                                                                        
         }
 
@@ -610,11 +611,6 @@ void Play::polyChangeVelocity(byte polymem, byte velocity) {
 
 
 void Play::handlePolyphonicAftertouch(byte sample1, byte value) {
-/*  Serial.print("Poly Aftertouch::");
-  Serial.print(sample1);
-  Serial.print("::");
-  Serial.println(value);
-*/
   for (int i=0; i<8; i++) {
     if (_polyMemIDs[i] == sample1) {
       polyChangeVelocity(i, value);

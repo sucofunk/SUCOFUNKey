@@ -79,6 +79,7 @@ class Live {
         volatile int _blinkPosition = 0;
         boolean _isActive = false;
         byte _activeBank = 1;
+        byte _sampleBank = 1;
 
         LiveState _currentState = OVERVIEW;
 
@@ -100,7 +101,7 @@ class Live {
 
         void _changeState(LiveState state);
         void _overview(boolean initialize);
-        void _playSlot(int slotIndex, boolean pressed);
+        void _playSlot(int slotIndex, byte velocity, boolean pressed);
         void _updateAllLoopingLEDs();
 
         void _handleSlotTypeSelection(byte bank, byte key, boolean initialize);
@@ -115,6 +116,8 @@ class Live {
         boolean _setMIDINote(byte note);
         byte _getMidiNoteForSlot(int slotIndex);
         boolean _saveAndActivateMIDINoteForSlot(int slotIndex);
+
+        void _removeSlot(int slotIndex);
 };
 
 #endif
