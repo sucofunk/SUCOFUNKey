@@ -74,7 +74,7 @@ float volumeValue = 0;
 float volumeTempValue = 0;
 
 // ToDo: make configurable
-byte MIDI_channel_Synth = 2;  // Channel 2 for triggering notes in the Synth mode
+byte MIDI_channel_Piano = 2;   // Channel 2 for triggering chromatically pitched samples in live mode (piano)
 byte MIDI_channel_Live = 1;    // Channel 1 for triggering Samples
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
@@ -638,12 +638,8 @@ void loop() {
 //    Serial.println(currentAppContext);
 //    Serial.println(MIDI.getChannel());
 
-/*    if ((MIDI.getChannel() == MIDI_channel_Synth || MIDI.getChannel() == 0) && currentAppContext == SYNTH) {
-      synthContext.receiveMidiData(MIDI.getType(), MIDI.getData1(), MIDI.getData2());
-    }
-*/
-    if (MIDI.getChannel() == MIDI_channel_Live) {
-      liveContext.receiveMidiData(MIDI.getType(), MIDI.getData1(), MIDI.getData2());
+    if (MIDI.getChannel() == MIDI_channel_Live || MIDI.getChannel() == MIDI_channel_Piano) {
+      liveContext.receiveMidiData(MIDI.getChannel(), MIDI.getType(), MIDI.getData1(), MIDI.getData2());
     }
   }
 }

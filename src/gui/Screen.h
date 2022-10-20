@@ -160,6 +160,8 @@ class Screen {
 
         const uint16_t C_LIVE_SNIPPET = RGBtoColor(80, 227, 194);
         const uint16_t C_LIVE_SAMPLE = C_ORANGE;
+        const uint16_t C_LIVE_PIANO = C_RECORDING;
+
 
         // Area definitions
         Area AREA_SCREEN = { 0, 0, 319, 239, false, C_BLACK};  // Fullscreen

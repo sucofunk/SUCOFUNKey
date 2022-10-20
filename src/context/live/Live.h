@@ -55,14 +55,16 @@ class Live {
             CONFIG_SNIPPET = 4,
             CONFIG_SAMPLE = 5,
             WAIT_MIDI_TRAINING_INPUT_SNIPPET = 6,
-            WAIT_MIDI_TRAINING_INPUT_SAMPLE = 7
+            WAIT_MIDI_TRAINING_INPUT_SAMPLE = 7,
+            WAIT_PIANO_SAMPLE_SELECT = 8,
+            PIANO = 9
         };
 
         void setActive(boolean active);
         long receiveTimerTick();
 
         void handleEvent(Sucofunkey::keyQueueStruct event);
-        void receiveMidiData(midi::MidiType type, int d1, int d2);
+        void receiveMidiData(byte channel, midi::MidiType type, int d1, int d2);
 
         void loadConfig();
         void saveConfig();
@@ -81,6 +83,7 @@ class Live {
         boolean _isActive = false;
         byte _activeBank = 1;
         byte _sampleBank = 1;
+        byte _pianoBank = 2;
 
         LiveState _currentState = OVERVIEW;
 
@@ -100,9 +103,11 @@ class Live {
         // Snippets are stored with slotIndex (0..71) and -1 if not in use
         int _midiNoteToSlot[128];
 
+        int _pianoSampleSlotIndex = -1;
+
         void _changeState(LiveState state);
         void _overview(boolean initialize);
-        void _playSlot(int slotIndex, byte velocity, boolean pressed);
+        void _playSlot(int slotIndex, byte velocity, boolean pressed, byte note);
         void _updateAllLoopingLEDs();
 
         void _handleSlotTypeSelection(byte bank, byte key, boolean initialize);
@@ -120,6 +125,8 @@ class Live {
         boolean _saveAndActivateMIDINoteForSlot(int slotIndex);
 
         void _removeSlot(int slotIndex);
+
+        void _playPiano(byte note, byte velocity, boolean play);
 };
 
 #endif

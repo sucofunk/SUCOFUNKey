@@ -98,6 +98,10 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
             _sampleBank = _keyboard->setBankDown();
           }
 
+          if (_currentState == PIANO) {
+            _pianoBank = _keyboard->setBankDown();
+          }
+
           break;
 
         case Sucofunkey::CURSOR_RIGHT:
@@ -113,6 +117,10 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
 
           if (_currentState == WAIT_SAMPLE_SELECT) {
             _sampleBank = _keyboard->setBankUp();
+          }
+
+          if (_currentState == PIANO) {
+            _pianoBank = _keyboard->setBankUp();
           }
 
           break;
@@ -157,6 +165,31 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
           break;
 
         case Sucofunkey::FN_SET:
+          // remove piano flag from sample
+          if (_currentState == PIANO) {
+            _slots[_pianoSampleSlotIndex].isPiano = false;
+            
+            // is piano sample in active bank? redraw it with the sample color
+            int from = (_activeBank-1)*24;
+            int to = from + 23;
+
+            Serial.print("switch::");
+            Serial.print(_pianoSampleSlotIndex);
+            Serial.print("::from::");
+            Serial.print(from);
+            Serial.print("::to::");
+            Serial.println(to);
+            if (_pianoSampleSlotIndex >= from && _pianoSampleSlotIndex <= to) {
+              Serial.println("anzeigen!");
+              _liveScreen.drawOverviewSlot(_slots[_pianoSampleSlotIndex], (_pianoSampleSlotIndex - from + 1));
+            }
+
+            _pianoSampleSlotIndex = -1;
+            _pianoBank = 2;
+            _cancel(false);
+            break;
+          }         
+
           if (_currentState == CONFIG_SNIPPET || _currentState == CONFIG_SAMPLE) {
             _removeSlot(_editingSlotId);
           } else {
@@ -164,16 +197,34 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
           }          
           break;
 
+        case Sucofunkey::ZOOM:
+          if (_currentState == OVERVIEW) {
+            if (_pianoSampleSlotIndex == -1) {
+              // select piano sample
+              _changeState(WAIT_PIANO_SAMPLE_SELECT);
+            } else {
+              _changeState(PIANO);
+            }
+          } else {
+            if (_currentState == PIANO || _currentState == WAIT_PIANO_SAMPLE_SELECT) {
+              _cancel(false);
+            }
+          }
+          break;
+
+        case Sucofunkey::FN_ZOOM:
+          break;
+
         case Sucofunkey::PLAY:
             if (_currentState == CONFIG_SAMPLE) {
-              _playSlot(_editingSlotId, 128, true);
+              _playSlot(_editingSlotId, 128, true, 128);
             }
           break;        
           break;
 
         case Sucofunkey::PAUSE:
             if (_currentState == CONFIG_SAMPLE) {
-              _playSlot(_editingSlotId, 128, false);
+              _playSlot(_editingSlotId, 128, false, 128);
             }        
           break;
 
@@ -203,9 +254,11 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
           break;
 
         default:
-          break;              
-      }
+          break;                  
+      }      
     }
+
+
 
     if (event.type == Sucofunkey::KEY_NOTE) {
       int slot = _keyboard->getSampleIdByEventKey(event.index);
@@ -220,7 +273,7 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
         
         case OVERVIEW:
             if (_slots[slotsIndex].type != Play::EMPTY) {
-              _playSlot(slotsIndex, 128, event.pressed);
+              _playSlot(slotsIndex, 128, event.pressed, 128);
             } else {              
               _changeState(SLOT_TYPE_SELECT);
               _handleSlotTypeSelection(_activeBank, slot, true);
@@ -255,15 +308,37 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
             }
 
           break;
+        
         case CONFIG_SAMPLE:
             if (_slots[slotsIndex].type != Play::EMPTY) {
-              _playSlot(slotsIndex, 128, event.pressed);
-            }
+              _playSlot(slotsIndex, 128, event.pressed, 128);
+            }            
           break;
+        
+        case WAIT_PIANO_SAMPLE_SELECT:
+          if (event.pressed) {
+            if (_slots[slotsIndex].type == Play::SAMPLE) {
+              if (_pianoSampleSlotIndex != -1) {
+                _slots[_pianoSampleSlotIndex].isPiano = false;
+              }
+
+              _pianoSampleSlotIndex = slotsIndex;
+              _slots[slotsIndex].isPiano = true;
+              _liveScreen.drawOverviewSlot(_slots[_pianoSampleSlotIndex], slot);
+              _changeState(PIANO);
+              }
+          } 
+          break;
+
+        case PIANO:
+          _playPiano((_pianoBank-1)*24 + slot + 28, 128, event.pressed);
+          break;
+
         default:
           break;  
       }
     }
+
 
     if (event.type == Sucofunkey::KEY_FN_NOTE && event.pressed) {
       int slot = _keyboard->getSampleIdByEventKey(event.index);
@@ -342,28 +417,49 @@ void Live::setActive(boolean active) {
 }
 
 
-void Live::receiveMidiData(midi::MidiType type, int d1, int d2) {
+void Live::receiveMidiData(byte channel, midi::MidiType type, int d1, int d2) {
   switch (type) {
     case midi::MidiType::NoteOn:
-      if (_currentState == WAIT_MIDI_TRAINING_INPUT_SNIPPET) {        
-        _liveScreen.updateSnippetConfig(_slots[_editingSlotId], 4, false, (_setMIDINote(d1) == true ? LiveScreen::MIDI_NOTE_FREE : LiveScreen::MIDI_NOTE_IN_USE)); // Encoder 4 = MIDI IN
-      } else {
-        if (_midiNoteToSlot[d1] != -1) {
-          // d2 = velocity
-          _playSlot(_midiNoteToSlot[d1], d2, true);
-        } 
-      }     
+      if (channel == 1) {
+        if (_currentState == WAIT_MIDI_TRAINING_INPUT_SNIPPET) {        
+          _liveScreen.updateSnippetConfig(_slots[_editingSlotId], 4, false, (_setMIDINote(d1) == true ? LiveScreen::MIDI_NOTE_FREE : LiveScreen::MIDI_NOTE_IN_USE)); // Encoder 4 = MIDI IN
+        } else {
+          if (_midiNoteToSlot[d1] != -1) {
+            // d2 = velocity
+            _playSlot(_midiNoteToSlot[d1], d2, true, 128);
+          } 
+        }
+      } 
+
+      if (channel == 2) {
+        _playPiano(d1, d2, true);
+      }
+
       break;
     case midi::MidiType::NoteOff:
-     if (_midiNoteToSlot[d1] != -1 && _currentState != WAIT_MIDI_TRAINING_INPUT_SNIPPET && _currentState != WAIT_MIDI_TRAINING_INPUT_SAMPLE) {
-      _playSlot(_midiNoteToSlot[d1], d2, false);
+
+     if (channel == 1) {
+      if (_midiNoteToSlot[d1] != -1 && _currentState != WAIT_MIDI_TRAINING_INPUT_SNIPPET && _currentState != WAIT_MIDI_TRAINING_INPUT_SAMPLE) {
+        _playSlot(_midiNoteToSlot[d1], d2, false, 128);
+      }
+     } 
+
+     if (channel == 2) {
+        _playPiano(d1, d2, false);
      }
+    
      break;
 
     case midi::MidiType::AfterTouchPoly:      
-      if (_slots[_midiNoteToSlot[d1]].type == Play::SAMPLE) {
+
+      if (channel == 1 && _slots[_midiNoteToSlot[d1]].type == Play::SAMPLE) {
         _play->handlePolyphonicAftertouch(_slots[_midiNoteToSlot[d1]].sampleNumber, d2, _slots[_midiNoteToSlot[d1]].stereoPosition);
       }
+
+      if (channel == 2) {
+        _play->handlePolyphonicAftertouch(_slots[_pianoSampleSlotIndex].sampleNumber, d2, _slots[_pianoSampleSlotIndex].stereoPosition);
+      }
+
       break;
 
     default:
@@ -453,7 +549,7 @@ void Live::_overview(boolean initialize) {
 
   for (int i=(_keyboard->getBank()-1)*24+1; i<=(_keyboard->getBank()-1)*24+24; i++) {
     // i = 1..72 in bunches of 24, depending on selected bank
-    _liveScreen.drawOverviewSlot(&_slots[i-1], s);
+    _liveScreen.drawOverviewSlot(_slots[i-1], s);
     s++;
   }
 
@@ -472,6 +568,7 @@ void Live::_updateAllLoopingLEDs() {
 
 void Live::_changeState(LiveState state) {
   _editingSlotId = (_editingSlotBank-1)*24+_editingSlotKey-1;
+
   switch (state) {
     case OVERVIEW:
       _editingSlotBank = 0;
@@ -491,7 +588,12 @@ void Live::_changeState(LiveState state) {
     case CONFIG_SAMPLE:
       _liveScreen.showSampleConfig(_slots[_editingSlotId]);
       break;
-
+    case WAIT_PIANO_SAMPLE_SELECT:
+      _liveScreen.showPianoSampleSelectMessage(true);
+      break;
+    case PIANO:
+      _liveScreen.showPianoMessage(true);
+      _keyboard->setBank(_pianoBank);
     default:
       break;
   }
@@ -501,7 +603,7 @@ void Live::_changeState(LiveState state) {
 
 
 // velocity == 128 -> take velocity from slot
-void Live::_playSlot(int slotIndex, byte velocity, boolean pressed) {
+void Live::_playSlot(int slotIndex, byte velocity, boolean pressed, byte note) {
   Play::LiveSlotDefinitionStruct slot = _slots[slotIndex];
 
   if (slot.type == Play::EMPTY) return;
@@ -544,13 +646,12 @@ void Live::_playSlot(int slotIndex, byte velocity, boolean pressed) {
   if (slot.type == Play::SAMPLE) {
     if (pressed) {
       // play sample    
-      _play->playNextFreeMemory(slot.sampleNumber, velocity == 128 ? slot.velocity : velocity, slot.stereoPosition, slot.baseMidiNote, slot.pitchedNote, slot.reverse, true);
+      _play->playNextFreeMemory(slot.sampleNumber, velocity == 128 ? slot.velocity : velocity, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, true);
     } else {
-      if (slot.immediateStopOnRelease) {
+      if (slot.immediateStopOnRelease || _currentState == PIANO) {
         _play->playNextFreeMemory(slot.sampleNumber, 0, slot.stereoPosition, slot.baseMidiNote, slot.pitchedNote, slot.reverse, false);
       }
     }
-  
   }
 
 };
@@ -579,23 +680,27 @@ void Live::_cancel(boolean showOverview) {
     case WAIT_SNIPPET_SELECT:
     case WAIT_SAMPLE_SELECT:
       _slots[(_editingSlotBank-1)*24+_editingSlotKey-1].type = Play::EMPTY;
-      _changeState(OVERVIEW);                
-      
-      if (showOverview) { 
-        _overview(true); 
-      }
+      _changeState(OVERVIEW);                      
       break;      
     case CONFIG_SNIPPET:
     case CONFIG_SAMPLE:
       _changeState(OVERVIEW);
-
-      if (showOverview) { 
-        _overview(true); 
-      }
       break;      
+    case WAIT_PIANO_SAMPLE_SELECT:
+      _liveScreen.showPianoSampleSelectMessage(false);
+      _changeState(OVERVIEW);
+      break;
+    case PIANO:
+      _liveScreen.showPianoMessage(false);
+      _changeState(OVERVIEW);    
+      break;
     default:
       break;
   }
+
+  if (showOverview) { 
+    _overview(true); 
+  }  
 }
 
 void Live::_changeBPM(float bpm) {
@@ -833,4 +938,9 @@ void Live::saveConfig() {
 void Live::_removeSlot(int slotIndex) {
   _slots[slotIndex] = Play::LiveSlotDefinitionStruct();
   _cancel();
+};
+
+
+void Live::_playPiano(byte note, byte velocity, boolean play) {  
+    _playSlot(_pianoSampleSlotIndex, velocity, play, note);
 };

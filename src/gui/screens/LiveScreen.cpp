@@ -270,11 +270,11 @@ void LiveScreen::showEmptyOverview(boolean createAreas) {
 };
 
 // slotNumber1 = 1..24
-void LiveScreen::drawOverviewSlot(Play::LiveSlotDefinitionStruct* slot, int slotNumber1) {
+void LiveScreen::drawOverviewSlot(Play::LiveSlotDefinitionStruct slot, int slotNumber1) {
 
     uint16_t color;
 
-    switch (slot->type) {
+    switch (slot.type) {
         case Play::EMPTY:
             color = _screen->C_BLACK;
             break;
@@ -282,7 +282,11 @@ void LiveScreen::drawOverviewSlot(Play::LiveSlotDefinitionStruct* slot, int slot
             color = _screen->C_LIVE_SNIPPET;
             break;
         case Play::SAMPLE:
-            color = _screen->C_LIVE_SAMPLE;
+            if (slot.isPiano) {
+                color = _screen->C_LIVE_PIANO;
+            } else {
+                color = _screen->C_LIVE_SAMPLE;
+            }            
             break;
         default:
             color = _screen->C_BLACK;
@@ -460,3 +464,21 @@ void LiveScreen::updateSampleConfig(Play::LiveSlotDefinitionStruct slot, int enc
         break;
     }
 }; 
+
+
+
+void LiveScreen::showPianoSampleSelectMessage(boolean show) {
+    _screen->fillArea(_screen->AREA_BOTTOM_MENU, _screen->C_BLACK);
+
+    if (show) {
+        _screen->drawTextInArea(_screen->AREA_BOTTOM_MENU, Screen::TEXTPOSITION_HCENTER_VCENTER, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WARNING, "select a keyboard sample");
+    }        
+};
+
+void LiveScreen::showPianoMessage(boolean show) {
+    _screen->fillArea(_screen->AREA_BOTTOM_MENU, _screen->C_BLACK);
+
+    if (show) {
+        _screen->drawTextInArea(_screen->AREA_BOTTOM_MENU, Screen::TEXTPOSITION_HCENTER_VCENTER, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WARNING, "KEYBOARD MODE");
+    }        
+};

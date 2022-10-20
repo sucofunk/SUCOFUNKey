@@ -51,7 +51,7 @@ class LiveScreen {
 
 
         void showEmptyOverview(boolean createAreas);
-        void drawOverviewSlot(Play::LiveSlotDefinitionStruct* slot, int slotNumber1);
+        void drawOverviewSlot(Play::LiveSlotDefinitionStruct slot, int slotNumber1);
 
         void drawBPM(float bpm);
 
@@ -65,7 +65,8 @@ class LiveScreen {
         void showSelectSample(Play::LiveSlotDefinitionStruct slot, boolean initial);
         void showSampleConfig(Play::LiveSlotDefinitionStruct slot);
         void updateSampleConfig(Play::LiveSlotDefinitionStruct slot, int encoder, boolean push, Options option); // encoder: 1..4 and 5..8 (with FN hold)
-
+        void showPianoSampleSelectMessage(boolean show);
+        void showPianoMessage(boolean show);
 
     private:
         Sucofunkey *_keyboard;

@@ -91,10 +91,8 @@ class Play {
             byte pitchedNote = 60;
             byte reverse = false;
 
-            byte midiChannel = 1;
             byte midiNote = 0;
-
-            byte pianoMidiChannel = 2;
+            boolean isPiano = false;
 
         } LiveSlotDefinitionStruct;
 
