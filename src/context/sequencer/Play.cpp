@@ -93,10 +93,16 @@ void Play::stopAllChannels() {
   _audioResources->playMem15.stop();
   _audioResources->playMem16.stop();
 
-  // ToDO: stop live, too?
+  _audioResources->playMemLive1.stop();
+  _audioResources->playMemLive2.stop();
+  _audioResources->playMemLive3.stop();
+  _audioResources->playMemLive4.stop();
+  _audioResources->playMemLive5.stop();
+  _audioResources->playMemLive6.stop();
+  _audioResources->playMemLive7.stop();
+  _audioResources->playMemLive8.stop();
 };
 
-// ToDo: extend to 16 Channels or even 24 including live mode
 Play::MixerSamplePlayMemory Play::prepareMixerRouting(byte channel) {;
     MixerSamplePlayMemory mixSPM;
 
@@ -470,7 +476,7 @@ int Play::_freeChannelCount() {
 // --- Live --------------------------------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------------------------------------
 
-void Play::playNextFreeMemory(byte sample1, byte velocity, byte panning, byte baseNote, byte note, boolean reverse, boolean play) {
+void Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, byte baseNote, byte note, boolean reverse, boolean play) {
 
   // check if sample in extmem.. if not, load it now!
   if (!_sfsio->addSampleToMemory((sample1/24)+1, (sample1%24), false)) return;
@@ -494,35 +500,35 @@ void Play::playNextFreeMemory(byte sample1, byte velocity, byte panning, byte ba
         
         switch(i) {
           case 0:
-            polyChangeVelocity(i, velocity);
+            polyChangeVelocity(i, velocity, stereoPosition);
             _audioResources->playMemLive1.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
             break;
           case 1:
-            polyChangeVelocity(i, velocity);          
+            polyChangeVelocity(i, velocity, stereoPosition);          
             _audioResources->playMemLive2.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
             break;
           case 2:
-            polyChangeVelocity(i, velocity);          
+            polyChangeVelocity(i, velocity, stereoPosition);          
             _audioResources->playMemLive3.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
             break;
           case 3:
-            polyChangeVelocity(i, velocity);          
+            polyChangeVelocity(i, velocity, stereoPosition);          
             _audioResources->playMemLive4.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
             break;
           case 4:
-            polyChangeVelocity(i, velocity);          
+            polyChangeVelocity(i, velocity, stereoPosition);          
             _audioResources->playMemLive5.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
             break;
           case 5:
-            polyChangeVelocity(i, velocity);          
+            polyChangeVelocity(i, velocity, stereoPosition);          
             _audioResources->playMemLive6.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
             break;
           case 6:
-            polyChangeVelocity(i, velocity);          
+            polyChangeVelocity(i, velocity, stereoPosition);          
             _audioResources->playMemLive7.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
             break;
           case 7:
-            polyChangeVelocity(i, velocity);          
+            polyChangeVelocity(i, velocity, stereoPosition);          
             _audioResources->playMemLive8.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
             break;                                                                        
         }
@@ -569,51 +575,58 @@ void Play::playNextFreeMemory(byte sample1, byte velocity, byte panning, byte ba
   }
 }
 
-void Play::polyChangeVelocity(byte polymem, byte velocity) {
 
-  _tempVelocity = (velocity/127.0)*1.0;
+void Play::polyChangeVelocity(byte polymem, byte velocity, byte stereoPosition) {
+
+  if (stereoPosition < 64) {
+    _tempVelocityL = (velocity/127.0)*1.0;
+    _tempVelocityR = (velocity/127.0)*(stereoPosition/64.0);
+  } else {
+    _tempVelocityL = (velocity/127.0)*((127-stereoPosition)/64.0);
+    _tempVelocityR = (velocity/127.0)*1.0;
+  }
 
   switch(polymem) {
     case 0:
-      _audioResources->mixerMem5L.gain(0, _tempVelocity);
-      _audioResources->mixerMem5R.gain(0, _tempVelocity);
+      _audioResources->mixerMem5L.gain(0, _tempVelocityL);
+      _audioResources->mixerMem5R.gain(0, _tempVelocityR);
       break;
     case 1:
-      _audioResources->mixerMem5L.gain(1, _tempVelocity);
-      _audioResources->mixerMem5R.gain(1, _tempVelocity);
+      _audioResources->mixerMem5L.gain(1, _tempVelocityL);
+      _audioResources->mixerMem5R.gain(1, _tempVelocityR);
       break;
     case 2:
-      _audioResources->mixerMem5L.gain(2, _tempVelocity);
-      _audioResources->mixerMem5R.gain(2, _tempVelocity);
+      _audioResources->mixerMem5L.gain(2, _tempVelocityL);
+      _audioResources->mixerMem5R.gain(2, _tempVelocityR);
       break;
     case 3:
-      _audioResources->mixerMem5L.gain(3, _tempVelocity);
-      _audioResources->mixerMem5R.gain(3, _tempVelocity);
+      _audioResources->mixerMem5L.gain(3, _tempVelocityL);
+      _audioResources->mixerMem5R.gain(3, _tempVelocityR);
       break;
     case 4:
-      _audioResources->mixerMem6L.gain(0, _tempVelocity);
-      _audioResources->mixerMem6R.gain(0, _tempVelocity);
+      _audioResources->mixerMem6L.gain(0, _tempVelocityL);
+      _audioResources->mixerMem6R.gain(0, _tempVelocityR);
       break;
     case 5:
-      _audioResources->mixerMem6L.gain(1, _tempVelocity);
-      _audioResources->mixerMem6R.gain(1, _tempVelocity);
+      _audioResources->mixerMem6L.gain(1, _tempVelocityL);
+      _audioResources->mixerMem6R.gain(1, _tempVelocityR);
       break;
     case 6:
-      _audioResources->mixerMem6L.gain(2, _tempVelocity);
-      _audioResources->mixerMem6R.gain(2, _tempVelocity);
+      _audioResources->mixerMem6L.gain(2, _tempVelocityL);
+      _audioResources->mixerMem6R.gain(2, _tempVelocityR);
       break;
     case 7:
-      _audioResources->mixerMem6L.gain(3, _tempVelocity);
-      _audioResources->mixerMem6R.gain(3, _tempVelocity);
+      _audioResources->mixerMem6L.gain(3, _tempVelocityL);
+      _audioResources->mixerMem6R.gain(3, _tempVelocityR);
       break;
   }
 }
 
 
-void Play::handlePolyphonicAftertouch(byte sample1, byte value) {
+void Play::handlePolyphonicAftertouch(byte sample1, byte velocity, byte stereoPosition) {
   for (int i=0; i<8; i++) {
     if (_polyMemIDs[i] == sample1) {
-      polyChangeVelocity(i, value);
+      polyChangeVelocity(i, velocity, stereoPosition);
       return;
     }
   }

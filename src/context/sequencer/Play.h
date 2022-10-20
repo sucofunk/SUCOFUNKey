@@ -123,9 +123,9 @@ class Play {
 
         // playing samples in live mode..
         //void playNextFreeMemory(byte sample1, byte velocity, boolean play);
-        void playNextFreeMemory(byte sample1, byte velocity, byte panning, byte baseNote, byte note, boolean reverse, boolean play);
-        void handlePolyphonicAftertouch(byte sample1, byte value);
-        void polyChangeVelocity(byte polymem, byte velocity);
+        void playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, byte baseNote, byte note, boolean reverse, boolean play);
+        void handlePolyphonicAftertouch(byte sample1, byte velocity, byte stereoPosition);
+        void polyChangeVelocity(byte polymem, byte velocity, byte stereoPosition);
 
 
     private:
@@ -156,7 +156,8 @@ class Play {
         // queue for polyphonic events. each entry corresponds to a playMemLive1..6
         // 0 = not playing 1..72 -> corresponding sample is playing 
         byte _polyMemIDs[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-        float _tempVelocity = 0.0;
+        float _tempVelocityL = 0.0;
+        float _tempVelocityR = 0.0;
 };
 
 #endif

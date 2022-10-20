@@ -44,6 +44,7 @@
 
 class Live {
     public:
+        
         Live(Sucofunkey* keyboard, Screen* screen, FSIO* fsio, SampleFSIO* sfsio, Play* play);
 
         enum LiveState {
@@ -106,6 +107,7 @@ class Live {
 
         void _handleSlotTypeSelection(byte bank, byte key, boolean initialize);
         void _cancel();
+        void _cancel(boolean showOverview);
         void _changeBPM(float bpm);
 
         void _handleEncoders(byte encoder, boolean function, int action);

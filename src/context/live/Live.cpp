@@ -30,17 +30,18 @@
    
 #include <Arduino.h>
 #include "../../hardware/Sucofunkey.h"
+#include "../../helper/SampleFSIO.h"
 #include "../../gui/Screen.h"
 #include "Live.h"
 #include "MIDI.h"
 
-Live::Live(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *sfsio, Play* play) {
+Live::Live(Sucofunkey* keyboard, Screen* screen, FSIO* fsio, SampleFSIO* sfsio, Play* play) {
     _keyboard = keyboard;    
     _screen = screen;
     _fsio = fsio;
     _sfsio = sfsio;
     _play = play;
-    _liveScreen = LiveScreen(keyboard, screen);
+    _liveScreen = LiveScreen(keyboard, screen, sfsio);
     _bpm = _play->getSong()->getPlayBackSpeed();
 
     for (int i=0; i<72; i++) {
@@ -164,9 +165,16 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
           break;
 
         case Sucofunkey::PLAY:
+            if (_currentState == CONFIG_SAMPLE) {
+              _playSlot(_editingSlotId, 128, true);
+            }
+          break;        
           break;
 
         case Sucofunkey::PAUSE:
+            if (_currentState == CONFIG_SAMPLE) {
+              _playSlot(_editingSlotId, 128, false);
+            }        
           break;
 
         case Sucofunkey::ENCODER_1_PUSH:
@@ -209,9 +217,10 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
         case SLOT_TYPE_SELECT:
           if (event.pressed) _cancel();
           break;
+        
         case OVERVIEW:
             if (_slots[slotsIndex].type != Play::EMPTY) {
-              _playSlot(slotsIndex, 127, event.pressed);
+              _playSlot(slotsIndex, 128, event.pressed);
             } else {              
               _changeState(SLOT_TYPE_SELECT);
               _handleSlotTypeSelection(_activeBank, slot, true);
@@ -231,9 +240,9 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
             } else {
               _play->unqueueSnippet(tempInt); // stop prelisten
             }
-
           }
           break;
+
         case WAIT_SAMPLE_SELECT:        
             if (event.pressed) {
               _slots[_editingSlotId].sampleNumber = _keyboard->getSampleIdByEventKey(event.index) + ((_sampleBank-1)*24);
@@ -246,6 +255,11 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
             }
 
           break;
+        case CONFIG_SAMPLE:
+            if (_slots[slotsIndex].type != Play::EMPTY) {
+              _playSlot(slotsIndex, 128, event.pressed);
+            }
+          break;
         default:
           break;  
       }
@@ -256,15 +270,21 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
       int slotsIndex = (slot-1)+((_activeBank-1)*24);
 
       // show slot configuration
-      if (_currentState == OVERVIEW && _slots[slotsIndex].type == Play::SNIPPET) {
+      //if (_currentState == OVERVIEW && _slots[slotsIndex].type == Play::SNIPPET) {
+      if (_slots[slotsIndex].type == Play::SNIPPET) {
+        if (_currentState != OVERVIEW) { _cancel(false); }
+
         _editingSlotKey = slot;
         _editingSlotBank = _activeBank;
         _changeState(CONFIG_SNIPPET);
       }
     
 
-      // show slot configuration
-      if (_currentState == OVERVIEW && _slots[slotsIndex].type == Play::SAMPLE) {
+      // show sample configuration
+      //if (_currentState == OVERVIEW && _slots[slotsIndex].type == Play::SAMPLE) {
+      if (_slots[slotsIndex].type == Play::SAMPLE) {
+        if (_currentState != OVERVIEW) { _cancel(false); }
+
         _editingSlotKey = slot;
         _editingSlotBank = _activeBank;
         _changeState(CONFIG_SAMPLE);
@@ -326,7 +346,7 @@ void Live::receiveMidiData(midi::MidiType type, int d1, int d2) {
   switch (type) {
     case midi::MidiType::NoteOn:
       if (_currentState == WAIT_MIDI_TRAINING_INPUT_SNIPPET) {        
-        _liveScreen.updateSnippetConfig(_slots[_editingSlotId], 4, (_setMIDINote(d1) == true ? LiveScreen::MIDI_NOTE_FREE : LiveScreen::MIDI_NOTE_IN_USE)); // Encoder 4 = MIDI IN
+        _liveScreen.updateSnippetConfig(_slots[_editingSlotId], 4, false, (_setMIDINote(d1) == true ? LiveScreen::MIDI_NOTE_FREE : LiveScreen::MIDI_NOTE_IN_USE)); // Encoder 4 = MIDI IN
       } else {
         if (_midiNoteToSlot[d1] != -1) {
           // d2 = velocity
@@ -342,7 +362,7 @@ void Live::receiveMidiData(midi::MidiType type, int d1, int d2) {
 
     case midi::MidiType::AfterTouchPoly:      
       if (_slots[_midiNoteToSlot[d1]].type == Play::SAMPLE) {
-        _play->handlePolyphonicAftertouch(_slots[_midiNoteToSlot[d1]].sampleNumber, d2);
+        _play->handlePolyphonicAftertouch(_slots[_midiNoteToSlot[d1]].sampleNumber, d2, _slots[_midiNoteToSlot[d1]].stereoPosition);
       }
       break;
 
@@ -480,6 +500,7 @@ void Live::_changeState(LiveState state) {
 };
 
 
+// velocity == 128 -> take velocity from slot
 void Live::_playSlot(int slotIndex, byte velocity, boolean pressed) {
   Play::LiveSlotDefinitionStruct slot = _slots[slotIndex];
 
@@ -523,10 +544,10 @@ void Live::_playSlot(int slotIndex, byte velocity, boolean pressed) {
   if (slot.type == Play::SAMPLE) {
     if (pressed) {
       // play sample    
-      _play->playNextFreeMemory(slot.sampleNumber, slot.velocity, slot.stereoPosition, slot.baseMidiNote, slot.pitchedNote, slot.reverse, true);
+      _play->playNextFreeMemory(slot.sampleNumber, velocity == 128 ? slot.velocity : velocity, slot.stereoPosition, slot.baseMidiNote, slot.pitchedNote, slot.reverse, true);
     } else {
       if (slot.immediateStopOnRelease) {
-        _play->playNextFreeMemory(slot.sampleNumber, slot.velocity, slot.stereoPosition, slot.baseMidiNote, slot.pitchedNote, slot.reverse, false);
+        _play->playNextFreeMemory(slot.sampleNumber, 0, slot.stereoPosition, slot.baseMidiNote, slot.pitchedNote, slot.reverse, false);
       }
     }
   
@@ -547,20 +568,31 @@ void Live::_handleSlotTypeSelection(byte bank, byte key, boolean initialize) {
   _liveScreen.showSlotTypeSelection(_slots[s], initialize);
 }
 
-// called when FN+SET is pressed or the context changes
+
 void Live::_cancel() {
+  _cancel(true);
+}
+
+void Live::_cancel(boolean showOverview) {
   switch (_currentState) {
     case SLOT_TYPE_SELECT:
     case WAIT_SNIPPET_SELECT:
     case WAIT_SAMPLE_SELECT:
       _slots[(_editingSlotBank-1)*24+_editingSlotKey-1].type = Play::EMPTY;
       _changeState(OVERVIEW);                
-      _overview(true);
+      
+      if (showOverview) { 
+        _overview(true); 
+      }
       break;      
     case CONFIG_SNIPPET:
     case CONFIG_SAMPLE:
-      _changeState(OVERVIEW);                
-      _overview(true);
+      _changeState(OVERVIEW);
+
+      if (showOverview) { 
+        _overview(true); 
+      }
+      break;      
     default:
       break;
   }
@@ -603,13 +635,13 @@ void Live::_handleSnippetConfiguration(byte encoder, boolean function, int actio
         if (!function) {
           // toggling play complete and stop on release
           _slots[_editingSlotId].immediateStopOnRelease = !_slots[_editingSlotId].immediateStopOnRelease;          
-          _liveScreen.updateSnippetConfig(_slots[_editingSlotId], 1, LiveScreen::NONE);
+          _liveScreen.updateSnippetConfig(_slots[_editingSlotId], 1, (action == 0 ? true : false), LiveScreen::NONE);
         }
         break;
       case 2:
         if (!function) {
           _slots[_editingSlotId].loopSnippet = !_slots[_editingSlotId].loopSnippet;
-          _liveScreen.updateSnippetConfig(_slots[_editingSlotId], 2, LiveScreen::NONE);
+          _liveScreen.updateSnippetConfig(_slots[_editingSlotId], 2, (action == 0 ? true : false), LiveScreen::NONE);
         } 
         break;
       case 4:
@@ -627,7 +659,7 @@ void Live::_handleSnippetConfiguration(byte encoder, boolean function, int actio
         } else {
           // handle encoder updates          
           boolean free = _setMIDINote(_slots[_editingSlotId].midiNote + action);
-          _liveScreen.updateSnippetConfig(_slots[_editingSlotId], 4, free ? LiveScreen::MIDI_NOTE_FREE : LiveScreen::MIDI_NOTE_IN_USE);
+          _liveScreen.updateSnippetConfig(_slots[_editingSlotId], 4, (action == 0 ? true : false), free ? LiveScreen::MIDI_NOTE_FREE : LiveScreen::MIDI_NOTE_IN_USE);
         }
         
         break;
@@ -645,33 +677,58 @@ void Live::_handleSampleConfiguration(byte encoder, boolean function, int action
     switch (encoder) {
       case 1:
         if (!function) {
-          // toggling play complete and stop on release
-          _slots[_editingSlotId].immediateStopOnRelease = !_slots[_editingSlotId].immediateStopOnRelease;          
-          _liveScreen.updateSampleConfig(_slots[_editingSlotId], 1, LiveScreen::NONE);
+          if (action == 0) {
+            // toggling play complete and stop on release
+            _slots[_editingSlotId].immediateStopOnRelease = !_slots[_editingSlotId].immediateStopOnRelease;          
+            _liveScreen.updateSampleConfig(_slots[_editingSlotId], 1, true, LiveScreen::NONE);
+          } else {
+            if (action == -1 && _slots[_editingSlotId].velocity > 1) _slots[_editingSlotId].velocity -= 2;
+            if (action == 1 && _slots[_editingSlotId].velocity < 126) _slots[_editingSlotId].velocity += 2;
+            _liveScreen.updateSampleConfig(_slots[_editingSlotId], 1, false, LiveScreen::NONE);            
+          }
         }
         break;
+      
       case 2:
         if (!function) {
-          _slots[_editingSlotId].reverse = !_slots[_editingSlotId].reverse;
-          _liveScreen.updateSampleConfig(_slots[_editingSlotId], 2, LiveScreen::NONE);
+          if (action == 0) {
+            _slots[_editingSlotId].reverse = !_slots[_editingSlotId].reverse;
+            _liveScreen.updateSampleConfig(_slots[_editingSlotId], 2, (action == 0 ? true : false), LiveScreen::NONE);
+          } else {
+            if (action == -1 && _slots[_editingSlotId].stereoPosition > 1) _slots[_editingSlotId].stereoPosition -= 2;
+            if (action == 1 && _slots[_editingSlotId].stereoPosition < 126) _slots[_editingSlotId].stereoPosition += 2;
+            _liveScreen.updateSampleConfig(_slots[_editingSlotId], 2, false, LiveScreen::NONE);
+          }
         } 
         break;
+      
+      case 3:
+        if (!function) {
+          if (action == 0) {
+          } else {
+            if (action == -1 && _slots[_editingSlotId].pitchedNote > 29) _slots[_editingSlotId].pitchedNote--;
+            if (action == 1 && _slots[_editingSlotId].pitchedNote < 100) _slots[_editingSlotId].pitchedNote++;
+            _liveScreen.updateSampleConfig(_slots[_editingSlotId], 3, false, LiveScreen::NONE);
+          }
+        } 
+        break;
+
       case 4:
         if (action == 0) {
-          // handle push -> Learn MIDI event -> triggering display is in receive midi functions
-          if (_currentState == WAIT_MIDI_TRAINING_INPUT_SNIPPET) {
+          // handle push -> Learn MIDI event
+          if (_currentState == WAIT_MIDI_TRAINING_INPUT_SAMPLE) {
             // end waiting for note
             _liveScreen.drawMIDIinWaitForTraining(false);          
-            _changeState(CONFIG_SNIPPET);
+            _changeState(CONFIG_SAMPLE);
           } else {
             // start waiting for note
-            _changeState(WAIT_MIDI_TRAINING_INPUT_SNIPPET);
+            _changeState(WAIT_MIDI_TRAINING_INPUT_SAMPLE);
             _liveScreen.drawMIDIinWaitForTraining(true);
           }
         } else {
           // handle encoder updates          
           boolean free = _setMIDINote(_slots[_editingSlotId].midiNote + action);
-          _liveScreen.updateSampleConfig(_slots[_editingSlotId], 4, free ? LiveScreen::MIDI_NOTE_FREE : LiveScreen::MIDI_NOTE_IN_USE);
+          _liveScreen.updateSampleConfig(_slots[_editingSlotId], 4, (action == 0 ? true : false), free ? LiveScreen::MIDI_NOTE_FREE : LiveScreen::MIDI_NOTE_IN_USE);
         }
         
         break;
@@ -714,7 +771,7 @@ void Live::loadConfig() {
   File readFile;
   byte *bufferBlocks;
 
-    // read _slots
+  // read _slots
   strcpy(buff, _sfsio->getSongPath());
   strcat(buff, "/PATTERN/LIVESLTS.DAT");
 
@@ -734,7 +791,16 @@ void Live::loadConfig() {
 
     readFile.close();
 
-    // ToDo: reconstruct _midiToSlots array from _slots
+    for (int i=0; i<128; i++) {
+      _midiNoteToSlot[i] = -1;
+    }
+
+    // reconstruct _midiToSlots array from _slots
+    for (int i=0; i<72; i++) {
+      if (_slots[i].type != Play::EMPTY) {
+        _midiNoteToSlot[_slots[i].midiNote] = i;
+      }
+    }
 
   } else {
     Serial.println("Live Configuration does not exist on SD card.. using default values.");

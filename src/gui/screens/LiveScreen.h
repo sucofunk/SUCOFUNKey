@@ -36,11 +36,12 @@
 #include "../../context/sequencer/Play.h"
 #include "../../helper/FSIO.h"
 #include "../Screen.h"
+#include "../../helper/SampleFSIO.h"
 
 class LiveScreen {
     public:
         LiveScreen(){};
-        LiveScreen(Sucofunkey *keyboard, Screen *screen);                
+        LiveScreen(Sucofunkey* keyboard, Screen* screen, SampleFSIO* sfsio);
 
         enum Options {
             NONE = 0,
@@ -57,22 +58,25 @@ class LiveScreen {
         void showSlotTypeSelection(Play::LiveSlotDefinitionStruct slot, boolean initial);     
         void showSelectSnippet(Play::LiveSlotDefinitionStruct slot, boolean initial);
         void showSnippetConfig(Play::LiveSlotDefinitionStruct slot);
-        void updateSnippetConfig(Play::LiveSlotDefinitionStruct slot, int encoder, Options option); // encoder: 1..4 and 5..8 (with FN hold)
+        void updateSnippetConfig(Play::LiveSlotDefinitionStruct slot, int encoder, boolean push, Options option); // encoder: 1..4 and 5..8 (with FN hold)
 
         void drawMIDIinWaitForTraining(boolean show);
 
         void showSelectSample(Play::LiveSlotDefinitionStruct slot, boolean initial);
         void showSampleConfig(Play::LiveSlotDefinitionStruct slot);
-        void updateSampleConfig(Play::LiveSlotDefinitionStruct slot, int encoder, Options option); // encoder: 1..4 and 5..8 (with FN hold)
+        void updateSampleConfig(Play::LiveSlotDefinitionStruct slot, int encoder, boolean push, Options option); // encoder: 1..4 and 5..8 (with FN hold)
 
 
     private:
         Sucofunkey *_keyboard;
         Screen *_screen;
+        SampleFSIO* _sfsio;
 
         char _cBuff3[3];
         char _cBuff5[5];
         char _cBuff10[10];
+        int _centerLineY = 105;
+        int _tempInt;
 
         Screen::Area _slotTypeSelectionAreaLeft;
         Screen::Area _slotTypeSelectionAreaRight;
@@ -85,6 +89,9 @@ class LiveScreen {
         Screen::Area _snippetsLoopArea;
         Screen::Area _snippetsMIDIArea;        
 
+        Screen::Area _waveFormArea;
+
+        void _drawSampleWaveform(int sampleId72, boolean reverse);
 };
 
 #endif

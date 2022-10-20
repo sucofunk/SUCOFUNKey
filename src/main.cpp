@@ -586,7 +586,7 @@ int z = 0;
 int zz = 0;
 
 
-void loop() {
+void loop() {  
   // recording? -> has highest priority -> store record buffer to sd..
   if (recorderContext.currentState == recorderContext.RECORDER_RECORDING) recorderContext.continueRecording();
   z++;
@@ -730,8 +730,8 @@ void handleKeyboardEventQueue() {
     Serial.println(event.type);
 */
 
-/*
-    Serial.print("MaxAudioMemoryUsed:: ");
+
+/*    Serial.print("MaxAudioMemoryUsed:: ");
     Serial.println(AudioMemoryUsageMax());
 */
 
