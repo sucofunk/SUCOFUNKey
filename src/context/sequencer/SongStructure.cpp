@@ -1598,6 +1598,145 @@ boolean SongStructure::setSnippetSlotFree(byte slot) {
 
 
 // -------------------------------------------------------------------------------------------------------------------
+//  SHEETS
+// -------------------------------------------------------------------------------------------------------------------
+
+
+boolean SongStructure::addSheetDivider(int position) {
+    int freeSheets = 0;
+    int insertBefore = 0;
+    int checked = 0;
+
+    if (position == 0) return false;
+
+    for (int i=16; i>0; i--) {
+        if (_meta.sheetDividerPositions[i] == 65535) freeSheets++;
+    }
+    
+    if (freeSheets == 0) return false; // limit is reached!
+
+    // find position in array where to add the new sheet divider
+    for (int i=1; i<17; i++) {
+        if (position == _meta.sheetDividerPositions[i]) return false; // elemnt already exists
+
+        if (position > _meta.sheetDividerPositions[i-1] && position < _meta.sheetDividerPositions[i]) {
+            insertBefore = i;
+            break;
+        }
+        checked++;
+    }
+
+    // first element in list
+    if (insertBefore == 0) insertBefore = 1;
+
+    // shift all entries from that position one to the right
+    for (int i=16; i>=insertBefore; i--) {
+        _meta.sheetDividerPositions[i+1] = _meta.sheetDividerPositions[i];
+    }
+
+    _meta.sheetDividerPositions[insertBefore] = position;
+    
+    return true;
+};
+
+void SongStructure::removeSheetDivider(int position) {
+    int removePosition = 0;
+
+    // find the array position where position is located
+    for (int i=1; i<17; i++) {
+        if (_meta.sheetDividerPositions[i] == position) {
+            removePosition = i;
+            break;
+        };
+    }
+
+    if (removePosition >= 1) {
+        // shift whole array right of the found position one position left
+        for (int i=removePosition+1; i<17; i++) {
+            _meta.sheetDividerPositions[i-1] = _meta.sheetDividerPositions[i];
+        }
+        _meta.sheetDividerPositions[16] = 65535;
+    }
+};
+
+int SongStructure::getNextSheetDividerPosition(int position) {
+    // find position in array where the element before is smaller and the element ahead is larger than the position
+    for (int i=0; i<16; i++) {
+        if (_meta.sheetDividerPositions[i] == position) return _meta.sheetDividerPositions[i+1];
+
+        if (position >= _meta.sheetDividerPositions[i] && position < _meta.sheetDividerPositions[i+1]) {
+            return _meta.sheetDividerPositions[i+1];
+        }
+    }
+    return -1;
+};
+
+int SongStructure::getPreviousSheetDividerPosition(int position) {
+    // find position in array where the element before is smaller and the element ahead is larger than the position
+    for (int i=1; i<16; i++) {
+
+        if (_meta.sheetDividerPositions[i] == position) return position;
+
+        if (position > _meta.sheetDividerPositions[i-1] && position < _meta.sheetDividerPositions[i]) {
+            return _meta.sheetDividerPositions[i-1];
+        }
+    }
+    return -1;
+};
+
+int SongStructure::getSheetStartForPosition(int position) {
+    for (int i=1; i<17; i++) {
+        if (position == _meta.sheetDividerPositions[i]) return _meta.sheetDividerPositions[i]; // position is sheet start
+
+        if (position > _meta.sheetDividerPositions[i-1] && position < _meta.sheetDividerPositions[i]) {
+            return _meta.sheetDividerPositions[i-1];
+        }
+    }
+    return 0;
+}
+
+int SongStructure::getSheetEndForPosition(int position) {
+    int retVal = 0;
+
+    for (int i=1; i<17; i++) {
+        if (position == _meta.sheetDividerPositions[i]) retVal = _meta.sheetDividerPositions[i+1]; // position is sheet start
+
+        if (position > _meta.sheetDividerPositions[i-1] && position < _meta.sheetDividerPositions[i]) {            
+            retVal = _meta.sheetDividerPositions[i];
+        }
+    }
+    
+    if (retVal == 65535) {
+        retVal = _meta.songLength-1;
+    } else {
+        retVal--;
+    }
+    return retVal;
+}
+
+void SongStructure::debugSheets() {
+    for (int i=0; i<17; i++) {                        
+        Serial.print(i);
+        Serial.print("\t");
+    }
+    Serial.println("");
+
+    for (int i=0; i<17; i++) {                        
+        Serial.print(_meta.sheetDividerPositions[i]);
+        Serial.print("\t");        
+    }
+    Serial.println("");
+    Serial.println("-----");
+
+    Serial.print("next 32::");
+    Serial.println(getNextSheetDividerPosition(32));    
+
+    Serial.print("previous 32::");
+    Serial.println(getPreviousSheetDividerPosition(32));    
+}
+
+
+// -------------------------------------------------------------------------------------------------------------------
 //  TESTS && DEBUGGING
 // -------------------------------------------------------------------------------------------------------------------
 

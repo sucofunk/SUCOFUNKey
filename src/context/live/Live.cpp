@@ -173,14 +173,7 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
             int from = (_activeBank-1)*24;
             int to = from + 23;
 
-            Serial.print("switch::");
-            Serial.print(_pianoSampleSlotIndex);
-            Serial.print("::from::");
-            Serial.print(from);
-            Serial.print("::to::");
-            Serial.println(to);
             if (_pianoSampleSlotIndex >= from && _pianoSampleSlotIndex <= to) {
-              Serial.println("anzeigen!");
               _liveScreen.drawOverviewSlot(_slots[_pianoSampleSlotIndex], (_pianoSampleSlotIndex - from + 1));
             }
 

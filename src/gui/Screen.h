@@ -162,6 +162,8 @@ class Screen {
         const uint16_t C_LIVE_SAMPLE = C_ORANGE;
         const uint16_t C_LIVE_PIANO = C_RECORDING;
 
+        const uint16_t C_SHEET = RGBtoColor(0, 0, 255);;
+
 
         // Area definitions
         Area AREA_SCREEN = { 0, 0, 319, 239, false, C_BLACK};  // Fullscreen

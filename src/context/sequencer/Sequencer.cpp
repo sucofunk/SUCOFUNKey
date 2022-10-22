@@ -60,6 +60,7 @@ Sequencer::Sequencer(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSI
     _blackKeyMenu.setOption(3, "DBL");
 
     _blackKeyMenu.setOption(4, "SNI");
+    _blackKeyMenu.setOption(5, "SHE");
 
     _blackKeyMenu.setOption(6, "SND");
     _blackKeyMenu.setOption(7, "INS");
@@ -128,11 +129,20 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
       switch(event.index) {
         // move cursor
         case Sucofunkey::CURSOR_LEFT: 
-              moveCursor(LEFT);
+                moveCursor(LEFT);
               break;
+        case Sucofunkey::MENU_CURSOR_LEFT: 
+                _jumpToPreviousSheet();
+              break;
+
         case Sucofunkey::CURSOR_RIGHT:
-              moveCursor(RIGHT);
+                moveCursor(RIGHT);
               break;
+        case Sucofunkey::MENU_CURSOR_RIGHT: 
+                _jumpToNextSheet();
+              break;
+
+
         case Sucofunkey::CURSOR_UP:
               moveCursor(UP);
               break;
@@ -157,13 +167,28 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               _song->swingLevelUp(_cursorChannel, _cursorPosition);
               _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);              
               break;
+
         case Sucofunkey::SET_CURSOR_UP:
-              _song->swingGroupUp(_cursorChannel, _cursorPosition);
-              _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+              if (_currentSequencerState == SHEETS) {
+                // create new sheet divider                
+                _song->addSheetDivider(_cursorPosition);
+                _sequencerScreen.drawGrid(SequencerScreen::SHEET_ADDED);
+                _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+              } else {
+                _song->swingGroupUp(_cursorChannel, _cursorPosition);
+                _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+              }
               break;
         case Sucofunkey::SET_CURSOR_DOWN:
-              _song->swingGroupDown(_cursorChannel, _cursorPosition);
-              _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);              
+              if (_currentSequencerState == SHEETS) {
+                // remove sheet divider
+                _song->removeSheetDivider(_cursorPosition);
+                _sequencerScreen.drawGrid(SequencerScreen::SHEET_REMOVED);
+                _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+              } else {
+                _song->swingGroupDown(_cursorChannel, _cursorPosition);
+                _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+              }
               break;
 
         case Sucofunkey::FN_CURSOR_UP:
@@ -253,6 +278,11 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
     }
 
 
+    // -------------------------------------------------------------------------
+    // NOTE
+    // -------------------------------------------------------------------------
+
+
     if (event.type == Sucofunkey::KEY_NOTE && event.pressed) {
       // check if blackKeys menu is active and pass the key to it
       if (_currentMenuState == MENU_BLACKKEY) {
@@ -280,7 +310,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
         
       if (_currentMenuState == MENU_PIANO) {
         
-        // ToDo: basenote setzen FP+NoteKey? -> eher in sampler??? -> da wird dann ja auch ADSR Hüllkurve gesetzt..
+        // ToDo: basenote setzen FN+NoteKey? -> eher in sampler??? -> da wird dann ja auch ADSR Hüllkurve gesetzt..
 
         if (_song->isSomethingAt(_cursorChannel, _cursorPosition)) {
           // is it a sample? -> set reference as origin in piano keyboard
@@ -324,6 +354,11 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
         _audioResources->playSdRaw.stop();
       }
     }
+
+
+    // -------------------------------------------------------------------------
+    // ENCODERS
+    // -------------------------------------------------------------------------
 
     if (event.type == Sucofunkey::ENCODER) {
       SongStructure::pointerType t = _song->getPosition(_cursorChannel, _cursorPosition).type;
@@ -439,27 +474,37 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
       }
     }
 
+    // -------------------------------------------------------------------------
     // Application Events from e.g. black key menue
+    // -------------------------------------------------------------------------
+
     if (event.type == Sucofunkey::EVENT_APPLICATION) {
       switch (event.index) {
+        // Selection
         case Sucofunkey::BLACKKEY_NAV_ITEM1:
               setSequencerState(SELECTION);
           break;
+        // Move a cell
         case Sucofunkey::BLACKKEY_NAV_ITEM2:
               setSequencerState(MOVE_CELL);
-          break;          
+          break;      
+        // Duplicate (Copy & Paste) a cell    
         case Sucofunkey::BLACKKEY_NAV_ITEM3:
               setSequencerState(DOUBLE_CELL);
-          break;          
+          break;
+        // Snippets          
         case Sucofunkey::BLACKKEY_NAV_ITEM4:
               if (_selection.isActive()) {
                 setSequencerState(SELECT_SNIPPET_SLOT);
               } else {
                 setSequencerState(SNIPPET_WAIT_DELETE);
               }              
-          break;          
-        case Sucofunkey::BLACKKEY_NAV_ITEM5:
           break;
+        // Sheets          
+        case Sucofunkey::BLACKKEY_NAV_ITEM5:
+            setSequencerState(SHEETS);
+          break;
+        // SND -> Parameter Change and Note Off
         case Sucofunkey::BLACKKEY_NAV_ITEM6:  
             {
               // Parameter Change for velocity and panning or NOTE OFF
@@ -488,17 +533,23 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
             }
           break;
+        
+        // Instrument -> MIDI out
         case Sucofunkey::BLACKKEY_NAV_ITEM7:
           _song->setMidiNote(_cursorChannel, _cursorPosition, {});
           _sequencerScreen.drawSample(_cursorChannel, _cursorPosition, false);
-          break;          
+          break;
+        
+        // Reverse          
         case Sucofunkey::BLACKKEY_NAV_ITEM8:
           _song->reverseSamplePlayback(_cursorChannel, _cursorPosition);
           _sequencerScreen.drawSample(_cursorChannel, _cursorPosition, false);
           break;          
+        
         case Sucofunkey::BLACKKEY_NAV_ITEM9:
-          // loadFromSD(true);
           break;          
+
+        // Clear selection/sketch
         case Sucofunkey::BLACKKEY_NAV_ITEM10:
           if (_currentSequencerState == SELECTION) {
             // clear selection
@@ -508,6 +559,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
             setSequencerState(SELECTION); // to deselect the selection..
           } else {
             // CLS -> deletes all notes from song
+            // ToDo: Maybe display a confirmation/warning/notification message
             setSequencerState(CONFIRM_CLS); 
           }          
           break;                    
@@ -589,8 +641,7 @@ boolean Sequencer::setMenuState(MenuState state) {
         _blackKeyMenu.showMenu();
       } else {
         // only switch to piano, if a sample ist selected -> otherwise there would be nothing to play
-        // needs to be extended, when synth is implemented
-        // ToDo: add for midi, too
+        // ToDo: add for midi, too?
 
         if (_song->getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE) {
           _blackKeyMenu.hideMenu();
@@ -605,6 +656,11 @@ boolean Sequencer::setMenuState(MenuState state) {
 
   return false;
 };
+
+
+// -------------------------------------------------------------------------
+//  STATES 
+// -------------------------------------------------------------------------
 
 
 void Sequencer::setSequencerState(SequencerState state) {
@@ -676,6 +732,12 @@ void Sequencer::setSequencerState(SequencerState state) {
           _sequencerScreen.drawGrid(SequencerScreen::SNIPPET_DELETE);
           _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
           break;
+
+      case SHEETS:
+          _blackKeyMenu.setExclusiveAction(5, false); 
+          _currentSequencerState = NORMAL;                    
+          break;
+
       default:
           break;
     }
@@ -691,10 +753,9 @@ void Sequencer::setSequencerState(SequencerState state) {
         if (_currentSequencerState == SELECT_SNIPPET_SLOT || _currentSequencerState == SNIPPET_WAIT_DELETE) {
           _snippets->hideFreeSlots();
         }
-
         _currentSequencerState = NORMAL; 
-
         break;
+
       case MOVE_CELL:
         if (_song->isSomethingAt(_cursorChannel, _cursorPosition)) {
           _saveCurrentCursorPosition();
@@ -704,6 +765,7 @@ void Sequencer::setSequencerState(SequencerState state) {
           _currentSequencerState = NORMAL;
         }
         break;
+
       case DOUBLE_CELL:
         if (_song->isSomethingAt(_cursorChannel, _cursorPosition)) {
           _saveCurrentCursorPosition();
@@ -713,10 +775,12 @@ void Sequencer::setSequencerState(SequencerState state) {
           _currentSequencerState = NORMAL;
         }
         break;
+
       case CONFIRM_CLS:
           _blackKeyMenu.setExclusiveAction(10, true);
           _currentSequencerState = CONFIRM_CLS;
         break;
+
       case SELECTION:
         _blackKeyMenu.setExclusiveAction(1, true);  
         _blackKeyMenu.allowAdditionalToExclusive(4); // allow saving selection as snippet
@@ -727,14 +791,15 @@ void Sequencer::setSequencerState(SequencerState state) {
         _currentSequencerState = SELECTION;        
         _sequencerScreen.drawSelection(&_selection);
         break;
+
       case SELECT_SNIPPET_SLOT:
         _blackKeyMenu.setExclusiveAction(4, true);
         _blackKeyMenu.disableExceptions();
         _snippets->showFreeSlots();
         _currentSequencerState = SELECT_SNIPPET_SLOT;
         break;
-      case SNIPPET_WAIT_DELETE:
-        
+
+      case SNIPPET_WAIT_DELETE:        
         s = _snippets->cursorInSnippet(_cursorPosition, _cursorChannel);
         if (s != -1) {
           _blackKeyMenu.setExclusiveAction(4, true);
@@ -746,8 +811,13 @@ void Sequencer::setSequencerState(SequencerState state) {
           _currentSequencerState = NORMAL;
           _snippets->hideFreeSlots();
         };
-
         break;
+
+        case SHEETS:
+          _blackKeyMenu.setExclusiveAction(5, true);
+          _currentSequencerState = SHEETS;
+        break;
+
       default:
         _currentSequencerState = NORMAL;
         break;
@@ -808,7 +878,8 @@ void Sequencer::playSong() {
     stopAllChannels();
 
     // song was paused (2x play), next play will start at cursor position
-    _nextPlayStartAtCursor = true;    
+    _nextPlayStartAtSheet = true;
+
     _playerPosition = _cursorPosition;
     _blinkPosition = _cursorPosition;
 
@@ -817,9 +888,12 @@ void Sequencer::playSong() {
     // autosave
     saveToSD();
   } else {
-    if (_nextPlayStartAtCursor) {
-      _playerPosition = _cursorPosition;
-      _blinkPosition = _cursorPosition;
+    if (_nextPlayStartAtSheet) {
+      _sheetStart = _song->getSheetStartForPosition(_cursorPosition);
+      _sheetEnd = _song->getSheetEndForPosition(_cursorPosition);
+      
+      _playerPosition = _sheetStart;
+      _blinkPosition = _playerPosition;
     } else {
       _playerPosition = 0;
       _blinkPosition = 0;
@@ -838,7 +912,7 @@ void Sequencer::stopSong() {
     // ToDo: draw cursor somewhere ;)
   }
   stopAllChannels();
-  _nextPlayStartAtCursor = false;
+  _nextPlayStartAtSheet = false;
   _playerPosition = 0;
   _isSnippetPlaying = false;
 }
@@ -891,11 +965,13 @@ void Sequencer::_playNext() {
       } 
     }
 
-    if (_playerPosition == positionEnd) {   
-      _playerPosition = positionStart;
+    if (_playerPosition == (_nextPlayStartAtSheet ? _sheetEnd : positionEnd)) {
+      _playerPosition = (_nextPlayStartAtSheet ? _sheetStart : positionStart);
+      _sequencerScreen.drawPlayStepIndicator(_playerPosition, false);
+      _blinkPosition = _playerPosition;
     } else {
       _playerPosition++;
-    }    
+    } 
 }
 
 
@@ -962,3 +1038,26 @@ void Sequencer::_clearSong() {
   _song->setCurrentPosition(_cursorChannel, _cursorPosition, true);       
   _sequencerScreen.drawExtMemPercentage(_sfsio->getExtmemUsagePercent());
 }
+
+
+void Sequencer::_jumpToPreviousSheet() {  
+  _jumpToPosition(_song->getPreviousSheetDividerPosition(_cursorPosition-1));   
+}
+
+void Sequencer::_jumpToNextSheet() {
+  _jumpToPosition(_song->getNextSheetDividerPosition(_cursorPosition));   
+}
+
+void Sequencer::_jumpToPosition(uint16_t position) {
+  if (position >= _song->getSongLength()) return;
+
+  _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, false);
+
+  _cursorPosition = position;  
+  _song->setCurrentPosition(_cursorChannel, _cursorPosition, false);
+
+  _sequencerScreen.drawGridAtPosition(position);
+  _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+}
+
+

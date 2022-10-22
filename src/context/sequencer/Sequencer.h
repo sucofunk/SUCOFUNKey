@@ -68,7 +68,8 @@ class Sequencer {
             CONFIRM_CLS = 3,
             SELECTION = 4,
             SELECT_SNIPPET_SLOT = 5,
-            SNIPPET_WAIT_DELETE = 6
+            SNIPPET_WAIT_DELETE = 6,
+            SHEETS = 7
         };
 
         enum Direction {
@@ -113,6 +114,9 @@ class Sequencer {
         Play *_play;
         SongStructure *_song;        
 
+        Snippets* _snippets;
+        Swing* _swing;
+
         SequencerScreen _sequencerScreen;
         BlackKeyMenu _blackKeyMenu;
         PianoKeyboard _pianoKeyboard;
@@ -135,11 +139,7 @@ class Sequencer {
         int _playerPosition = 0;
         volatile int _blinkPosition = 0;
 
-        void _playNext();
         byte _activeNoteLEDPin = 0;
-
-        void _saveCurrentCursorPosition();
-        boolean _savedCursorEqualsCurrent();
 
         byte _cursorChannel = 0;
         uint16_t _cursorPosition = 0;
@@ -150,14 +150,18 @@ class Sequencer {
 
         boolean _playLEDon = false;        
 
-        // if true, play will start from cursor position, false will play from start
-        boolean _nextPlayStartAtCursor = false;
-
+        // if true, play will start from sheet beginning
+        boolean _nextPlayStartAtSheet = false;
+        uint16_t _sheetStart = 0;
+        uint16_t _sheetEnd = 0;
+        
+        void _playNext();
+        void _saveCurrentCursorPosition();
+        boolean _savedCursorEqualsCurrent();        
         void _clearSong();
-
-        Snippets* _snippets;
-        Swing* _swing;
-
+        void _jumpToPreviousSheet();
+        void _jumpToNextSheet();
+        void _jumpToPosition(uint16_t position);
 };
 
 #endif

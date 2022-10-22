@@ -61,11 +61,14 @@ class SequencerScreen {
                 RESOLUTION = 9,
                 SCALE = 10,
                 SELECTION = 11,
-                SNIPPET_DELETE = 12
+                SNIPPET_DELETE = 12,
+                SHEET_ADDED = 13,
+                SHEET_REMOVED = 14
         };
 
-        void initializeGrid(SongStructure *pattern, uint16_t cursorPosition); 
+        void initializeGrid(SongStructure *pattern, uint16_t cursorPosition);         
         void drawGrid(LastAction action);
+        void drawGridAtPosition(uint16_t position);
         void drawCursorAt(byte channel, uint16_t position, boolean draw);
         void drawSample(byte channel, uint16_t position, boolean drawBackground);
         void drawSamples();

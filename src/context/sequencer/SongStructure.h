@@ -179,10 +179,18 @@ class SongStructure {
         boolean isSnippetSlotFree(byte slot); // 1..14
         boolean setSnippetSlotFree(byte slot); // 1..14
 
+        boolean addSheetDivider(int position);
+        void removeSheetDivider(int position);
+        int getNextSheetDividerPosition(int position);
+        int getPreviousSheetDividerPosition(int position);
+        int getSheetStartForPosition(int position);
+        int getSheetEndForPosition(int position);
+
         void test();
         void testLog();
         void testLogSample(uint16_t channel, uint16_t position);
         void debugInfos();
+        void debugSheets();
 
     private:
         Swing _swing;
@@ -238,6 +246,8 @@ class SongStructure {
             float    playbackSpeed = 85.0; // BPM
 
             byte     swingGroupLevels[9] = {0, 4, 4, 4, 4, 4, 4, 4, 4};
+
+            int      sheetDividerPositions[17] = { 0, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535 };
         } MetaInfos;
 
         MetaInfos _meta;
@@ -250,7 +260,7 @@ class SongStructure {
         samplePointerStruct _samplePointers[5000];
         sampleStruct _sampleBucket[2500];
         parameterChangeSampleStruct _parameterChangeSampleBucket[2500];
-        midiNoteStruct _midiNoteBucket[500];
+        midiNoteStruct _midiNoteBucket[500];        
 
         uint16_t _maxSongLength = sizeof(_blocks)/sizeof(blockStruct) * BLOCKSIZE; // amount of buckets * blocksize
 

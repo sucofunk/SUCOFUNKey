@@ -118,9 +118,35 @@ void SequencerScreen::drawGrid(LastAction action) {
     lc = (lc == _song->getSongResolution()*_zoom->getZoomlevelFactor()) ? 1 : lc+1;
   }
 
+
   if ((action == SHORTEN || action == SCALE)  && (amountOfGridcellsToDraw < _xPositionCapacity)) {
     _screen->fillRect((amountOfGridcellsToDraw)*_cellWidth+1, _screen->AREA_CONTENT.y1+1, _screen->AREA_SCREEN.x2-(amountOfGridcellsToDraw*_cellWidth)+2, h+1, _screen->C_BLACK);
   }
+
+
+  // draw sheet divider lines..
+  int previousSheet = _song->getPreviousSheetDividerPosition(_xPositionOffset);
+  int nextSheet = _xPositionOffset;
+  int viewPortEnd = _xPositionOffset + (_xPositionCapacity * _zoom->getZoomlevelOffset()); 
+  boolean cont = true;
+
+  if (previousSheet == _xPositionOffset) {
+    // start cell is start of sheet -> draw sheet divider line
+    _screen->drawFastVLine(0, _screen->AREA_CONTENT.y1+1, h, _screen->C_SHEET);
+  }
+
+  // iterate to check if there are multiple sheet divider visible in the viewport
+  while (cont) {
+    nextSheet = _song->getNextSheetDividerPosition(nextSheet);
+    if (nextSheet <= viewPortEnd) {
+      // next sheet divider line is in viewport
+      int x = (nextSheet - _xPositionOffset) / _zoom->getZoomlevelOffset();
+      _screen->drawFastVLine(x * _cellWidth, _screen->AREA_CONTENT.y1+1, h, _screen->C_SHEET);
+    } else {
+      cont = false;
+    }
+  }
+  // END sheet divider lines
 
 
   if (action != SELECTION) {
@@ -133,6 +159,15 @@ void SequencerScreen::drawGrid(LastAction action) {
 
   drawSnippets();
 }
+
+
+
+void SequencerScreen::drawGridAtPosition(uint16_t position) {
+  _xPositionOffset = position - (position % _zoom->getZoomlevelOffset());
+  drawGrid(INIT);
+};
+
+
 
 void SequencerScreen::drawCursorAt(byte channel, uint16_t position, boolean draw) {
   // draw cursor if it is within the viewport and displayed range
