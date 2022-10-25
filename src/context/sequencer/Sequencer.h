@@ -68,8 +68,7 @@ class Sequencer {
             CONFIRM_CLS = 3,
             SELECTION = 4,
             SELECT_SNIPPET_SLOT = 5,
-            SNIPPET_WAIT_DELETE = 6,
-            SHEETS = 7
+            SNIPPET_WAIT_DELETE = 6
         };
 
         enum Direction {

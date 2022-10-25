@@ -60,7 +60,7 @@ Sequencer::Sequencer(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSI
     _blackKeyMenu.setOption(3, "DBL");
 
     _blackKeyMenu.setOption(4, "SNI");
-    _blackKeyMenu.setOption(5, "SHE");
+//    _blackKeyMenu.setOption(5, "SHE");
 
     _blackKeyMenu.setOption(6, "SND");
     _blackKeyMenu.setOption(7, "INS");
@@ -134,7 +134,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::MENU_CURSOR_LEFT: 
                 _jumpToPreviousSheet();
               break;
-
+        
         case Sucofunkey::CURSOR_RIGHT:
                 moveCursor(RIGHT);
               break;
@@ -142,13 +142,28 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
                 _jumpToNextSheet();
               break;
 
-
         case Sucofunkey::CURSOR_UP:
               moveCursor(UP);
               break;
+
+        case Sucofunkey::MENU_CURSOR_UP: 
+              _song->addSheetDivider(_cursorPosition);
+              _sequencerScreen.drawGrid(SequencerScreen::SHEET_ADDED);
+              _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);                
+              break;
+
+
         case Sucofunkey::CURSOR_DOWN:
               moveCursor(DOWN);
               break;
+
+        case Sucofunkey::MENU_CURSOR_DOWN: 
+               _song->removeSheetDivider(_cursorPosition);
+               _sequencerScreen.drawGrid(SequencerScreen::SHEET_REMOVED);
+               _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);                
+              break;
+
+
         // change sample bank
         case Sucofunkey::FN_CURSOR_LEFT:
               _keyboard->setBankDown();
@@ -169,26 +184,12 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               break;
 
         case Sucofunkey::SET_CURSOR_UP:
-              if (_currentSequencerState == SHEETS) {
-                // create new sheet divider                
-                _song->addSheetDivider(_cursorPosition);
-                _sequencerScreen.drawGrid(SequencerScreen::SHEET_ADDED);
-                _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
-              } else {
                 _song->swingGroupUp(_cursorChannel, _cursorPosition);
                 _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
-              }
               break;
         case Sucofunkey::SET_CURSOR_DOWN:
-              if (_currentSequencerState == SHEETS) {
-                // remove sheet divider
-                _song->removeSheetDivider(_cursorPosition);
-                _sequencerScreen.drawGrid(SequencerScreen::SHEET_REMOVED);
-                _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
-              } else {
                 _song->swingGroupDown(_cursorChannel, _cursorPosition);
                 _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
-              }
               break;
 
         case Sucofunkey::FN_CURSOR_UP:
@@ -502,7 +503,6 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
           break;
         // Sheets          
         case Sucofunkey::BLACKKEY_NAV_ITEM5:
-            setSequencerState(SHEETS);
           break;
         // SND -> Parameter Change and Note Off
         case Sucofunkey::BLACKKEY_NAV_ITEM6:  
@@ -733,11 +733,6 @@ void Sequencer::setSequencerState(SequencerState state) {
           _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
           break;
 
-      case SHEETS:
-          _blackKeyMenu.setExclusiveAction(5, false); 
-          _currentSequencerState = NORMAL;                    
-          break;
-
       default:
           break;
     }
@@ -811,11 +806,6 @@ void Sequencer::setSequencerState(SequencerState state) {
           _currentSequencerState = NORMAL;
           _snippets->hideFreeSlots();
         };
-        break;
-
-        case SHEETS:
-          _blackKeyMenu.setExclusiveAction(5, true);
-          _currentSequencerState = SHEETS;
         break;
 
       default:
