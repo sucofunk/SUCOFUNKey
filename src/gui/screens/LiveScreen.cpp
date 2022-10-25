@@ -336,7 +336,7 @@ void LiveScreen::showSnippetConfig(Play::LiveSlotDefinitionStruct slot) {
 void LiveScreen::updateSnippetConfig(Play::LiveSlotDefinitionStruct slot, int encoder, boolean push, Options option) {
     switch (encoder) {
         case 1:
-        _screen->drawTextInArea(_snippetsCompleteArea, Screen::TEXTPOSITION_LEFT_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, slot.immediateStopOnRelease ? "while hold" : "play complete");
+        _screen->drawTextInArea(_snippetsCompleteArea, Screen::TEXTPOSITION_LEFT_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, slot.immediateStopOnRelease ? "instant stop" : "play complete");
         break;
 
         case 2:
@@ -387,7 +387,7 @@ void LiveScreen::showSampleConfig(Play::LiveSlotDefinitionStruct slot) {
     _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION1, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "vol");
     _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION2, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "pan");
     _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "pitch");
-    _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION4, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "xxx");
+    _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION4, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, " ");
 
     // draw frame for volume bar
     _screen->vr(_screen->AREA_SEQUENCER_OPTION1_VOLUME, 0.0, _screen->C_WHITE);

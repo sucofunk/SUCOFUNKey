@@ -3,7 +3,7 @@
 Beatmaker's sketchbook is developed to be as intuitive to use as possible. As you know, it is Open Source and will change and improve over time.
 The learning curve is pretty flat. Just play around.
 
-Last edit: 22.07.2022
+Last edit: 25.10.2022
 
 ## 1 Input controls
 
@@ -37,12 +37,12 @@ The fader on the bottom of the front panel is not a crossfader as in a DJ mixer.
 ## 2 Most important shortcuts
 The most important key-compinations to know, as they are essential, are:
 
-    MENU+ENCODER1   Sampler
-    MENU+ENCODER2   Sequencer    
-    MENU+ENCODER3   Proprietary Instrument/Synth mode
-    MENU+ENCODER4   Proprietary Live mode
+    MENU+ENCODER1   Sampler (sample)
+    MENU+ENCODER2   Sequencer (sketch)
+    MENU+ENCODER3   Arrange Mode (arrange) - not implemented yet
+    MENU+ENCODER4   Live mode (play)
 
-    FUNK+SET        Is the undo function. Like CTRL+Z on a PC. It works only in the navigating context.
+    FUNK+SET        Is the undo and sometimes delete function. Like CTRL+Z on a PC.
 
     MENU            Hiding the menu will cancel the current menu action
     
@@ -55,7 +55,7 @@ Select *create a new song* to.. you guessed it.. enter the name of the new song 
 
 
 ## 4 Switching between contexts
-The main contexts *Sampler*, *Sequencer*, *Instrument* and *Live Mode* are assigned to the four encoders. If you are in the main menu, just hit one of the four encoders to jump to the corresponding context. If you are in a context, use the shortcut **MENU+ENCODER 1/2/3/4** to change the context.
+The main contexts *sample*, *sketch*, *arrange* and *play* are assigned to the four encoders. If you are in the main menu, just hit one of the four encoders to jump to the corresponding context. If you are in a context, use the shortcut **MENU+ENCODER 1/2/3/4** to change the context.
 
 Holding the FUNK key for more than five seconds (and do not to release the key), will bring you to the settings menu.
 
@@ -115,21 +115,26 @@ PLAY to pre-listen the library sample. Use SET to select the selected sample, ca
 When cutting a sample (Menu -> CUT), ENCODER1 moves the start pointer, ENCODER2 moves the end pointer. Encoder 3 adjusts the volume.
 Playing the selected part is always possible by hitting PLAY.
 
-To fine-adjust the start- and end-point, use FUNK+ENCODER1/2. The amount of 16 Bits (one amplitude change) will be shown on top. Pay attention that it resets to zero, if you change it again on a grin level (without holding FUNK).
+To fine-adjust the start- and end-point, use FUNK+ENCODER1/2. The amount of 16 Bits (one amplitude change) will be shown on top. Pay attention that it resets to zero, if you change it again without holding FUNK.
 
-You can push ENCODER1 and ENCODER2 to give the control over the marker to the fader. Push the Encoder again to set the position from the fader and fine-adjust it.
+You can push ENCODER1 and ENCODER2 to give control over the marker to the fader. Push the Encoder again to set the position from the fader and fine-adjust it.
 
 When the right part is selected, you can SAV it and overwrite the current sample with the selected part.
 With SAS (save as) the selection can be saved to a free sample slot. Free sample slots light up green.
 
 
-## 8 Sequencer
+## 8 Sequencer (sketch)
 
-The sequencer is just a matrix with 8 lines (channels) and almost endless columns.  One channel is not bound to anything. You can place different samples right after each other. If one sample is still playing, the next one will stop it and play itself. While a sample is playing, **Parameter changes** can adjust the volume and panning of a sample.
-Each Sample can be adjusted by volume, panning, (chromatic) pitch -> midi basenote is currently always 60 and a probability to be played. Use ENCODER1 for volume, ENCODER2 for panning, ENCODER 3 for pitch and ENCODER 4 for probability. If you do not want to turn the encoders, you can always push the encoder and the current value of the fader will be taken instead.
+The sequencer is just a matrix with 8 lines (channels) and almost endless columns. It is called a sketch. Sketches can be divided into sheets (on other devices it would be called pattern). One channel is not bound to anything. You can place different samples right after each other. If one sample is still playing, the next one will stop it and play itself. While a sample is playing, **Parameter changes** can adjust the volume and panning of a sample.
+Each Sample can be adjusted by volume, panning, (chromatic) pitch with a midi basenote of 60 (C4) and a probability to be played.
+Swing can be added to a single sample or swing groups. Swing can only be used to delay the playback of a sample. To play a sample before the timing, you need to trigger it one step earlier and delay it with swing. Samples can be assigned to swing groups. When the swing value of one sample in the group is changed, all samples in the group will inherit the same value. Swing groups are displayed in different colors. Samples with swing are marked with a small vertical line on the grid. The value of swing is displayed below the grid on the right side (above probability) on a 11 raster bar.
+Use ENCODER1 for volume, ENCODER2 for panning, ENCODER 3 for pitch and ENCODER 4 for probability. If you do not want to turn the encoders, you can always push the encoder and the current value of the fader will be taken instead.
 
 
 Black key Menu Options
+
+    SEL
+    To start a selection. Move the cursor and a selection will span. PLAY will play just the selection. Use SNI to save the selection as a snippet.
 
     MOV     
     Move a grid cell to another position. Go to the source cell, hit MOV, go to the destination and hit MOV again.
@@ -138,22 +143,30 @@ Black key Menu Options
     Double an cell. This makes a copy of the cell you hit DBL on. Move the cursor to the copy detination and hit DBL again.    
     If you hit DBL twice, a copy of the current active cell will be added to the cell right beside it - if it is empty.
 
+    SNI
+    Snippets. Can be saved to one of the 14 white keys of the keyboard from a selection. Free slots will light up on the keyboard.
+    When entering the SNI mode while the cursor is within a snippet, you can use PLAY to listen only to the snippet or delete it by deselecting the lighting white key again.
+
     SND     
-    Sound has two Options. It can be used as a Parameter change for playing samples (Volume and Panning) and as a Note off to stop the currently playing sample.
+    Sound has two Options. It can be used as a Parameter change for playing samples (Volume, Panning and fine grained Pitch) and as a Note off to stop the currently playing sample.
     Hit it once, it's a parameter change, hit it again, it becomes a Note Off (Sample only, not a Midi Note off).
 
     INS
     Adds a MIDI Out message. You can adjust the MIDI parameters Velocity, Channel and Note with ENCODERS1..3.
     To send a corresponding Note Off, you need to send the exact same Note/Channel combination with a Velocity of zero. If the velocity is zero, it will be marked with a red X on the grid.
 
+    REV
+    Reverse changes the playback direction of a sample. Can be used with parameter changes to change the playback direction while playing a sample.
+
     CLS
-    Clear Song -> removes everything from the current song. You need to confirm that operation with a second hit on CLS.
+    Clear Selection -> when used on a selection
+    Clear Song -> removes everything from the current sketch. Affects, when no selection is active. You need to confirm that operation with a second hit on CLS.
 
 
 Playback behavior
 
     PLAY    Play song
-    PLAY    Stop playback (when playing) and start next playback at cursor position
+    PLAY    Stop playback (when playing) and start next playback at the beginning of the sheet the cursor is located on
     STOP    Stop playback and start next playback from the beginning
 
 Auto Save behavior
@@ -175,16 +188,49 @@ Shortcuts
     FUNK+NOTE       Pre-listen Sample
     FUNK+PLAY       Pre-listen to sample at cursor position
 
+    MENU+UP         Create a sheet divider before the current cursor position.
+    MENU+DOWN       Removes a sheet divider at the current cursor position.
+    MENU+RIGHT      Jumps to the next sheet.
+    MENU+LEFT       Jumps to the previous sheet.
+    
+    SET+LEFT/RIGHT  Changes the swing value of a single sample or the value of a complete swing group, if a group is selected (different colors).
+    SET+UP/DOWN     Changes the swing group the sample is assigned to.
+
+    ENCODER1        On an empty grid cell, it will change the playback speed BPM
+
 While playing
 
     FUNK+ENCODER1   Change playback BPM
 
-    A lot of functions are working even while playing, but they might impact the playback speed (needs to be fixed)
+    A lot of functions are working even while playing, but they might impact the playback speed, as refreshing the display takes some time (needs to be fixed).
 
 
-## 9 Technical stuff
+## 9 Play mode
 
-## 9.1 SD-card
+Play mode is for live performances and playing around with samples and snippets. Each key on the keyboard can be assigned to a sample or a snippet. All three banks can be used - 72 slots in total can be assignet. Each note on the keyboard can be triggered from external MIDI gear on MIDI channel 1 (the channel will be configurable in future versions). Each slot is by default assigned to the corresponding standard MIDI note of the position (e.g. the first C on the second bank is note 60). The midi note for each slot can be changed by a) selecting a note or b) learning from an incoming MIDI signal.
+
+To assign a snippet or sample to a slot, hit an not assigned key (displayed as black slot on the keyboard on the display). You will be prompted to use it as a snippet or sample slot. Use LEFT/RIGHT to change the value, hit SET to enter. Then select a sample or snippet from the keyboard. SET will assign the played snippet/sample. In the third step, different parameters can be set. 
+
+For *samples* these are: Velocity (will be overwritten when triggered from an external MIDI device with velocity value), panning and pitch. *Play complete* (ENCODER1) will play the whole sample, wehen triggered, *while hold* will stop playing the sample, ehen the key is released. FORWARD and REVERSE (ENCODER 2) will change the playback direction. ENCODER 4 changes the assigned MIDI note (will not affect the slot position on the internal keyboard). Pushing ENCODER4 will set the device into the learning mode and wait for an incoming MIDI note on channel 1. Pushing ENCODER4 again will assign the MIDI note. If the note is displayed in red, the MIDI note is already assigned to another slot. If you save (SET) with an already assigned MIDI note, it cannot be triggered from external gear.
+Push SET to save the sample configuration.
+
+For snippets these are: *play complete* / *instant stop* (ENCODER1) will play the complete snippet or stop the snippet when the snippet is triggered again. *LOOP*/*ONCE* (ENCODER2) will play the snippet only once or loop it until it is triggered again. The MIDI note functionality (ENCODER4) is identical to the one of the samples.
+
+When there are samples and/or snippets assigned to slots, the slots will be displayed in different colors. Pushing a SLOT key will play the saved configuration.
+For editing a slot again, hit FUNK+SLOT KEY to enter the edit mode again. Use SET to save the configuration and return to the overview or hit FUNK+SET to remove the sample/snippet from the slot.
+
+ENCODER1 in the overview will change the playback speed of the snippets. The initial value is taken from the sequencer and can be overwritten. Changing the speed in play mode will not affect the BPM set in the sequencer.
+
+SWITCH will ask you to select a sample. When a sample is selected, it can be played chromatically via the keyboard. This mode is called PIANO mode. Only one Sample can be assigned to PIANO mode and it is displayed in red on the overview. Whenever you hit switch on a live performance, the PIANO mode will start with the selected sample. The PIANO sample can be played via an external MIDI keyboard on MIDI channel 2 - with up to 8 notes (polyphony) at a time. FUNK+SET in piano mode will clear the sample from piano mode. 
+
+In total, 24 channels are available for live mode. 16 channels for snippets and 8 for samples/piano. If all channels are in use, triggering another sample/snippet will be ignored.
+The 8 channels for samples can be triggered with polyphonic aftertouch from external midi gear.
+
+To record a live performance, hit RECORD, select *resample* via the input selector, start recording and switch back (MENU+ENCODER4) to play mode. Hit RECORD again to stop recording your session. The recorded session is saved to the internal SD card and will immediately be displayed in the SAMPLE mode.
+
+## 10 Technical stuff
+
+## 10.1 SD-card
 
 Everything is stored on the SD card on the teensy 4.1 microcontroller.
 There are two directories on the root folder of the SD-Card.
@@ -196,7 +242,7 @@ There are two directories on the root folder of the SD-Card.
     The  subdirectories below this folder contain one song, each. If you want to delete a song, just delete the corresponding directory. 
 
 
-## 9.2 Updating the firmware
+## 10.2 Updating the firmware
 
 To update the firmware of your Beatmaker's sketchbook, just compile the sources of this project or get a pre-compiled version.
 The latest pre-built version as .hex file is stored [here](/built/).

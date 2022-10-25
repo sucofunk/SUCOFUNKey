@@ -893,10 +893,11 @@ void Live::loadConfig() {
       _midiNoteToSlot[i] = -1;
     }
 
-    // reconstruct _midiToSlots array from _slots
+    // reconstruct _midiToSlots array and _pianoSampleSlotIndex from _slots
     for (int i=0; i<72; i++) {
       if (_slots[i].type != Play::EMPTY) {
         _midiNoteToSlot[_slots[i].midiNote] = i;
+        if (_slots[i].isPiano) _pianoSampleSlotIndex = i;
       }
     }
 
