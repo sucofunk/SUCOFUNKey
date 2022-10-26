@@ -497,6 +497,7 @@ void Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, 
 
       if (_polyMemIDs[i] == 0) {
           _polyMemIDs[i] = sample1;
+          _polyMemNotes[i] = note;
         
         switch(i) {
           case 0:
@@ -539,8 +540,9 @@ void Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, 
   } else {
     // stop wavetable
     for (int i=0; i<6; i++) {
-      if (_polyMemIDs[i] == sample1) {
+      if (_polyMemIDs[i] == sample1 && _polyMemNotes[i] == note) {
           _polyMemIDs[i] = 0;
+          _polyMemIDs[i] = 128;
 
           switch(i) {
             case 0:

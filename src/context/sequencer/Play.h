@@ -154,6 +154,8 @@ class Play {
         // queue for polyphonic events. each entry corresponds to a playMemLive1..6
         // 0 = not playing 1..72 -> corresponding sample is playing 
         byte _polyMemIDs[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+        // stores the played note for each sample.. to stop the right sample, if playing a sample polyphonic
+        byte _polyMemNotes[8] = {128, 128, 128, 128, 128, 128, 128, 128};
         float _tempVelocityL = 0.0;
         float _tempVelocityR = 0.0;
 };

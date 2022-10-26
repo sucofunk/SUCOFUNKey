@@ -414,15 +414,20 @@ void Live::receiveMidiData(byte channel, midi::MidiType type, int d1, int d2) {
   switch (type) {
     case midi::MidiType::NoteOn:
       if (channel == 1) {
-        if (_currentState == WAIT_MIDI_TRAINING_INPUT_SNIPPET) {        
-          _liveScreen.updateSnippetConfig(_slots[_editingSlotId], 4, false, (_setMIDINote(d1) == true ? LiveScreen::MIDI_NOTE_FREE : LiveScreen::MIDI_NOTE_IN_USE)); // Encoder 4 = MIDI IN
-        } else {
+        if (_currentState != WAIT_MIDI_TRAINING_INPUT_SNIPPET && _currentState != WAIT_MIDI_TRAINING_INPUT_SAMPLE) {
           if (_midiNoteToSlot[d1] != -1) {
             // d2 = velocity
             _playSlot(_midiNoteToSlot[d1], d2, true, 128);
-          } 
-        }
-      } 
+          }
+        } else {
+          if (_currentState == WAIT_MIDI_TRAINING_INPUT_SNIPPET) {        
+              _liveScreen.updateSnippetConfig(_slots[_editingSlotId], 4, false, (_setMIDINote(d1) == true ? LiveScreen::MIDI_NOTE_FREE : LiveScreen::MIDI_NOTE_IN_USE)); // Encoder 4 = MIDI IN        
+          }
+          if (_currentState == WAIT_MIDI_TRAINING_INPUT_SAMPLE) {        
+              _liveScreen.updateSampleConfig(_slots[_editingSlotId], 4, false, (_setMIDINote(d1) == true ? LiveScreen::MIDI_NOTE_FREE : LiveScreen::MIDI_NOTE_IN_USE)); // Encoder 4 = MIDI IN        
+          }
+        } 
+      }
 
       if (channel == 2) {
         _playPiano(d1, d2, true);
@@ -642,7 +647,7 @@ void Live::_playSlot(int slotIndex, byte velocity, boolean pressed, byte note) {
       _play->playNextFreeMemory(slot.sampleNumber, velocity == 128 ? slot.velocity : velocity, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, true);
     } else {
       if (slot.immediateStopOnRelease || _currentState == PIANO) {
-        _play->playNextFreeMemory(slot.sampleNumber, 0, slot.stereoPosition, slot.baseMidiNote, slot.pitchedNote, slot.reverse, false);
+        _play->playNextFreeMemory(slot.sampleNumber, 0, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, false);
       }
     }
   }
