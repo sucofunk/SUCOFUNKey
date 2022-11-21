@@ -42,76 +42,49 @@ The firmware is a VSCode project, using the [PlatformIO](https://platformio.org/
 ## Status
 
 SUCOFUNKey is work in progress. Here is a short overview of what is already implemented and the next steps, including a roadmap of the project.
-The main Features - Sampling & Sequencing - are working properly.
+The main Features - Sampling & Sequencing - are working properly. Even the play mode is implemented.
 Read the [user manual](doc/manual.md) for details.
 
 ### Hardware
-- is ready and can be purchased at [www.sucofunk.com](https://sucofunk.com)
-
-### Base functionality
-  - startup sequence with SD-Card check
-  - loading projects
-  - creating projects
-  - File structure per project on SD-Card (card can be loaded on a PC to edit/change samples)
-  - Global sample library on SD card
-  - loading samples to PSRAM (EXTMEM) for faster and polyphonic playback (at least 10 samples at once)
-  - GUI system
-  - Waveform buffering for ad hoc drawing of samples to the screen
-  - Mapping note keys to a keyboard to enter names, etc.
-  
-### Sampler
-  - record from microphone
-  - record from line-in
-  - resampling
-  - resampling with microphone or line-in
-  - trim sample with encoders and/or fader
-  - save samples to sample slot (stored on SD-card)
-  - adjust sample volume
-  
-### Sequencer
-  - Samples can be set on a 8 x (2..256) grid, one track is not limited to one sample
-  - chromatic pitching
-  - volume adjustment per note (changeable while sample is playing)
-  - panning per note (changeable while sample is playing)
-  - stop note/sample at any grid position
-  - probability for each note/sample/position on the grid
-  - variable pattern length
-  - automatic pattern resolution scaling
-  - playback speed with 0.5 BPM resolution
-  - Triggering external MIDI gear with channel, note, velocity and NOTE OFF
-
-### MIDI integration
-  - Samples can be played at every time
-  - Up to 8 samples at the same time with polyphonic aftertouch
+- is ready and DIY kits can be purchased at [www.sucofunk.com](https://sucofunk.com)
+- transfering PCB design to SMD to have the option for producing a larger amount of boards, if needed.
 
 ## Next steps
 Currently I am creating almost everything by myself. So the next steps might take a while, hopefully not too long.
 
 ### Off device & Hardware
+- <del>Create</del> Optimize user manual/video tutorial
+- Fix a tiny bug in the schematics
+- Find and decide on a license for hardware publishing
+- Publish the gerber files and/or KiCAD Project
 - <del>Publish circuit diagram</del>
 - <del>Create DIY tutorial with pictures for soldering parts</del>
 - <del>Publish files to print your own case<del>
-- Create user manual/video tutorial
 - <del>Improve the website</del>
 
 ### On device / Firmware
+- Implement Arrange Mode
+- Option to change Songs from main menu
 - Option to give samples a name instead of the standard numbers (1..72)
 - Set a base note for a sample e.g. C4 to map chromatic pitching to note keys
+- Move settings from code to a configuration menu within the device
+- More features for the sampler (fade in/out, bitcrusher)
+- add feature to <del>select and</del> move blocks in the sequencer
+- fix bugs
 - <del>Optimize menu structure and create a main menu</del>
 - <del>Sample library (Filesystem) integration to use samples on multiple projects</del>
 - <del>Save/Load pattern to/from SD-card</del>
 - <del>Memory management to store multiple pattern in memory</del>
 - <del>Implementation Song mode (chaining multiple pattern to a song)</del>
-- Move settings from code to a configuration menu within the device
-- More features for the sampler (fade in/out)
-- add feature to select and move blocks in the sequencer
-- add snippets to the sequencer
-- add another zoom level to the sequencer
+- <del>add snippets to the sequencer</del>
+- <del>add another zoom level to the sequencer</del>
 
 ## Roadmap
+- Timestretching samples
 - Effects channels
 - USB Audio
 - File system integration to a computer via USB to load/save samples from/to device
+- Synthesizer (maybe.. if there is enough RAM left)
 - <del>Add MIDI to the sequencer to control external sound devices<del>
-- Live mode with <del>MIDI Integration</del> and snippets
-- Synthesizer
+- <del>Live mode with <del>MIDI Integration</del> and snippets</del>
+
