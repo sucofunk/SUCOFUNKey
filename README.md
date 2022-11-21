@@ -41,8 +41,7 @@ The firmware is a VSCode project, using the [PlatformIO](https://platformio.org/
 
 ## Status
 
-SUCOFUNKey is work in progress. Here is a short overview of what is already implemented and the next steps, including a roadmap of the project.
-The main Features - Sampling & Sequencing - are working properly. Even the play mode is implemented.
+SUCOFUNKey is work in progress. The main Features - Sampling & Sequencing - are working properly. Even the play mode is implemented.
 Read the [user manual](doc/manual.md) for details.
 
 ### Hardware
@@ -54,7 +53,7 @@ Currently I am creating almost everything by myself. So the next steps might tak
 
 ### Off device & Hardware
 - <del>Create</del> Optimize user manual/video tutorial
-- Fix a tiny bug in the schematics
+- Fix a tiny bug in the schematics and change LED resistor values
 - Find and decide on a license for hardware publishing
 - Publish the gerber files and/or KiCAD Project
 - <del>Publish circuit diagram</del>
@@ -71,6 +70,7 @@ Currently I am creating almost everything by myself. So the next steps might tak
 - More features for the sampler (fade in/out, bitcrusher)
 - add feature to <del>select and</del> move blocks in the sequencer
 - fix bugs
+- <del>Patterns in Sequencer</del>  
 - <del>Optimize menu structure and create a main menu</del>
 - <del>Sample library (Filesystem) integration to use samples on multiple projects</del>
 - <del>Save/Load pattern to/from SD-card</del>
