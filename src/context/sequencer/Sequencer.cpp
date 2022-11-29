@@ -130,6 +130,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
         // move cursor
         case Sucofunkey::CURSOR_LEFT: 
                 moveCursor(LEFT);
+                
               break;
         case Sucofunkey::MENU_CURSOR_LEFT: 
                 _jumpToPreviousSheet();
@@ -291,13 +292,15 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
           if (_selection.isActive()) {
             // save snippet to slot
             _snippets->saveSelectionToSlot(&_selection, _keyboard->getWhiteKeyByEventKey(event.index));            
-            setSequencerState(SELECT_SNIPPET_SLOT); // to deselect the snippet option           
+            setSequencerState(SELECT_SNIPPET_SLOT); // to deselect the snippet option
+            saveToSD();
           } else {
             // deleting a snippet slot
             int s = _snippets->cursorInSnippet(_cursorPosition, _cursorChannel);
             if (s != -1 && s == _keyboard->getWhiteKeyByEventKey(event.index)) {
               if (_snippets->deleteSnippetFromSlot(s)) {
                 setSequencerState(SNIPPET_WAIT_DELETE); // deactivate snippet indicator..
+                saveToSD();
               }              
             }
           }          
@@ -481,19 +484,19 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
 
     if (event.type == Sucofunkey::EVENT_APPLICATION) {
       switch (event.index) {
-        // Selection
+        // Selection SEL
         case Sucofunkey::BLACKKEY_NAV_ITEM1:
               setSequencerState(SELECTION);
           break;
-        // Move a cell
+        // Move a cell MOV
         case Sucofunkey::BLACKKEY_NAV_ITEM2:
               setSequencerState(MOVE_CELL);
           break;      
-        // Duplicate (Copy & Paste) a cell    
+        // Duplicate (Copy & Paste) a cell  DBL
         case Sucofunkey::BLACKKEY_NAV_ITEM3:
               setSequencerState(DOUBLE_CELL);
           break;
-        // Snippets          
+        // Snippets  SNI
         case Sucofunkey::BLACKKEY_NAV_ITEM4:
               if (_selection.isActive()) {
                 setSequencerState(SELECT_SNIPPET_SLOT);
@@ -604,6 +607,11 @@ void Sequencer::moveCursor(Direction direction) {
 
     // draw frame of selection
     _sequencerScreen.drawSelection(&_selection);
+  }
+
+  // cancel SNI (Snippet delete) mode
+  if (_currentSequencerState == SNIPPET_WAIT_DELETE) {
+    setSequencerState(NORMAL);
   }
 };
 
@@ -747,6 +755,7 @@ void Sequencer::setSequencerState(SequencerState state) {
 
         if (_currentSequencerState == SELECT_SNIPPET_SLOT || _currentSequencerState == SNIPPET_WAIT_DELETE) {
           _snippets->hideFreeSlots();
+          _blackKeyMenu.setExclusiveAction(4, false);
         }
         _currentSequencerState = NORMAL; 
         break;
@@ -1040,6 +1049,11 @@ void Sequencer::_jumpToNextSheet() {
 
 void Sequencer::_jumpToPosition(uint16_t position) {
   if (position >= _song->getSongLength()) return;
+
+  // cancel SNI (Snippet delete) mode
+  if (_currentSequencerState == SNIPPET_WAIT_DELETE) {
+    setSequencerState(NORMAL);
+  }
 
   _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, false);
 

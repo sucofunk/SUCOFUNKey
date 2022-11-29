@@ -216,7 +216,7 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
       }
 
       // waiting for a free slot selection (save as)
-      if (currentState == SAMPLE_WAIT_SAVE_SLOT) {
+      if (currentState == SAMPLE_WAIT_SAVE_SLOT && event.pressed) {
         // is selected slot free?
         if (!_sfsio->sampleBanksStatus[_keyboard->getBank()-1][sampleId-1]) {
           _samplerScreen.showSavingMessage();
@@ -239,17 +239,18 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
           _blackKeyMenu.showMenu();
           currentState = SAMPLE_EDIT_TRIM;
           indicateFreeSamples(false,1);
+          return;
         } 
       }
 
       // handle menu keys
-      if (_blackKeyMenu.isVisible() && currentState != SAMPLE_WAIT_SAVE_SLOT) {
+      if (_blackKeyMenu.isVisible() && currentState != SAMPLE_WAIT_SAVE_SLOT && event.pressed) {
         _blackKeyMenu.handleEvent(event);
       } 
     }
 
     // handle application events like bottom menu selects
-    if (event.type == Sucofunkey::EVENT_APPLICATION) {
+    if (event.type == Sucofunkey::EVENT_APPLICATION && event.pressed && currentState != SAMPLE_WAIT_SAVE_SLOT) {
       switch(event.index) {
 
         case Sucofunkey::BLACKKEY_NAV_ITEM1:

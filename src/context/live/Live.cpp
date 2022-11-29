@@ -179,6 +179,7 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
 
             _pianoSampleSlotIndex = -1;
             _pianoBank = 2;
+            saveConfig();
             _cancel(false);
             break;
           }         
@@ -318,6 +319,7 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
               _pianoSampleSlotIndex = slotsIndex;
               _slots[slotsIndex].isPiano = true;
               _liveScreen.drawOverviewSlot(_slots[_pianoSampleSlotIndex], slot);
+              saveConfig();
               _changeState(PIANO);
               }
           } 
@@ -935,7 +937,9 @@ void Live::saveConfig() {
 
 
 void Live::_removeSlot(int slotIndex) {
+  _pianoSampleSlotIndex = -1;
   _slots[slotIndex] = Play::LiveSlotDefinitionStruct();
+  saveConfig();
   _cancel();
 };
 
