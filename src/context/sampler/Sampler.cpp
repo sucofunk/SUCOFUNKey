@@ -222,9 +222,9 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
           _samplerScreen.showSavingMessage();
 
           // saving..
-          int sampleId72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
+          int sampleId72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1; 
           uint32_t start = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerStartPosition + _trimMarkerStartSampleCountOffset;
-          uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * (_trimMarkerEndPosition+ _trimMarkerEndSampleCountOffset + 1);
+          uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerEndPosition + _trimMarkerEndSampleCountOffset;
 
           if (_activeSampleSlot == 0) {
             _sfsio->copyFilePart(_sfsio->recorderFilename, _sfsio->sampleFilename[_keyboard->getBank()-1][sampleId-1], start*2, end*2, _volumeScaleFactor);
@@ -579,7 +579,7 @@ void Sampler::saveActiveSample() {
 
   int sampleId72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
   uint32_t start = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerStartPosition + _trimMarkerStartSampleCountOffset;
-  uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * (_trimMarkerEndPosition + _trimMarkerEndSampleCountOffset + 1);
+  uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerEndPosition + _trimMarkerEndSampleCountOffset;
 
   char * filename = _activeSampleSlot == 0 ? _sfsio->recorderFilename : _sfsio->sampleFilename[_tempBank-1][_activeSampleSlot-1];
 
