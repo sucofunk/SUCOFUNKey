@@ -1613,7 +1613,7 @@ boolean SongStructure::addSheetDivider(int position) {
         if (_meta.sheetDividerPositions[i] == 65535) freeSheets++;
     }
     
-    if (freeSheets == 0) return false; // limit is reached!
+    if (freeSheets == 1) return false; // limit is reached!
 
     // find position in array where to add the new sheet divider
     for (int i=1; i<17; i++) {

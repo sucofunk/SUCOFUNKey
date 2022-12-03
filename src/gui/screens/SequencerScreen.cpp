@@ -86,10 +86,16 @@ void SequencerScreen::initializeGrid(SongStructure *song, uint16_t cursorPositio
 
 
 void SequencerScreen::drawGrid(LastAction action) {
-  uint16_t maxWidth = _cellWidth*_xPositionCapacity+1;
+  if (action == INIT) {
+      _screen->fillArea(_screen->AREA_GRID, _screen->C_BLACK);
+  }
+
+  int amountOfGridcellsToDraw = _amountOfGridCellsToDraw();
+
+  uint16_t maxWidth = _cellWidth*amountOfGridcellsToDraw+1;
 
   if ((_song->getSongLength()/_zoom->getZoomlevelOffset()) <= _xPositionCapacity) {
-    maxWidth = (_song->getSongLength()/_zoom->getZoomlevelOffset())*_cellWidth+1; 
+    maxWidth = (_song->getSongLength()/_zoom->getZoomlevelOffset())*_cellWidth+1;
   } 
 
   // horizontal lines
@@ -97,20 +103,9 @@ void SequencerScreen::drawGrid(LastAction action) {
     _screen->drawFastHLine(0, i*_cellHeight+_screen->AREA_CONTENT.y1+1, maxWidth, _screen->C_GRID_BRIGHT);
   }
 
-  // showTail -> draw the end of the song
-  if (action == APPEND || action == SHORTEN) {
-    if (_xPositionCapacity * _zoom->getZoomlevelOffset() >= _song->getSongLength()) {
-      _xPositionOffset = 0;
-    } else {
-      _xPositionOffset = _song->getSongLength() - (_xPositionCapacity * _zoom->getZoomlevelOffset());
-    }
-  }
-
   // vertical lines  
   uint8_t lc = ((_xPositionOffset/_zoom->getZoomlevelOffset()) % static_cast<uint8_t>(_song->getSongResolution()*_zoom->getZoomlevelFactor())) + 1;
   uint8_t h = _cellHeight * 8; // 8 Channels
-
-  int amountOfGridcellsToDraw = _amountOfGridCellsToDraw();
 
   for (int i=0; i<=amountOfGridcellsToDraw; i++) {
     _screen->drawFastVLine(i*_cellWidth, _screen->AREA_CONTENT.y1+1, h, lc == 1 ?_screen->C_WHITE : _screen->C_GRID_BRIGHT);

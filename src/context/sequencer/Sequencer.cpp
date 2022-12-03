@@ -148,9 +148,13 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               break;
 
         case Sucofunkey::MENU_CURSOR_UP: 
-              _song->addSheetDivider(_cursorPosition);
-              _sequencerScreen.drawGrid(SequencerScreen::SHEET_ADDED);
-              _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);                
+              if (_song->addSheetDivider(_cursorPosition)) {
+                _sequencerScreen.drawGrid(SequencerScreen::SHEET_ADDED);
+                _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+              } else {
+                // no more sheets available..
+                // ToDo: show message to user?
+              }
               break;
 
 
