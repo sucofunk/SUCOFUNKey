@@ -98,6 +98,9 @@ void AudioPlayMemorySUCO::update(void)
 
 	out = block->data;
 
+    int16_t p1;
+    int16_t p2;
+
     for (int i=0; i < AUDIO_BLOCK_SAMPLES; i += 2) {        
 
         if (_startDelayRemainSamples > 0) {
@@ -111,8 +114,20 @@ void AudioPlayMemorySUCO::update(void)
                 in = beginning+_positionInt;
                 tmp32 = *in;
 
+// Bitcrushing
+/*                    p1 = (int16_t)(tmp32 & 65535);
+                    p2 = (int16_t)(tmp32 >> 16);   
+
+                    p1 = (p1 & 65280);
+                    p2 = (p2 & 65280);
+
+                    *out++ = p1;
+                    *out++ = p2;
+*/
                 *out++ = (int16_t)(tmp32 & 65535);
                 *out++ = (int16_t)(tmp32 >> 16);
+                
+
             } else {
                 *out++ = 0;
                 *out++ = 0;
@@ -148,7 +163,7 @@ void AudioPlayMemorySUCO::setFrequencyByMIDINote(byte note) {
 };
 
 void AudioPlayMemorySUCO::adjustFrequencyByTick(int pitchChange) {
-    _increment += (pitchChange*0.01);
+    _increment += (pitchChange*0.0075);
 };
 
 void AudioPlayMemorySUCO::reversePlayback() {

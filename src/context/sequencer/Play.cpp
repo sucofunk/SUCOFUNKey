@@ -191,7 +191,7 @@ void Play::playMixedSample(byte channel, uint16_t position, int snippetSlot) {
   if (snippetSlot == -1) {
     mixSPM = prepareMixerRouting(channel);
   } else {
-    // playing an arrangement/snippsts -> getChannel from snippetChannels
+    // playing an arrangement/snippets -> getChannel from snippetChannels
 
     int playingSnippetsIndex = -1;
 
@@ -260,6 +260,7 @@ void Play::playMixedSample(byte channel, uint16_t position, int snippetSlot) {
 
     // is there something to do? -> sample probability OK or a parameter change. then go!
     if (random(100) <= probability || sps.type == SongStructure::PARAMETER_CHANGE_SAMPLE) {
+
       if (stereoPosition < 64) {
         mixSPM.playMemoryMixerL->gain(mixSPM.playMemoryMixerGain, (velocity/127.0)*1.0);
         mixSPM.playMemoryMixerR->gain(mixSPM.playMemoryMixerGain, (velocity/127.0)*(stereoPosition/64.0));
@@ -413,7 +414,9 @@ void Play::snippetsPlayNext() {
     
       // play all channels of snippet
       for (int c = snippet.startY; c <= snippet.endY; c++) {
-        playMixedSample(c, snippet.startX + _playPositionSnippets[s], _playingSnippets[s]);
+        if (_song.getPosition(c, snippet.startX + _playPositionSnippets[s]).type != SongStructure::UNDEFINED) {
+          playMixedSample(c, snippet.startX + _playPositionSnippets[s], _playingSnippets[s]);
+        }        
       }
 
       if (_playPositionSnippets[s] < snippetLength-1) {
