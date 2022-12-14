@@ -60,7 +60,7 @@ class Arrange {
         int _playbackTickSpeed = 10000;
         boolean _playLEDon = false;
         boolean _isInitialized = false;
-        boolean _LEDHighlightSlots[14] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false};
+        boolean _LEDHighlightSlots[14] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false};        
 };
 
 #endif

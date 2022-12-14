@@ -317,6 +317,7 @@ class Sucofunkey {
         boolean isEventWhiteKey(byte eventKey); // a white key from the piano keyboard.. false does not mean that it is a black key.. might be anything else
 
         String getMIDINoteName(byte note);
+        void scanI2C(); // for debugging reasons
 
     private:
         // Interrupt Pins on Teensy from Sucokey
@@ -332,6 +333,8 @@ class Sucofunkey {
         int _lastFaderReadings[5] = {0, 0, 0, 0, 0};
         int _faderReadingPosition = 0;
         int _faderReading = 0;
+
+        int _pseudoWatchdogCount = 0;
 
         Adafruit_MCP23017 _mcp1;
         Adafruit_MCP23017 _mcp2;

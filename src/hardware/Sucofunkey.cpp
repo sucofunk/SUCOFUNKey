@@ -168,6 +168,9 @@ Sucofunkey::Sucofunkey(int intPinMCP1, int intPinMCP2, int intPinMCP3, int intPi
   _values_mcp4_current = _mcp4.readGPIOAB();
   _keyPressedInterrupt5 = false;
   _values_mcp5_current = _mcp5.readGPIOAB();
+
+
+  scanI2C();
 }
 
 
@@ -457,8 +460,20 @@ void Sucofunkey::printQueue() {
 
 boolean Sucofunkey::hasEvents() { 
   if(!keyQueue.isEmpty()) {
+    _pseudoWatchdogCount = 0;
     return true;     
   } else {
+    // reset all interrups by reading all GPIO PINs from the MCP23017 chips -> manually trigger all mcp interrupts, as they tend to hang, when inputs happen at unpredictable times?!?
+    if (_pseudoWatchdogCount == 100000) {
+      _keyPressedInterrupt1 = true;
+      _keyPressedInterrupt2 = true;
+      _keyPressedInterrupt3 = true;
+      _keyPressedInterrupt4 = true;
+      _keyPressedInterrupt5 = true;
+
+      _pseudoWatchdogCount = 0;
+    }
+    _pseudoWatchdogCount++;
     return false;
   }
 };
@@ -774,3 +789,24 @@ String Sucofunkey::getMIDINoteName(byte note) {
 
     return retVal;
 };
+
+
+void Sucofunkey::scanI2C() {
+   byte error, address;
+
+  Serial.print("I2C: ");
+
+  for (address = 1; address < 127; address++) {
+      // The i2c_scanner uses the return value of
+      // the Write.endTransmisstion to see if
+      // a device did acknowledge to the address.
+      Wire2.beginTransmission(address);
+      error = Wire2.endTransmission();
+
+      if (error == 0) {
+        Serial.print(address,HEX);
+        Serial.print(" ");
+      }
+  }
+  Serial.println("");  
+}

@@ -44,6 +44,28 @@ Arrange::Arrange(Sucofunkey* keyboard, Screen* screen, FSIO* fsio, SampleFSIO* s
     _playbackTickSpeed = _play->calculatePlaybackTickSpeed();
 }
 
+/*
+  TODO:
+  
+  SongStructure
+  - append sheet to arrangement
+  - insert sheet before position
+  - remove sheet from arrangement
+
+  Play
+  - queue sheet
+
+  Arrange
+  - play arrangement from beginning
+  - play arrangement from position x (0..63)
+  - stop
+
+  - gui and editing the arrangement
+
+*/
+
+
+
 // returns the current tick speed.. as tempo changes are not handled global
 long Arrange::receiveTimerTick() {
   if (_isInitialized) {

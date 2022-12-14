@@ -214,12 +214,13 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
               _playSlot(_editingSlotId, 128, true, 128);
             }
           break;        
-          break;
 
         case Sucofunkey::PAUSE:
             if (_currentState == CONFIG_SAMPLE) {
               _playSlot(_editingSlotId, 128, false, 128);
-            }        
+            }  else {
+              _keyboard->scanI2C();
+            }     
           break;
 
         case Sucofunkey::ENCODER_1_PUSH:
