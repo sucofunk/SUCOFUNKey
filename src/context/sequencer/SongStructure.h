@@ -186,11 +186,21 @@ class SongStructure {
         int getSheetStartForPosition(int position);
         int getSheetEndForPosition(int position);
 
+        int getSheetStartPosition(int sheet);
+        int getSheetEndPosition(int sheet);
+        int getSheetCount();
+
+        boolean appendSheetToArrangement(int sheet);
+        boolean removeLastSheetFromArrangement();        
+        boolean arrangementHasNextSheet(int position);
+        int arrangementGetSheetForPosition(int position);
+
         void test();
         void testLog();
         void testLogSample(uint16_t channel, uint16_t position);
         void debugInfos();
         void debugSheets();
+        void debugArrangement();
 
     private:
         Swing _swing;
@@ -248,7 +258,9 @@ class SongStructure {
             byte     swingGroupLevels[9] = {0, 4, 4, 4, 4, 4, 4, 4, 4};
 
             int      sheetDividerPositions[17] = { 0, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535 };
-            //int      arragementSheets[64] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }
+
+            int      maxSheetsInArrangement = 64;
+            int      arrangementSheets[64] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
         } MetaInfos;
 
         MetaInfos _meta;

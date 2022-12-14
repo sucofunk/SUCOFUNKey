@@ -119,8 +119,12 @@ class Play {
         void snippetsPlayNext();
         void removeLoopFlagFromSnippet(int slot);
 
+        boolean queueArrangement(int startPosition, boolean loop); // startPosition starts at 0 -> first sheet in arrangement
+        void arrangementPlayNext();
+        boolean isArrangementPlaying();
+        void stopArrangement();
+
         // playing samples in live mode..
-        //void playNextFreeMemory(byte sample1, byte velocity, boolean play);
         void playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, byte baseNote, byte note, boolean reverse, boolean play);
         void handlePolyphonicAftertouch(byte sample1, byte velocity, byte stereoPosition);
         void polyChangeVelocity(byte polymem, byte velocity, byte stereoPosition);
@@ -158,6 +162,13 @@ class Play {
         byte _polyMemNotes[8] = {128, 128, 128, 128, 128, 128, 128, 128};
         float _tempVelocityL = 0.0;
         float _tempVelocityR = 0.0;
+
+        boolean _loopArrangement = false;
+        boolean _arrangementIsPlaying = false;
+        boolean _arrangementIsPaused = false;
+        int _arrangementSheetPosition = 0;
+        int _playPositionArrangement = -1;
+        int _lastPositionUntilNextArrangementSheet = 0;
 };
 
 #endif

@@ -185,13 +185,16 @@ Play::MixerSamplePlayMemory Play::prepareMixerRouting(byte channel) {;
 
 // plays one sample from the sequencer grid, as defined at channel/position
 // snippet == -1 -> take original channels from sequencer
+
+// ToDo: add midi events!
+
 void Play::playMixedSample(byte channel, uint16_t position, int snippetSlot) {
   Play::MixerSamplePlayMemory mixSPM;
 
   if (snippetSlot == -1) {
     mixSPM = prepareMixerRouting(channel);
   } else {
-    // playing an arrangement/snippets -> getChannel from snippetChannels
+    // playing a snippet -> getChannel from snippetChannels
 
     int playingSnippetsIndex = -1;
 
@@ -472,8 +475,77 @@ int Play::_freeChannelCount() {
 };
 
 
+// -----------------------------------------------------------------------------------------------------------------
+// --- Arrangement -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------------------
 
+// startPosition starts at 0 -> first sheet in arrangement
+// returns wether we are starting from a sheet beginning (true) or from somwhere where the arrangement was paused.
+boolean Play::queueArrangement(int startPosition, boolean loop) {
+  boolean retVal = true;
 
+  if (_arrangementIsPlaying) {
+    _arrangementIsPaused = true;
+    _arrangementIsPlaying = false;
+    stopAllChannels();
+    retVal = false;
+  } else {
+    if (_arrangementIsPaused) {
+      _arrangementIsPaused = false;
+      _arrangementIsPlaying = true;
+      retVal = false;      
+    } else {
+      // start from where the parameter says..
+      checkIfAllSamplesAreLoaded();
+      _loopArrangement = loop;
+      _arrangementSheetPosition = startPosition;
+      _playPositionArrangement = _song.getSheetStartPosition(_song.arrangementGetSheetForPosition(_arrangementSheetPosition));
+      _lastPositionUntilNextArrangementSheet = _song.getSheetEndPosition(_song.arrangementGetSheetForPosition(_arrangementSheetPosition));
+      if (_playPositionArrangement != -1) _arrangementIsPlaying = true;
+    }
+  }
+
+  return retVal;
+}; 
+
+void Play::arrangementPlayNext() {
+
+  if (!_arrangementIsPlaying) return;
+
+  for (int c=0; c<8; c++) {
+    playMixedSample(c, _playPositionArrangement, -1);
+  }
+
+  // end of sheet reached?  
+  if (_playPositionArrangement == _lastPositionUntilNextArrangementSheet) {
+
+    if (_song.arrangementHasNextSheet(_arrangementSheetPosition)) {
+      _arrangementSheetPosition++;
+
+    } else {
+      _arrangementSheetPosition = 0;
+
+      if (!_loopArrangement) {
+        _arrangementIsPlaying = false;
+      }
+    }
+      
+    _playPositionArrangement = _song.getSheetStartPosition(_song.arrangementGetSheetForPosition(_arrangementSheetPosition));
+    _lastPositionUntilNextArrangementSheet = _song.getSheetEndPosition(_song.arrangementGetSheetForPosition(_arrangementSheetPosition));            
+  } else {    
+    _playPositionArrangement++;
+  }
+
+};
+
+boolean Play::isArrangementPlaying() {
+  return _arrangementIsPlaying;  
+};
+
+void Play::stopArrangement() {
+  _arrangementIsPlaying = false;
+  stopAllChannels();  
+};
 
 // -----------------------------------------------------------------------------------------------------------------
 // --- Live --------------------------------------------------------------------------------------------------------

@@ -42,44 +42,42 @@ Arrange::Arrange(Sucofunkey* keyboard, Screen* screen, FSIO* fsio, SampleFSIO* s
     _audioResources = audioResources;    
     _play = play;
     _playbackTickSpeed = _play->calculatePlaybackTickSpeed();
+    _arrangeScreen = ArrangeScreen(keyboard, screen, sfsio);
 }
-
-/*
-  TODO:
-  
-  SongStructure
-  - append sheet to arrangement
-  - insert sheet before position
-  - remove sheet from arrangement
-
-  Play
-  - queue sheet
-
-  Arrange
-  - play arrangement from beginning
-  - play arrangement from position x (0..63)
-  - stop
-
-  - gui and editing the arrangement
-
-*/
-
 
 
 // returns the current tick speed.. as tempo changes are not handled global
 long Arrange::receiveTimerTick() {
-  if (_isInitialized) {
-    _play->snippetsPlayNext();
-  }
+  if (_isInitialized && _play->isArrangementPlaying()) {
+    _play->arrangementPlayNext();  
   
-  _playLEDon = !_playLEDon;  
-  //_keyboard->setLEDState(Sucofunkey::LED_PLAY, _playLEDon);
+    if (_blinkPosition == 0) {
+      _playLEDon = true;
+    } else {
+      _playLEDon = false;
+    }
+
+    _keyboard->setLEDState(Sucofunkey::LED_PLAY, _playLEDon);
+
+    if (_blinkPosition < (_play->getSong()->getSongResolution()*4)-1) {
+      _blinkPosition++;
+    } else {
+      _blinkPosition = 0;
+    }
+  } else {
+    // stopped.. check if play led is still on..
+    if (_playLEDon) {
+      _playLEDon = false;      
+    }    
+  }
+
+  _keyboard->setLEDState(Sucofunkey::LED_PLAY, _playLEDon);
   return _playbackTickSpeed;
 }
 
 
 void Arrange::handleEvent(Sucofunkey::keyQueueStruct event) {
-  int wk;
+  int sheet;
 
   if (event.pressed) {
     switch(event.index) {
@@ -89,50 +87,42 @@ void Arrange::handleEvent(Sucofunkey::keyQueueStruct event) {
       case Sucofunkey::CURSOR_RIGHT:
             _keyboard->setBankUp();
             break;
-      case Sucofunkey::PLAY:
-            _play->snippetsPlayNext();
+      case Sucofunkey::FN_PLAY:      
+            _playbackTickSpeed = _play->calculatePlaybackTickSpeed();            
+            if (_play->queueArrangement(0, true)) _blinkPosition = 0;
             break;
+      case Sucofunkey::PLAY:
+            _playbackTickSpeed = _play->calculatePlaybackTickSpeed();            
+            if (_play->queueArrangement(0, false)) _blinkPosition = 0;
+            break;
+      case Sucofunkey::PAUSE:
+            _play->stopArrangement();
+            break;
+      case Sucofunkey::FN_SET:
+            _play->getSong()->removeLastSheetFromArrangement();
+            break;
+
     }
   }
 
   if (event.type == Sucofunkey::KEY_NOTE && event.pressed && _keyboard->isEventWhiteKey(event.index)) {
-    wk = _keyboard->getWhiteKeyByEventKey(event.index);
-
-    if (_LEDHighlightSlots[wk-1] == true) {
-      _LEDHighlightSlots[wk-1] = false;
-      _keyboard->setLEDState(_keyboard->getLEDPinByWhiteKey(wk), false);
-      _play->unqueueSnippet(wk);
-    } else {
-      _play->queueSnippet(wk, true, false);
-    }
-  }
-
-  if (event.type == Sucofunkey::KEY_FN_NOTE && event.pressed && _keyboard->isEventWhiteKey(event.index-100)) {
-    wk = _keyboard->getWhiteKeyByEventKey(event.index-100);
-
-    if (_LEDHighlightSlots[wk-1] == false) {
-      _play->queueSnippet(wk, false, true);
-      _LEDHighlightSlots[wk-1] = true;
-      _keyboard->setLEDState(_keyboard->getLEDPinByWhiteKey(wk), true);
-    } else {
-      _LEDHighlightSlots[wk-1] = false;
-      _keyboard->setLEDState(_keyboard->getLEDPinByWhiteKey(wk), false);
-      _play->removeLoopFlagFromSnippet(wk);
-    }
-  }    
-
+    sheet = _keyboard->getWhiteKeyByEventKey(event.index) + ((_keyboard->getBank()-1)*14);
+    _play->getSong()->appendSheetToArrangement(sheet);
+    _play->getSong()->debugArrangement();
+  }   
 }
 
 void Arrange::setActive(boolean active) {
   if (active) {
     _isActive = true;
     _keyboard->setBank(_activeBank);
-    Serial.println("Arrange mode");
-    _screen->testBild("Arranger");    
+    Serial.println("Arrange mode");  
+    
     // might have changed in sequencer
     _play->checkIfAllSamplesAreLoaded();
     _isInitialized = true;
     _playbackTickSpeed = _play->calculatePlaybackTickSpeed();
+    _arrangeScreen.showEmptyOverview();
   } else {
     _isActive = false;
     _keyboard->setBank(0);

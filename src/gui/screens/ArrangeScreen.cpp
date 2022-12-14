@@ -28,42 +28,27 @@
 
    ---------------------------------------------------------------------------------------------- */
    
-#ifndef Arrange_h
-#define Arrange_h
+#include "ArrangeScreen.h"
 
-#include "../../hardware/Sucofunkey.h"
-#include "../../gui/Screen.h"
-#include "../../helper/AudioResources.h"
-#include "../../helper/SampleFSIO.h"
-#include "../../helper/FSIO.h"
-#include "../../gui/screens/components/BottomMenu.h"
-#include "../sequencer/Play.h"
-#include "../../gui/screens/ArrangeScreen.h"
-#include <MIDI.h>
+ArrangeScreen::ArrangeScreen(Sucofunkey* keyboard, Screen* screen, SampleFSIO* sfsio) {
+    _keyboard = keyboard;
+    _screen = screen;        
+    _sfsio = sfsio;
+}
 
-class Arrange {
-    public:
-        Arrange(Sucofunkey* keyboard, Screen* screen, FSIO* fsio, SampleFSIO* sfsio, unsigned int* extmemArray, AudioResources* audioResources, Play* play);
-        long receiveTimerTick();
-        void setActive(boolean active);
-        void handleEvent(Sucofunkey::keyQueueStruct event);
+void ArrangeScreen::showEmptyOverview() {
+    _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);
+    
+    for (int i=0; i<=10; i++) {
+        _screen->drawFastHLine(0, _screen->AREA_CONTENT.y1 + (i*19), 320, _screen->C_GRID_DARK);
+    }
+    
+    for (int i=0; i<=6; i++) {
+        _screen->drawFastVLine(i*53, _screen->AREA_CONTENT.y1, _screen->AREA_CONTENT.y2-_screen->AREA_CONTENT.y1, _screen->C_GRID_DARK);
+    }
 
-    private:
-        Sucofunkey* _keyboard;
-        Screen* _screen;
-        FSIO* _fsio;
-        SampleFSIO* _sfsio;
-        unsigned int* _extmemArray;
-        AudioResources* _audioResources;
-        Play* _play;
-        ArrangeScreen _arrangeScreen;
 
-        boolean _isActive = false;
-        byte _activeBank = 1;
-        int _playbackTickSpeed = 100000;
-        volatile int _blinkPosition = 0;
-        boolean _playLEDon = false;
-        boolean _isInitialized = false;
-};
+//    _screen->drawFastHLine(offsetLR + static_cast<int>(0.5*cellSize), sharpieTopLineY, 3*cellSize+4, _screen->C_WHITE);
+//    _screen->drawFastHLine(offsetLR + static_cast<int>(0.5*cellSize), sharpieBottomLineY, 3*cellSize+4, _screen->C_WHITE);
 
-#endif
+}

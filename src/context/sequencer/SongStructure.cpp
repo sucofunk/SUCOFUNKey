@@ -1714,6 +1714,35 @@ int SongStructure::getSheetEndForPosition(int position) {
     return retVal;
 }
 
+
+int SongStructure::getSheetStartPosition(int sheet) {
+    if (sheet <= 0 || sheet > getSheetCount()) return -1;
+    return _meta.sheetDividerPositions[sheet-1];
+};
+
+int SongStructure::getSheetEndPosition(int sheet) {
+    if (sheet <= 0 || sheet > getSheetCount()) return -1;
+    return _meta.sheetDividerPositions[sheet] == 65535 ? _meta.songLength-1 : _meta.sheetDividerPositions[sheet]-1;
+};
+
+int SongStructure::getSheetCount() {
+    int retVal = 0;
+
+    for (int i=0; i<17; i++) {
+        if (_meta.sheetDividerPositions[i] != 65535) {
+            retVal++;
+        } 
+    }
+
+    return retVal;
+};
+
+int SongStructure::arrangementGetSheetForPosition(int position) {
+    if (position >= 0 && position < _meta.maxSheetsInArrangement) return _meta.arrangementSheets[position];
+    return -1;
+};
+
+
 void SongStructure::debugSheets() {
     for (int i=0; i<17; i++) {                        
         Serial.print(i);
@@ -1735,6 +1764,66 @@ void SongStructure::debugSheets() {
     Serial.println(getPreviousSheetDividerPosition(32));    
 }
 
+
+// -------------------------------------------------------------------------------------------------------------------
+//  Arrangement
+// -------------------------------------------------------------------------------------------------------------------
+
+boolean SongStructure::appendSheetToArrangement(int sheet) {
+
+    // check if sheet is really a sheet and not just a number..
+    if (sheet <= 0 || sheet > getSheetCount()) return false;
+
+    // first sheet in arrangement
+    if (_meta.arrangementSheets[0] == -1) {
+        _meta.arrangementSheets[0] = sheet;
+        return true;
+    }
+
+    for (int i=_meta.maxSheetsInArrangement-1; i>=1; i--) {
+        if (_meta.arrangementSheets[i] == -1 && _meta.arrangementSheets[i-1] != -1) {
+            _meta.arrangementSheets[i] = sheet;
+            return true;
+        }
+    }    
+    
+    return false;
+};
+
+boolean SongStructure::removeLastSheetFromArrangement() {
+    // arrangement is complete/full, remove last sheet
+    if (_meta.arrangementSheets[_meta.maxSheetsInArrangement-1] != -1) {
+        _meta.arrangementSheets[_meta.maxSheetsInArrangement-1] = -1;
+        return true;
+    }
+
+    // arrangement is not full/compete, delete last sheet entry
+    for (int i=_meta.maxSheetsInArrangement-1; i>=1; i--) {
+        if (_meta.arrangementSheets[i] == -1 && _meta.arrangementSheets[i-1] != -1) {
+            _meta.arrangementSheets[i-1] = -1;
+            return true;
+        }        
+    }    
+
+    // happens, if there is no sheet in the arrangement
+    return false;
+};
+
+
+boolean SongStructure::arrangementHasNextSheet(int position) {
+    if (position >= 0 && position < _meta.maxSheetsInArrangement && _meta.arrangementSheets[position+1] != -1) return true;
+    return false;
+}
+
+
+void SongStructure::debugArrangement() {
+    Serial.print("Arrangement :: ");
+    for (int i=0; i<_meta.maxSheetsInArrangement; i++) {
+        Serial.print(_meta.arrangementSheets[i]);
+        Serial.print(" ");
+    }
+    Serial.println("");
+}
 
 // -------------------------------------------------------------------------------------------------------------------
 //  TESTS && DEBUGGING

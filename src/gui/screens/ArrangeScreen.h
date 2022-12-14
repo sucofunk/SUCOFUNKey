@@ -28,42 +28,31 @@
 
    ---------------------------------------------------------------------------------------------- */
    
-#ifndef Arrange_h
-#define Arrange_h
+#ifndef ArrangeScreen_h
+#define ArrangeScreen_h
 
+#include <Arduino.h>
 #include "../../hardware/Sucofunkey.h"
-#include "../../gui/Screen.h"
-#include "../../helper/AudioResources.h"
-#include "../../helper/SampleFSIO.h"
+#include "../../context/sequencer/Play.h"
 #include "../../helper/FSIO.h"
-#include "../../gui/screens/components/BottomMenu.h"
-#include "../sequencer/Play.h"
-#include "../../gui/screens/ArrangeScreen.h"
-#include <MIDI.h>
+#include "../Screen.h"
+#include "../../helper/SampleFSIO.h"
 
-class Arrange {
+class ArrangeScreen {
     public:
-        Arrange(Sucofunkey* keyboard, Screen* screen, FSIO* fsio, SampleFSIO* sfsio, unsigned int* extmemArray, AudioResources* audioResources, Play* play);
-        long receiveTimerTick();
-        void setActive(boolean active);
-        void handleEvent(Sucofunkey::keyQueueStruct event);
+        ArrangeScreen(){};
+        ArrangeScreen(Sucofunkey* keyboard, Screen* screen, SampleFSIO* sfsio);
+
+        void showEmptyOverview();
 
     private:
-        Sucofunkey* _keyboard;
-        Screen* _screen;
-        FSIO* _fsio;
+        Sucofunkey *_keyboard;
+        Screen *_screen;
         SampleFSIO* _sfsio;
-        unsigned int* _extmemArray;
-        AudioResources* _audioResources;
-        Play* _play;
-        ArrangeScreen _arrangeScreen;
 
-        boolean _isActive = false;
-        byte _activeBank = 1;
-        int _playbackTickSpeed = 100000;
-        volatile int _blinkPosition = 0;
-        boolean _playLEDon = false;
-        boolean _isInitialized = false;
+        char _cBuff3[3];
+        char _cBuff5[5];
+        char _cBuff10[10];
 };
 
 #endif

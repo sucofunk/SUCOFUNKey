@@ -566,8 +566,10 @@ void sendTickToActiveContext() {
           break;
     case  AppContext::ARRANGE:
           globalTickIntervalNew = arrangeContext.receiveTimerTick();
+          break;
     case  AppContext::LIVE:
           globalTickIntervalNew = liveContext.receiveTimerTick();
+          break;
     default:
           break;
   }    
