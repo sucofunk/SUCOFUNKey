@@ -82,35 +82,111 @@ void Arrange::handleEvent(Sucofunkey::keyQueueStruct event) {
   if (event.pressed) {
     switch(event.index) {
       case Sucofunkey::CURSOR_LEFT:
-            _keyboard->setBankDown();
+            moveCursor(LEFT);
             break;
       case Sucofunkey::CURSOR_RIGHT:
+            moveCursor(RIGHT);
+            break;
+      case Sucofunkey::CURSOR_UP:
+            moveCursor(UP);
+            break;
+      case Sucofunkey::CURSOR_DOWN:
+            moveCursor(DOWN);
+            break;
+
+      case Sucofunkey::FN_CURSOR_LEFT:
+            _keyboard->setBankDown();
+            break;
+      case Sucofunkey::FN_CURSOR_RIGHT:
             _keyboard->setBankUp();
             break;
+
+      case Sucofunkey::FN_CURSOR_UP:
+            if (_play->getSong()->arrangementGetSheetForPosition(_cursorPosition) != -1) {
+              _arrangeScreen.annotateCell(_cursorPosition, _play->getSong()->arrangementGetSheetForPosition(_cursorPosition) , _play->getSong()->arrangementChangePositionRepeat(_cursorPosition, true));
+              saveToSD();
+            }            
+            break;
+
+      case Sucofunkey::FN_CURSOR_DOWN:            
+            if (_play->getSong()->arrangementGetSheetForPosition(_cursorPosition) != -1) {
+              _arrangeScreen.annotateCell(_cursorPosition, _play->getSong()->arrangementGetSheetForPosition(_cursorPosition) , _play->getSong()->arrangementChangePositionRepeat(_cursorPosition, false));
+              saveToSD();
+            }
+            break;
+
       case Sucofunkey::FN_PLAY:      
             _playbackTickSpeed = _play->calculatePlaybackTickSpeed();            
             if (_play->queueArrangement(0, true)) _blinkPosition = 0;
             break;
       case Sucofunkey::PLAY:
-            _playbackTickSpeed = _play->calculatePlaybackTickSpeed();            
-            if (_play->queueArrangement(0, false)) _blinkPosition = 0;
+            _playbackTickSpeed = _play->calculatePlaybackTickSpeed();
+            if (_play->queueArrangement(_cursorPosition, false)) _blinkPosition = 0;
             break;
       case Sucofunkey::PAUSE:
-            _play->stopArrangement();
+            if (_play->isArrangementPlaying()) {
+              _play->stopArrangement();
+            } else {
+              _arrangeScreen.drawCursor(_cursorPosition, false);
+              _cursorPosition = 0;
+              _arrangeScreen.drawCursor(_cursorPosition, true);
+            }
+            
+
             break;
       case Sucofunkey::FN_SET:
-            _play->getSong()->removeLastSheetFromArrangement();
+            if(_play->getSong()->arrangementRemovePosition(_cursorPosition)) {
+              _arrangeScreen.annotateCell(_cursorPosition, _play->getSong()->arrangementGetSheetForPosition(_cursorPosition), _play->getSong()->arrangementGetRepeatForPosition(_cursorPosition));
+              saveToSD();
+            }
             break;
 
+      case Sucofunkey::ARRANGEMENT_PLAY_INDICATOR_CELL:
+            _arrangeScreen.drawCursor(_cursorPosition, false);
+            _cursorPosition = event.data1;            
+            _arrangeScreen.drawCursor(_cursorPosition, true);
+            break;
     }
   }
 
   if (event.type == Sucofunkey::KEY_NOTE && event.pressed && _keyboard->isEventWhiteKey(event.index)) {
     sheet = _keyboard->getWhiteKeyByEventKey(event.index) + ((_keyboard->getBank()-1)*14);
-    _play->getSong()->appendSheetToArrangement(sheet);
-    _play->getSong()->debugArrangement();
-  }   
+    if (_play->getSong()->arrangementInsertSheetAtPosition(_cursorPosition, sheet)) {
+      _arrangeScreen.annotateCell(_cursorPosition, sheet, _play->getSong()->arrangementGetRepeatForPosition(_cursorPosition));
+      saveToSD();
+    }    
+  }
+
 }
+
+
+void Arrange::moveCursor(CursorDirection direction) {
+  _arrangeScreen.drawCursor(_cursorPosition, false);
+
+  switch(direction) {    
+    case UP:
+        _cursorPosition = _cursorPosition-_arrangeScreen.columns;
+        if (_cursorPosition < 0) _cursorPosition = _cursorPosition+_arrangeScreen.columns;
+      break;
+    case RIGHT:
+        _cursorPosition++;
+        if (_cursorPosition > (_arrangeScreen.rows*_arrangeScreen.columns)-1) _cursorPosition = (_arrangeScreen.rows*_arrangeScreen.columns)-1;   
+      break;
+    case DOWN:
+        _cursorPosition = _cursorPosition+_arrangeScreen.columns;
+        if (_cursorPosition > (_arrangeScreen.rows*_arrangeScreen.columns)-1) _cursorPosition = _cursorPosition-_arrangeScreen.columns;   
+      break;
+    case LEFT:
+        _cursorPosition--;
+        if (_cursorPosition < 0) _cursorPosition = 0;
+      break;
+    default:
+      break;    
+  }
+
+  _arrangeScreen.drawCursor(_cursorPosition, true);
+};
+
 
 void Arrange::setActive(boolean active) {
   if (active) {
@@ -123,6 +199,12 @@ void Arrange::setActive(boolean active) {
     _isInitialized = true;
     _playbackTickSpeed = _play->calculatePlaybackTickSpeed();
     _arrangeScreen.showEmptyOverview();
+    _arrangeScreen.drawCursor(_cursorPosition, true);
+
+    for (int i=0; i<_arrangeScreen.rows*_arrangeScreen.columns; i++) {
+      if (_play->getSong()->arrangementGetSheetForPosition(i) != -1) _arrangeScreen.annotateCell(i, _play->getSong()->arrangementGetSheetForPosition(i), _play->getSong()->arrangementGetRepeatForPosition(i));
+    }
+
   } else {
     _isActive = false;
     _keyboard->setBank(0);
@@ -130,4 +212,7 @@ void Arrange::setActive(boolean active) {
   }
 }
 
+void Arrange::saveToSD() {
+  _play->getSong()->saveMetadataToSD(_sfsio->getSongPath());
+};
 

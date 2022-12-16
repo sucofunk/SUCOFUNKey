@@ -502,6 +502,7 @@ boolean Play::queueArrangement(int startPosition, boolean loop) {
       _playPositionArrangement = _song.getSheetStartPosition(_song.arrangementGetSheetForPosition(_arrangementSheetPosition));
       _lastPositionUntilNextArrangementSheet = _song.getSheetEndPosition(_song.arrangementGetSheetForPosition(_arrangementSheetPosition));
       if (_playPositionArrangement != -1) _arrangementIsPlaying = true;
+      _currentSheetPlays = 0;
     }
   }
 
@@ -519,19 +520,28 @@ void Play::arrangementPlayNext() {
   // end of sheet reached?  
   if (_playPositionArrangement == _lastPositionUntilNextArrangementSheet) {
 
-    if (_song.arrangementHasNextSheet(_arrangementSheetPosition)) {
-      _arrangementSheetPosition++;
-
+    // repeat sheet?
+    if (_song.arrangementGetRepeatForPosition(_arrangementSheetPosition) > _currentSheetPlays) {
+      _playPositionArrangement = _song.getSheetStartPosition(_song.arrangementGetSheetForPosition(_arrangementSheetPosition));
+      _lastPositionUntilNextArrangementSheet = _song.getSheetEndPosition(_song.arrangementGetSheetForPosition(_arrangementSheetPosition));
+      _currentSheetPlays++;
     } else {
-      _arrangementSheetPosition = 0;
+      // no repeat or repeat count reached..      
+      if (_song.arrangementHasNextSheet(_arrangementSheetPosition)) {
+        _arrangementSheetPosition++;              
+      } else {
+        _arrangementSheetPosition = 0;
 
-      if (!_loopArrangement) {
-        _arrangementIsPlaying = false;
+        if (!_loopArrangement) {
+          _arrangementIsPlaying = false;
+        }
       }
+        
+      _playPositionArrangement = _song.getSheetStartPosition(_song.arrangementGetSheetForPosition(_arrangementSheetPosition));
+      _lastPositionUntilNextArrangementSheet = _song.getSheetEndPosition(_song.arrangementGetSheetForPosition(_arrangementSheetPosition));
+      _currentSheetPlays = 0;
+      _keyboard->addApplicationEventWithDataToQueue(_keyboard->ARRANGEMENT_PLAY_INDICATOR_CELL, _arrangementSheetPosition, 0, 0);
     }
-      
-    _playPositionArrangement = _song.getSheetStartPosition(_song.arrangementGetSheetForPosition(_arrangementSheetPosition));
-    _lastPositionUntilNextArrangementSheet = _song.getSheetEndPosition(_song.arrangementGetSheetForPosition(_arrangementSheetPosition));            
   } else {    
     _playPositionArrangement++;
   }

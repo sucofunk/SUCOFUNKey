@@ -170,6 +170,7 @@ class SongStructure {
 
         boolean loadFromSD(char *songPath);
         boolean saveToSD(char *songPath);
+        boolean saveMetadataToSD(char *songPath);
 
         void clearSelection(Selection selection, int endOffsetX);
         void clearSelection(uint8_t startChannel, uint16_t startPosition, uint8_t endChannel, uint16_t endPosition);
@@ -194,6 +195,10 @@ class SongStructure {
         boolean removeLastSheetFromArrangement();        
         boolean arrangementHasNextSheet(int position);
         int arrangementGetSheetForPosition(int position);
+        int arrangementGetRepeatForPosition(int position);
+        int arrangementChangePositionRepeat(int position, boolean increase);
+        boolean arrangementInsertSheetAtPosition(int position, int sheet);
+        boolean arrangementRemovePosition(int position);
 
         void test();
         void testLog();
@@ -259,8 +264,28 @@ class SongStructure {
 
             int      sheetDividerPositions[17] = { 0, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535 };
 
-            int      maxSheetsInArrangement = 64;
-            int      arrangementSheets[64] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+            int      maxSheetsInArrangement = 80;
+            int      arrangementSheets[80] = { -1, -1, -1, -1, -1, -1, -1, -1,
+                                               -1, -1, -1, -1, -1, -1, -1, -1,
+                                               -1, -1, -1, -1, -1, -1, -1, -1,
+                                               -1, -1, -1, -1, -1, -1, -1, -1,
+                                               -1, -1, -1, -1, -1, -1, -1, -1,
+                                               -1, -1, -1, -1, -1, -1, -1, -1,
+                                               -1, -1, -1, -1, -1, -1, -1, -1,
+                                               -1, -1, -1, -1, -1, -1, -1, -1,
+                                               -1, -1, -1, -1, -1, -1, -1, -1,
+                                               -1, -1, -1, -1, -1, -1, -1, -1 };
+            
+            int      arrangementRepeats[80] ={ 0, 0, 0, 0, 0, 0, 0, 0,
+                                               0, 0, 0, 0, 0, 0, 0, 0,
+                                               0, 0, 0, 0, 0, 0, 0, 0,
+                                               0, 0, 0, 0, 0, 0, 0, 0,
+                                               0, 0, 0, 0, 0, 0, 0, 0,
+                                               0, 0, 0, 0, 0, 0, 0, 0,
+                                               0, 0, 0, 0, 0, 0, 0, 0,
+                                               0, 0, 0, 0, 0, 0, 0, 0,
+                                               0, 0, 0, 0, 0, 0, 0, 0,
+                                               0, 0, 0, 0, 0, 0, 0, 0 };
         } MetaInfos;
 
         MetaInfos _meta;

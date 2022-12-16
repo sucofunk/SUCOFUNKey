@@ -43,10 +43,20 @@
 
 class Arrange {
     public:
+        enum CursorDirection {
+            UP = 1,
+            RIGHT = 2,
+            DOWN = 3,
+            LEFT = 4
+        };
+
         Arrange(Sucofunkey* keyboard, Screen* screen, FSIO* fsio, SampleFSIO* sfsio, unsigned int* extmemArray, AudioResources* audioResources, Play* play);
         long receiveTimerTick();
         void setActive(boolean active);
         void handleEvent(Sucofunkey::keyQueueStruct event);
+        
+        void moveCursor(CursorDirection direction);
+        void saveToSD();
 
     private:
         Sucofunkey* _keyboard;
@@ -64,6 +74,8 @@ class Arrange {
         volatile int _blinkPosition = 0;
         boolean _playLEDon = false;
         boolean _isInitialized = false;
+
+        int _cursorPosition = 0;
 };
 
 #endif

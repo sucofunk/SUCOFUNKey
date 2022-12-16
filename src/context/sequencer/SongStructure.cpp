@@ -1356,14 +1356,13 @@ boolean SongStructure::loadFromSD(char *songPath) {
     return true;
 };
 
-boolean SongStructure::saveToSD(char *songPath) {
-    
-    // ToDo: SD card error handling and removing the delays, which are just here for the case that the sd card hangs for a few ms
 
+
+
+boolean SongStructure::saveMetadataToSD(char *songPath) {
     char buff[40];
     File writeFile;
     byte *bufferBlocks;
-
 
     // write _meta -> all meta infos for this song
     strcpy(buff, songPath);
@@ -1377,6 +1376,18 @@ boolean SongStructure::saveToSD(char *songPath) {
     writeFile.write(bufferBlocks, sizeof(MetaInfos));
  
     writeFile.close();
+}
+
+
+boolean SongStructure::saveToSD(char *songPath) {
+    
+    // ToDo: SD card error handling and removing the delays, which are just here for the case that the sd card hangs for a few ms
+
+    saveMetadataToSD(songPath);
+
+    char buff[40];
+    File writeFile;
+    byte *bufferBlocks;
  
 
     // write _blocks
@@ -1742,6 +1753,10 @@ int SongStructure::arrangementGetSheetForPosition(int position) {
     return -1;
 };
 
+int SongStructure::arrangementGetRepeatForPosition(int position) {
+    if (position >= 0 && position < _meta.maxSheetsInArrangement) return _meta.arrangementRepeats[position];
+    return 0;
+};
 
 void SongStructure::debugSheets() {
     for (int i=0; i<17; i++) {                        
@@ -1816,7 +1831,40 @@ boolean SongStructure::arrangementHasNextSheet(int position) {
 }
 
 
+int SongStructure::arrangementChangePositionRepeat(int position, boolean increase) {
+    if (_meta.arrangementSheets[position] != -1) {
+        if (!increase && _meta.arrangementRepeats[position] == 0) return 0;
+        _meta.arrangementRepeats[position] = _meta.arrangementRepeats[position] + (increase ? 1 : -1);
+        return _meta.arrangementRepeats[position];
+    }
+    return 0; 
+};
+
+boolean SongStructure::arrangementInsertSheetAtPosition(int position, int sheet) {
+    // check if sheet is really a sheet and not just a number..
+    if (sheet <= 0 || sheet > getSheetCount()) return false;
+
+    if (position >= 0 && position < _meta.maxSheetsInArrangement) {
+        _meta.arrangementSheets[position] = sheet;
+        return true;
+    }
+    return false;
+};
+
+boolean SongStructure::arrangementRemovePosition(int position) {
+    if (position >= 0 && position < _meta.maxSheetsInArrangement) {
+        _meta.arrangementSheets[position] = -1;
+        return true;
+    }
+    return false;    
+};
+
 void SongStructure::debugArrangement() {
+    // keep an eye on this bug.. probably a versioning problem..
+    Serial.print("maxSheets::");
+    Serial.println(_meta.maxSheetsInArrangement);
+    if (_meta.maxSheetsInArrangement > 10) _meta.maxSheetsInArrangement = 80;
+
     Serial.print("Arrangement :: ");
     for (int i=0; i<_meta.maxSheetsInArrangement; i++) {
         Serial.print(_meta.arrangementSheets[i]);

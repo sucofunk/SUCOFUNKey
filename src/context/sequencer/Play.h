@@ -169,6 +169,7 @@ class Play {
         int _arrangementSheetPosition = 0;
         int _playPositionArrangement = -1;
         int _lastPositionUntilNextArrangementSheet = 0;
+        int _currentSheetPlays = 0;
 };
 
 #endif

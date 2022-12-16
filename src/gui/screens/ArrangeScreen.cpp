@@ -39,16 +39,44 @@ ArrangeScreen::ArrangeScreen(Sucofunkey* keyboard, Screen* screen, SampleFSIO* s
 void ArrangeScreen::showEmptyOverview() {
     _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);
     
-    for (int i=0; i<=10; i++) {
-        _screen->drawFastHLine(0, _screen->AREA_CONTENT.y1 + (i*19), 320, _screen->C_GRID_DARK);
+    for (int i=0; i<=rows; i++) {
+        _screen->drawFastHLine(0, _screen->AREA_CONTENT.y1 + (i*(190/rows)), 320, _screen->C_GRID_DARK);
     }
     
-    for (int i=0; i<=6; i++) {
-        _screen->drawFastVLine(i*53, _screen->AREA_CONTENT.y1, _screen->AREA_CONTENT.y2-_screen->AREA_CONTENT.y1, _screen->C_GRID_DARK);
+    for (int i=0; i<=columns; i++) {
+        _screen->drawFastVLine(i*(320/columns) - (i > 0 ? 1 : 0), _screen->AREA_CONTENT.y1, _screen->AREA_CONTENT.y2-_screen->AREA_CONTENT.y1, _screen->C_GRID_DARK);
+    }
+}
+
+void ArrangeScreen::drawCursor(int position, boolean highlight) {
+    int row = position / columns;
+    int column = position - (row * columns);
+
+    _screen->drawFastHLine(column*(320/columns) - (column > 0 ? 1 : 0), _screen->AREA_CONTENT.y1 + (row*(190/rows)), (320/columns), highlight ? _screen->C_ORANGE : _screen->C_GRID_DARK);  
+    _screen->drawFastHLine(column*(320/columns) - (column > 0 ? 1 : 0), _screen->AREA_CONTENT.y1 + ((row+1)*(190/rows)), (320/columns), highlight ? _screen->C_ORANGE : _screen->C_GRID_DARK);  
+
+    _screen->drawFastVLine(column*(320/columns) - (column > 0 ? 1 : 0), _screen->AREA_CONTENT.y1 + (row*(190/rows)), (190/rows), highlight ? _screen->C_ORANGE : _screen->C_GRID_DARK);  
+    _screen->drawFastVLine((column+1)*(320/columns) - 1, _screen->AREA_CONTENT.y1 + (row*(190/rows)), (190/rows), highlight ? _screen->C_ORANGE : _screen->C_GRID_DARK);
+};
+
+void ArrangeScreen::annotateCell(int position, int sheet, int repeat) {
+    int row = position / columns;
+    int column = position - (row * columns);
+
+    Screen::Area tempArea = { column*(320/columns) - (column > 0 ? 1 : 0) + 1 , _screen->AREA_CONTENT.y1 + (row*(190/rows) + 2), 
+                              column*(320/columns) - (column > 0 ? 1 : 0) + (320/columns) - 1, _screen->AREA_CONTENT.y1 + (row*(190/rows)) + (190/rows) - 1, false, _screen->C_BLACK};
+
+    if (sheet >= 1) {
+        if (repeat > 0) {
+            sprintf(_cBuff5, "%d +%d", sheet, repeat);
+        } else {
+            sprintf(_cBuff5, "%d", sheet);
+        }
+        
+        _screen->drawTextInArea(tempArea, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_SMALL, false, _screen->C_WHITE, _cBuff5);
+    } else {
+        _screen->fillArea(tempArea, _screen->C_BLACK);
     }
 
 
-//    _screen->drawFastHLine(offsetLR + static_cast<int>(0.5*cellSize), sharpieTopLineY, 3*cellSize+4, _screen->C_WHITE);
-//    _screen->drawFastHLine(offsetLR + static_cast<int>(0.5*cellSize), sharpieBottomLineY, 3*cellSize+4, _screen->C_WHITE);
-
-}
+};

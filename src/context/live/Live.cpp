@@ -55,9 +55,10 @@ Live::Live(Sucofunkey* keyboard, Screen* screen, FSIO* fsio, SampleFSIO* sfsio, 
 
 // returns the current tick speed.. as tempo changes are not handled global
 long Live::receiveTimerTick() {
-  if (_isInitialized) {
+   if (_isInitialized) {
+    _play->arrangementPlayNext();
     _play->snippetsPlayNext();  
-  
+    
     if (_blinkPosition == 0) {
       _playLEDon = true;
     } else {
@@ -212,14 +213,22 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::PLAY:
             if (_currentState == CONFIG_SAMPLE) {
               _playSlot(_editingSlotId, 128, true, 128);
+            } else {
+              // arrangement playback
+              if (_play->queueArrangement(0, false)) _blinkPosition = 0;
             }
+          break;        
+
+        case Sucofunkey::FN_PLAY:
+            // loop arrangement playback
+            if (_play->queueArrangement(0, true)) _blinkPosition = 0;
           break;        
 
         case Sucofunkey::PAUSE:
             if (_currentState == CONFIG_SAMPLE) {
               _playSlot(_editingSlotId, 128, false, 128);
             }  else {
-              _keyboard->scanI2C();
+              _play->stopArrangement();
             }     
           break;
 

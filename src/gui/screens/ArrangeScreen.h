@@ -43,7 +43,12 @@ class ArrangeScreen {
         ArrangeScreen(){};
         ArrangeScreen(Sucofunkey* keyboard, Screen* screen, SampleFSIO* sfsio);
 
+        int rows = 10;
+        int columns = 8;
+
         void showEmptyOverview();
+        void drawCursor(int position, boolean highlight);
+        void annotateCell(int position, int sheet, int repeat);
 
     private:
         Sucofunkey *_keyboard;
