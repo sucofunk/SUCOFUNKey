@@ -62,14 +62,18 @@ Currently I am creating almost everything by myself. So the next steps might tak
 - <del>Improve the website</del>
 
 ### On device / Firmware
-- Implement Arrange Mode
 - Option to change Songs from main menu
-- Option to give samples a name instead of the standard numbers (1..72)
-- Set a base note for a sample e.g. C4 to map chromatic pitching to note keys
+- Extend the Sample file browser
+- Extend Sampler:
+  - Option to give samples a name instead of the standard numbers (1..72)
+  - Set a base note for a sample e.g. C4 to map chromatic pitching to note keys
+  - ADSR envelope
+  - Bitcrusher
 - Move settings from code to a configuration menu within the device
-- More features for the sampler (fade in/out, bitcrusher)
 - add feature to <del>select and</del> move blocks in the sequencer
+- copy and paste selections in the sequencer to re-use them
 - fix bugs
+- <del>Implement Arrange Mode</del>
 - <del>Patterns in Sequencer</del>  
 - <del>Optimize menu structure and create a main menu</del>
 - <del>Sample library (Filesystem) integration to use samples on multiple projects</del>
