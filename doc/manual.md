@@ -209,7 +209,8 @@ While playing
 
 The arrange mode gives the option to chain sheets from the sequencer to a complete song.
 Each cell of the grid can hold one sheet. You can navigate within the grid via the CURSOR keys. The grid plays from left to right and top to bottom.
-The arrangement can be played in the play mode, too, via pushing the PLAY key.
+The arrangement will stop playing, if there is an empty cell. This way you can create multiple arrangements.
+The first arrangement can be played in the play mode, too, via pushing the PLAY key.
 
 Shortcuts
 
