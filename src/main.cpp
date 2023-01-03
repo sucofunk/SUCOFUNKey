@@ -728,10 +728,9 @@ void handleKeyboardEventQueue() {
     Serial.println(event.type);
 */
 
+//    Serial.print("MaxAudioMemoryUsed:: ");
+//    Serial.println(AudioMemoryUsageMax());
 
-/*    Serial.print("MaxAudioMemoryUsed:: ");
-    Serial.println(AudioMemoryUsageMax());
-*/
 
     if (event.type == Sucofunkey::EVENT_APPLICATION) {
       switch(event.index) {

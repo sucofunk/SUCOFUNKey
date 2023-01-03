@@ -49,6 +49,8 @@ void AudioPlayMemorySUCO::play(const unsigned int *data)
 	length = format & 0xFFFFFF;
 	playing = format >> 24;    
     _startDelayRemainSamples = 0;
+    _noteOff = false;
+    _noteOffPercentage = 1.0f;
 }
 
 
@@ -70,7 +72,16 @@ void AudioPlayMemorySUCO::playPitched(const unsigned int *data, byte baseNote, b
     _startDelayRemainSamples = startDelaySamples;
     _reverse = reverse;
 
+    _noteOff = false;
+    _noteOffPercentage = 1.0f;
+
     if (reverse) _position = (length/2)-2;
+}
+
+
+void AudioPlayMemorySUCO::noteOff(void) {
+    _noteOffPercentage = 1.0;
+    _noteOff = true;
 }
 
 
@@ -82,6 +93,9 @@ void AudioPlayMemorySUCO::stop(void)
     _position = 0.0f;
     _increment = 1.0f;
     _reverse = false;
+
+    _noteOff = false;
+    _noteOffPercentage = 1.0f;
 }
 
 
@@ -98,8 +112,8 @@ void AudioPlayMemorySUCO::update(void)
 
 	out = block->data;
 
-    int16_t p1;
-    int16_t p2;
+//    int16_t p1;
+//    int16_t p2;
 
     for (int i=0; i < AUDIO_BLOCK_SAMPLES; i += 2) {        
 
@@ -124,14 +138,27 @@ void AudioPlayMemorySUCO::update(void)
                     *out++ = p1;
                     *out++ = p2;
 */
-                *out++ = (int16_t)(tmp32 & 65535);
-                *out++ = (int16_t)(tmp32 >> 16);
-                
 
+                if (_noteOff) {
+                    // fade out..
+                    _noteOffPercentage = _noteOffPercentage - _noteOffOffset;                    
+
+                    if (_noteOffPercentage <= 0.0f) { 
+                        playing = 0;
+                        *out++ = 0;
+                        *out++ = 0;
+                    } else {
+                        *out++ = (int16_t)((int16_t)(tmp32 & 65535))*_noteOffPercentage;
+                        *out++ = (int16_t)((int16_t)(tmp32 >> 16))*_noteOffPercentage;
+                    }
+                } else {
+                    *out++ = (int16_t)(tmp32 & 65535);
+                    *out++ = (int16_t)(tmp32 >> 16);
+                }
             } else {
                 *out++ = 0;
                 *out++ = 0;
-                playing = 0;                
+                playing = 0;
             }
 
             if (_reverse) {
@@ -147,6 +174,8 @@ void AudioPlayMemorySUCO::update(void)
         _position = 0.0f;
         _increment = 1.0f;
         _reverse = false;
+        _noteOffPercentage = 1.0f;
+        _noteOff = false;
     }
 
 	transmit(block);

@@ -45,7 +45,8 @@ public:
 	void play(const unsigned int *data);
     void playPitched(const unsigned int *data, byte baseNote, byte note, int startDelaySamples, boolean reverse);
 	void stop(void);
-	bool isPlaying(void) { return playing; }
+	void noteOff(void);
+	bool isPlaying(void) { return playing == 0 ? false : true ; }
 	virtual void update(void);
 
     void setBaseMIDINote(byte baseNote);
@@ -69,6 +70,9 @@ private:
     byte _note = 60;
 
     boolean _reverse = false;
+    boolean _noteOff = false;
+    double _noteOffPercentage = 1.0;
+    double _noteOffOffset = 0.0005;
 
     int _startDelayRemainSamples = 0;
 };

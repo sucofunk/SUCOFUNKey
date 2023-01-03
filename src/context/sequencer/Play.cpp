@@ -218,8 +218,8 @@ void Play::playMixedSample(byte channel, uint16_t position, int snippetSlot) {
 
   SongStructure::samplePointerStruct sps = _song.getPosition(channel, position);
 
-  if (sps.type == SongStructure::NOTE_OFF) {
-    mixSPM.playMemory->stop();
+  if (sps.type == SongStructure::NOTE_OFF) {    
+    mixSPM.playMemory->noteOff();
   } else {
     byte velocity = 64;
     byte stereoPosition = 64;
@@ -576,6 +576,15 @@ void Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, 
   if (!_audioResources->playMemLive7.isPlaying()) { _polyMemIDs[6] = 0; }
   if (!_audioResources->playMemLive8.isPlaying()) { _polyMemIDs[7] = 0; }
 
+/*  
+  for (int i=0; i<8; i++) {
+    Serial.print(_polyMemIDs[i]);
+    Serial.print(" :: ");
+  }
+
+  Serial.println("");
+*/
+
   if (play) {    
     // search next free playmem and play..
     for (int i=0; i<8; i++) {
@@ -624,35 +633,43 @@ void Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, 
     }  
   } else {
     // stop wavetable
-    for (int i=0; i<6; i++) {
+    for (int i=0; i<8; i++) {
       if (_polyMemIDs[i] == sample1 && _polyMemNotes[i] == note) {
           _polyMemIDs[i] = 0;
-          _polyMemIDs[i] = 128;
+          //_polyMemIDs[i] = 128;
 
           switch(i) {
             case 0:
-              _audioResources->playMemLive1.stop();
+              _audioResources->playMemLive1.noteOff();
+              //_audioResources->playMemLive1.stop();
               break;
             case 1:
-              _audioResources->playMemLive2.stop();
+              _audioResources->playMemLive2.noteOff();
+              //_audioResources->playMemLive2.stop();
               break;
             case 2:
-              _audioResources->playMemLive3.stop();
+              _audioResources->playMemLive3.noteOff();
+              //_audioResources->playMemLive3.stop();
               break;
             case 3:
-              _audioResources->playMemLive4.stop();
+              _audioResources->playMemLive4.noteOff();
+              //_audioResources->playMemLive4.stop();
               break;
             case 4:
-              _audioResources->playMemLive5.stop();
+              _audioResources->playMemLive5.noteOff();
+              //_audioResources->playMemLive5.stop();
               break;
             case 5:
-              _audioResources->playMemLive6.stop();
+              _audioResources->playMemLive6.noteOff();
+              //_audioResources->playMemLive6.stop();
               break;
             case 6:
-              _audioResources->playMemLive7.stop();
+              _audioResources->playMemLive7.noteOff();
+              //_audioResources->playMemLive7.stop();
               break;
             case 7:
-              _audioResources->playMemLive8.stop();
+              _audioResources->playMemLive8.noteOff();
+              //_audioResources->playMemLive8.stop();
               break;
           }
 
