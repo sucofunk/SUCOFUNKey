@@ -3,7 +3,7 @@
 Beatmaker's sketchbook is developed to be as intuitive to use as possible. As you know, it is Open Source and will change and improve over time.
 The learning curve is pretty flat. Just play around.
 
-Last edit: 25.10.2022
+Last edit: 31.12.2022
 
 ## 1 Input controls
 
@@ -112,7 +112,7 @@ PLAY to pre-listen the library sample. Use SET to select the selected sample, ca
 
 
 ### Cutting a sample
-When cutting a sample (Menu -> CUT), ENCODER1 moves the start pointer, ENCODER2 moves the end pointer. Encoder 3 adjusts the volume.
+When cutting a sample (Menu -> CUT), ENCODER1 moves the start pointer, ENCODER2 moves the end pointer. ENCODER 3 adjusts the volume.
 Playing the selected part is always possible by hitting PLAY.
 
 To fine-adjust the start- and end-point, use FUNK+ENCODER1/2. The amount of 16 Bits (one amplitude change) will be shown on top. Pay attention that it resets to zero, if you change it again without holding FUNK.
@@ -205,7 +205,25 @@ While playing
     A lot of functions are working even while playing, but they might impact the playback speed, as refreshing the display takes some time (needs to be fixed).
 
 
-## 9 Play mode
+## 9 Arrange mode
+
+The arrange mode gives the option to chain sheets from the sequencer to a complete song.
+Each cell of the grid can hold one sheet. You can navigate within the grid via the CURSOR keys. The grid plays from left to right and top to bottom.
+The arrangement will stop playing, if there is an empty cell. This way you can create multiple arrangements.
+The first arrangement can be played in the play mode, too, via pushing the PLAY key.
+
+Shortcuts
+
+    WHITE KEYS   Insert a sheet to the highlighted grid cell. Each white key corresponds to a sheet from the sequencer.
+    FN+SET       Delete the sheet from the active cell.
+    PLAY         Play the arrangement, starting at the active cell. 
+                 If the arrangement is currently playing, it will be paused. Hitting PLAY again will start at the paused position.
+    FUNK+UP      The selected cell will be played as many times as you hit the combination. Indicated via (+1, +2,...)
+    FUNK+DOWN    Remove one repetition of the selected cell.
+
+
+
+## 10 Play mode
 
 Play mode is for live performances and playing around with samples and snippets. Each key on the keyboard can be assigned to a sample or a snippet. All three banks can be used - 72 slots in total can be assignet. Each note on the keyboard can be triggered from external MIDI gear on MIDI channel 1 (the channel will be configurable in future versions). Each slot is by default assigned to the corresponding standard MIDI note of the position (e.g. the first C on the second bank is note 60). The midi note for each slot can be changed by a) selecting a note or b) learning from an incoming MIDI signal.
 
@@ -228,9 +246,9 @@ The 8 channels for samples can be triggered with polyphonic aftertouch from exte
 
 To record a live performance, hit RECORD, select *resample* via the input selector, start recording and switch back (MENU+ENCODER4) to play mode. Hit RECORD again to stop recording your session. The recorded session is saved to the internal SD card and will immediately be displayed in the SAMPLE mode.
 
-## 10 Technical stuff
+## 11 Technical stuff
 
-## 10.1 SD-card
+## 11.1 SD-card
 
 Everything is stored on the SD card on the teensy 4.1 microcontroller.
 There are two directories on the root folder of the SD-Card.
@@ -242,7 +260,7 @@ There are two directories on the root folder of the SD-Card.
     The  subdirectories below this folder contain one song, each. If you want to delete a song, just delete the corresponding directory. 
 
 
-## 10.2 Updating the firmware
+## 11.2 Updating the firmware
 
 To update the firmware of your Beatmaker's sketchbook, just compile the sources of this project or get a pre-compiled version.
 The latest pre-built version as .hex file is stored [here](/built/).
