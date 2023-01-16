@@ -278,10 +278,7 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
         case OVERVIEW:
             if (_slots[slotsIndex].type != Play::EMPTY) {
               _playSlot(slotsIndex, 128, event.pressed, 128);
-            } else {              
-              _changeState(SLOT_TYPE_SELECT);
-              _handleSlotTypeSelection(_activeBank, slot, true);
-            }
+            } 
 
           break;
 
@@ -349,25 +346,30 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
       int slot = _keyboard->getSampleIdByEventKey(event.index);
       int slotsIndex = (slot-1)+((_activeBank-1)*24);
 
-      // show slot configuration
-      //if (_currentState == OVERVIEW && _slots[slotsIndex].type == Play::SNIPPET) {
-      if (_slots[slotsIndex].type == Play::SNIPPET) {
-        if (_currentState != OVERVIEW) { _cancel(false); }
+      if (_slots[slotsIndex].type == Play::EMPTY) {
+        // empty slot.. start with sample/snippet selection
+        _changeState(SLOT_TYPE_SELECT);
+        _handleSlotTypeSelection(_activeBank, slot, true);
+      } else {
+        // show slot configuration
+        //if (_currentState == OVERVIEW && _slots[slotsIndex].type == Play::SNIPPET) {
+        if (_slots[slotsIndex].type == Play::SNIPPET) {
+          if (_currentState != OVERVIEW) { _cancel(false); }
 
-        _editingSlotKey = slot;
-        _editingSlotBank = _activeBank;
-        _changeState(CONFIG_SNIPPET);
-      }
-    
+          _editingSlotKey = slot;
+          _editingSlotBank = _activeBank;
+          _changeState(CONFIG_SNIPPET);
+        }
+      
+        // show sample configuration
+        //if (_currentState == OVERVIEW && _slots[slotsIndex].type == Play::SAMPLE) {
+        if (_slots[slotsIndex].type == Play::SAMPLE) {
+          if (_currentState != OVERVIEW) { _cancel(false); }
 
-      // show sample configuration
-      //if (_currentState == OVERVIEW && _slots[slotsIndex].type == Play::SAMPLE) {
-      if (_slots[slotsIndex].type == Play::SAMPLE) {
-        if (_currentState != OVERVIEW) { _cancel(false); }
-
-        _editingSlotKey = slot;
-        _editingSlotBank = _activeBank;
-        _changeState(CONFIG_SAMPLE);
+          _editingSlotKey = slot;
+          _editingSlotBank = _activeBank;
+          _changeState(CONFIG_SAMPLE);
+        }
       }
     }
 
