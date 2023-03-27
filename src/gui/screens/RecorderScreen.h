@@ -43,9 +43,9 @@ class RecorderScreen {
         RecorderScreen();
         RecorderScreen(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *sfsio, AudioResources *audioResources);
 
-        void showRecorderScreen();
-        void showRecorderScreenRecording();
-        void drawInputPeakMeter(float peak);
+        void showRecorderScreen(boolean onScreen);
+        void showRecorderScreenRecording(boolean onScreen);
+        void drawInputPeakMeter(float peak, boolean onScreen);
         
     private:
         Sucofunkey *_keyboard;

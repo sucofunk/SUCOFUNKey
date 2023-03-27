@@ -74,6 +74,7 @@ class Recorder {
         RecorderScreen _recorderScreen;
 
         byte _lastInput = Sucofunkey::INPUT_NONE;
+        boolean _onScreenPeak = true;
 
         void activateInput();
 };

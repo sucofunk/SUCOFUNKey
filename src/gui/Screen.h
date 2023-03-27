@@ -33,10 +33,12 @@
 
 #include <Arduino.h>
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
+//#include <Adafruit_ILI9341.h> // Hardware specific library for ILI9341
 
 class Screen {
     public:
-        Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness);  
+        Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness);
+        //Screen(Adafruit_ILI9341 *tft, int BL_PIN, int BL_brightness);          
 
         typedef struct area {
                 int x1;
@@ -104,13 +106,15 @@ class Screen {
 
         uint16_t RGBtoColor(byte r, byte g, byte b);
 
+
         // Color definitions
 
         const uint16_t C_WHITE = RGBtoColor(255, 255, 255);
         const uint16_t C_BLACK = RGBtoColor(0, 0, 0);
+
         
         const uint16_t C_GREEN = RGBtoColor(0, 255, 0);        
-        const uint16_t C_ORANGE = ST77XX_ORANGE;
+        const uint16_t C_ORANGE = RGBtoColor(235, 146, 52);
 
         const uint16_t C_PEAK_OVER = RGBtoColor(255, 0, 0);
         const uint16_t C_PEAK_MUCH = RGBtoColor(245, 150, 5);
@@ -124,7 +128,6 @@ class Screen {
         const uint16_t C_SB_FREE = RGBtoColor(18, 222, 38);
         const uint16_t C_SB_USED = RGBtoColor(222, 38, 18);
         
-        //const uint16_t C_TRIM_START = RGBtoColor(245, 166, 35);
         const uint16_t C_TRIM_START = C_ORANGE;
         const uint16_t C_TRIM_END = RGBtoColor(80, 227, 194);       
 
@@ -155,8 +158,10 @@ class Screen {
         const uint16_t C_SWING_GROUPS[9] = {C_ORANGE, RGBtoColor(114, 220, 35), RGBtoColor(35, 207, 220), RGBtoColor(141, 35, 220), RGBtoColor(219, 161, 36), RGBtoColor(220, 48, 35), RGBtoColor(40, 215, 193), RGBtoColor(251, 213, 4), RGBtoColor(120, 120, 120)};
 
         const uint16_t C_CURSOR = C_ORANGE;
-        const uint16_t C_SELECTION = ST77XX_YELLOW; // RGBtoColor(255, 255, 255);
-        const uint16_t C_SNIPPET = ST77XX_GREEN; 
+        //const uint16_t C_SELECTION = ST77XX_YELLOW; // RGBtoColor(255, 255, 255);
+        const uint16_t C_SELECTION = RGBtoColor(245, 238, 34);
+        //const uint16_t C_SNIPPET = ST77XX_GREEN; 
+        const uint16_t C_SNIPPET = RGBtoColor(32, 212, 86); 
 
         const uint16_t C_LIVE_SNIPPET = RGBtoColor(80, 227, 194);
         const uint16_t C_LIVE_SAMPLE = C_ORANGE;
@@ -232,6 +237,8 @@ class Screen {
 
     private:
         Adafruit_ST7789 *_tft;
+        //Adafruit_ILI9341 *_tft;
+
         int16_t _dx = 0;
         int16_t _dy = 0;
         uint16_t _dw = 0;

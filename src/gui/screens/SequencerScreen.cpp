@@ -118,7 +118,6 @@ void SequencerScreen::drawGrid(LastAction action) {
     _screen->fillRect((amountOfGridcellsToDraw)*_cellWidth+1, _screen->AREA_CONTENT.y1+1, _screen->AREA_SCREEN.x2-(amountOfGridcellsToDraw*_cellWidth)+2, h+1, _screen->C_BLACK);
   }
 
-
   // draw sheet divider lines..
   int previousSheet = _song->getPreviousSheetDividerPosition(_xPositionOffset);
   int nextSheet = _xPositionOffset;

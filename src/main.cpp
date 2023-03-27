@@ -49,6 +49,7 @@
 #include <Audio.h>
 #include <MIDI.h>
 #include <Adafruit_ST7789.h>
+//#include <Adafruit_ILI9341.h>
 
 // PINs on the Teensy 4.1 to receive Interrupts from the 5 MCP23017 chips used as port expanders to receive updated from the 36 Buttons and 4 rotary encoders
 // The MCP23017s control the 32 LEDs in the SUCOFUNKey, too
@@ -116,6 +117,8 @@ AudioResources audioResources;
 
 // Hardware SPI for LCD Screen
 Adafruit_ST7789 tft(&SPI1, PIN_SCREEN_CS, PIN_SCREEN_DC, PIN_SCREEN_RST);
+//Adafruit_ILI9341 tft(&SPI1, PIN_SCREEN_DC, PIN_SCREEN_CS, PIN_SCREEN_RST);
+
 
 // Initializing the "keyboard"
 Sucofunkey keyboard(PIN_SUCOKEY_INT_1, PIN_SUCOKEY_INT_2, PIN_SUCOKEY_INT_3, PIN_SUCOKEY_INT_4, PIN_SUCOKEY_INT_5);
@@ -435,6 +438,10 @@ void setup() {
 
   // initialize screen
   tft.init(240, 320, SPI_MODE0);
+  
+  // ILI9341:
+  //tft.begin();
+  
   tft.setRotation(3);
   tft.fillScreen(screen.C_STARTUP_BG);
 
@@ -496,6 +503,8 @@ void setup() {
 
   MIDI.begin(MIDI_CHANNEL_OMNI);
   Serial.println("setup done");
+  // remove before flight... just for testing, if soldering worked and did not fry the MCPs
+  //keyboard.scanI2C();
 }
 
 

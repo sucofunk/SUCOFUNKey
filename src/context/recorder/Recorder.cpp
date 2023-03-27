@@ -48,11 +48,11 @@ void Recorder::handleEvent(Sucofunkey::keyQueueStruct event) {
       switch(event.index) {
         case Sucofunkey::RECORD:
             if (currentState == RECORDER_RECORDING) {
-              _recorderScreen.showRecorderScreen();
+              _recorderScreen.showRecorderScreen(_onScreenPeak);
               stopRecording();
             } else {
               startRecording();
-              _recorderScreen.showRecorderScreenRecording();
+              _recorderScreen.showRecorderScreenRecording(_onScreenPeak);
             }
             break;
         case Sucofunkey::FN_RECORD:
@@ -62,7 +62,7 @@ void Recorder::handleEvent(Sucofunkey::keyQueueStruct event) {
             break;
         case Sucofunkey::PAUSE:
             if (currentState == RECORDER_RECORDING) {
-              _recorderScreen.showRecorderScreen();
+              _recorderScreen.showRecorderScreen(_onScreenPeak);
               stopRecording();
             } else {
               if (currentState == RECORDER_NOTHING) {
@@ -76,6 +76,16 @@ void Recorder::handleEvent(Sucofunkey::keyQueueStruct event) {
             _keyboard->toggleInput();
             activateInput();
             break;
+
+         case Sucofunkey::ZOOM:
+            _onScreenPeak = !_onScreenPeak;
+            if (currentState == RECORDER_RECORDING) {
+              _recorderScreen.showRecorderScreenRecording(_onScreenPeak);  
+            } else {
+              _recorderScreen.showRecorderScreen(_onScreenPeak);
+            }
+            _keyboard->showInputLEDs();
+            break;   
       }
     }
 
@@ -111,7 +121,7 @@ void Recorder::handleEvent(Sucofunkey::keyQueueStruct event) {
 
 long Recorder::receiveTimerTick() {
     if (_isActive) {
-         _recorderScreen.drawInputPeakMeter(_audioResources->peak1.read());
+         _recorderScreen.drawInputPeakMeter(_audioResources->peak1.read(), _onScreenPeak);
     }
 
     return 70000;
@@ -122,7 +132,7 @@ void Recorder::setActive(boolean active) {
     _isActive = true;
     _keyboard->setBank(0);
     currentState = RECORDER_NOTHING;
-    _recorderScreen.showRecorderScreen();
+    _recorderScreen.showRecorderScreen(_onScreenPeak);
     _keyboard->setInput(_lastInput);
     activateInput();    
   } else {

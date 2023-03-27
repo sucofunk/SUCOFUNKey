@@ -31,8 +31,7 @@
 #include <Arduino.h>
 #include "Screen.h"
 #include <SD.h>
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
+
 #include "fonts/OxygenMono_Regular8pt7b.h" // https://fonts.google.com/specimen/Oxygen+Mono
 #include "fonts/BaiJamjureeRegularMonoDigits8pt7b.h" // https://fonts.google.com/specimen/Bai+Jamjuree
 #include "fonts/BaiJamjuree_Medium5pt7b.h" // https://fonts.google.com/specimen/Bai+Jamjuree
@@ -42,6 +41,14 @@ Screen::Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness) {
   _BL_PIN = BL_PIN;
   _BL_brightness = BL_brightness;
 }
+
+
+/*Screen::Screen(Adafruit_ILI9341 *tft, int BL_PIN, int BL_brightness) {
+  _tft = tft;
+  _BL_PIN = BL_PIN;
+  _BL_brightness = BL_brightness;
+}
+*/
 
 void Screen::testBild(const char* text) {
     fillArea(AREA_SCREEN, C_BLACK);    
@@ -214,6 +221,9 @@ uint16_t Screen::RGBtoColor(byte r, byte g, byte b) {
   color = color + (tg << 5);
   color = color + tb;  
   return color;
+
+
+  //return _tft->color565(r, g, b);
 };
 
 void Screen::drawText(const char *text,int x, int y, uint16_t color, const GFXfont *font) {

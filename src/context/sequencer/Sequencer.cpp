@@ -273,6 +273,11 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
                 if (!_isPlaying) { _play->playMixedSample(_cursorChannel, _cursorPosition, -1); }
             }
             break;            
+        
+        case Sucofunkey::FN_ENCODER_3_PUSH:
+            // ToDo: move cursor to the middle of the viewport
+            break;
+
         // set probability from fader          
         case Sucofunkey::ENCODER_4_PUSH:
             if (_song->getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE) {
@@ -401,7 +406,15 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
 
         case Sucofunkey::FN_ENCODER_4:
             if (!_isPlaying) {
-              _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, false);              
+
+              // ToDo: - append/shorten grid
+              //       - move cursor to end of grid
+              //       - center viewport at end of grid VP-START .... | <-end of grid at middle of screen .... VP-END
+              //         ^ only if the song does not completely fit on the screen!
+
+
+              
+              _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, false);
               _song->changeSongLengthByTick(event.pressed, 4); // 4 is one tick at zoom level NORMAL.. needed to keep everything in shape when moving on different zoom levels
 
               // ToDo: check if maximum song length is reached!
@@ -414,6 +427,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               _sequencerScreen.drawGrid(event.pressed ? _sequencerScreen.APPEND : _sequencerScreen.SHORTEN);
               _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
             }
+            
           break;
 
 

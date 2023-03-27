@@ -170,7 +170,7 @@ Sucofunkey::Sucofunkey(int intPinMCP1, int intPinMCP2, int intPinMCP3, int intPi
   _values_mcp5_current = _mcp5.readGPIOAB();
 
 
-  scanI2C();
+  //scanI2C();
 }
 
 
@@ -577,8 +577,11 @@ byte Sucofunkey::getBank() {
 
 void Sucofunkey::setInput(byte nr) {
   _activeInput = nr;
-    
-  switch (nr) {
+  showInputLEDs();
+};
+
+void Sucofunkey::showInputLEDs() {
+  switch (_activeInput) {
     case INPUT_NONE:  
               setLEDState(LED_INPUT_MIC, false);
               setLEDState(LED_INPUT_LINE, false);
@@ -614,7 +617,7 @@ void Sucofunkey::setInput(byte nr) {
               setLEDState(LED_INPUT_RESAMPLE, false);
               break;
   }
-};
+}
 
 void Sucofunkey::toggleInput() {
   if (_activeInput < 5) {

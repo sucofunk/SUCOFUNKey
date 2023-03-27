@@ -88,6 +88,7 @@ class Sucofunkey {
         byte getBank();
 
         void setInput(byte nr);
+        void showInputLEDs();
         void toggleInput();
         byte getInput();
 
