@@ -95,6 +95,7 @@ void SampleSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
 
                     if (s[0] == '/') {
                         _fsio->readLibrarySamplesFromSD(_fsio->getLibrarySamples(), s);
+                        _activeItem = 0; // set cursor to first entry in list/viewport after changing a directory
                         drawSampleSelector();
                     } else {
                         _fsio->setSelectedSamplePathFromSD(_offset + _activeItem);
