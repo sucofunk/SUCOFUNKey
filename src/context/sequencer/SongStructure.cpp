@@ -1089,15 +1089,24 @@ uint16_t SongStructure::getSongLength() {
     return _meta.songLength;
 };
 
-void SongStructure::changeSongLengthByTick(boolean increase, byte tickAmount) {
-    if (increase && _meta.songLength+tickAmount < _maxSongLength) {
-        _meta.songLength = _meta.songLength + tickAmount;
-    } 
-
-    // song needs at least to be 2 "ticks" long - no idea why, but how would a 1 Tick song look like? Sell it on ebay for a million?
-    if (!increase && _meta.songLength > 2*tickAmount) {
-        _meta.songLength = _meta.songLength - tickAmount;
-    }         
+boolean SongStructure::changeSongLengthByTick(boolean increase, byte tickAmount) {
+    if (increase) {
+        if (_meta.songLength+tickAmount < _maxSongLength) {
+            _meta.songLength = _meta.songLength + tickAmount;
+            return true;
+        } else {
+            // max song length reached
+            return false;
+        }
+    } else {
+        // song needs at least to be 2 "ticks" long - no idea why, but how would a 1 Tick song look like? Sell it on ebay for a million?
+        if (_meta.songLength > 2*tickAmount) {
+            _meta.songLength = _meta.songLength - tickAmount;
+            return true;
+        } else {
+            return false;
+        }
+    }
 };
 
 uint16_t SongStructure::getMaxSongLength() {

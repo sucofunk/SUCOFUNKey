@@ -143,7 +143,7 @@ class SongStructure {
 
         void setSongLength(uint16_t songLength);
         uint16_t getSongLength();
-        void changeSongLengthByTick(boolean increase, byte tickAmount); // true = increase pattern lenght by tickAmount (depending on zoomlevel); false = decrease by ..
+        boolean changeSongLengthByTick(boolean increase, byte tickAmount); // true = increase pattern lenght by tickAmount (depending on zoomlevel); false = decrease by ..
 
         uint16_t getMaxSongLength();
 

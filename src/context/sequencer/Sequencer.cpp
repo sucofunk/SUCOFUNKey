@@ -383,54 +383,47 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               _playbackTickSpeed = _play->calculatePlaybackTickSpeed();
               _sequencerScreen.drawBPM(_song->getPlayBackSpeed());
             } else {
-              moveCursor(event.pressed ? DOWN : UP);
-            }
-          break;
-        
-        case Sucofunkey::FN_ENCODER_2:
-            if (_isPlaying) {
-              // what will be the function?
-            } else {
-              moveCursor(event.pressed ? RIGHT : LEFT);              
+              // was: move cursor on channels -> useless?
+              // moveCursor(event.pressed ? DOWN : UP);
             }
           break;
 
-        case Sucofunkey::FN_ENCODER_3:
+
+        case Sucofunkey::FN_ENCODER_2:            
+            /* disabled scrolling the plane, as it might be useless.. free the encoder for something more useful ;) (btw: it was on encoder 3)
+            // scroll whole grid
             _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, false);
             
             if (event.pressed && _sequencerScreen.viewportCheckUpdate(_cursorChannel, _cursorPosition, _sequencerScreen.SCROLL_RIGHT)) _sequencerScreen.drawGrid(_sequencerScreen.SCROLL_RIGHT);
-            if (!event.pressed && _sequencerScreen.viewportCheckUpdate(_cursorChannel, _cursorPosition, _sequencerScreen.SCROLL_LEFT)) _sequencerScreen.drawGrid(_sequencerScreen.SCROLL_LEFT);            
+            if (!event.pressed && _sequencerScreen.viewportCheckUpdate(_cursorChannel, _cursorPosition, _sequencerScreen.SCROLL_LEFT)) _sequencerScreen.drawGrid(_sequencerScreen.SCROLL_LEFT);
             
             _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+            */
           break;
 
+
+        case Sucofunkey::FN_ENCODER_3:
+            if (_isPlaying) {
+              // what will be the function?
+            } else {
+              moveCursor(event.pressed ? RIGHT : LEFT);
+            }
+          break;
+
+        // enhance/shorten grid
         case Sucofunkey::FN_ENCODER_4:
             if (!_isPlaying) {
-
-              // ToDo: - append/shorten grid
-              //       - move cursor to end of grid
-              //       - center viewport at end of grid VP-START .... | <-end of grid at middle of screen .... VP-END
-              //         ^ only if the song does not completely fit on the screen!
-
-
-              
-              _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, false);
-              _song->changeSongLengthByTick(event.pressed, 4); // 4 is one tick at zoom level NORMAL.. needed to keep everything in shape when moving on different zoom levels
-
-              // ToDo: check if maximum song length is reached!
-
-              // if cursor is at the end, move it one cell left, otherwise it would be out off the grid
-              if (_cursorPosition >= _song->getSongLength()) {
+              // 4 is one tick at zoom level NORMAL.. needed to keep everything in shape when moving on different zoom levels
+              if (_song->changeSongLengthByTick(event.pressed, 4)) {
+                // ToDo: find another solution without that much redrawing/flickering
                 _cursorPosition = _song->getSongLength()-zoom.getZoomlevelOffset();
-              }
-
-              _sequencerScreen.drawGrid(event.pressed ? _sequencerScreen.APPEND : _sequencerScreen.SHORTEN);
-              _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
-            }
-            
+                _sequencerScreen.initializeGrid(_song, _cursorPosition);                
+                _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+              } else {
+                // ToD: max or min song length is reached.. inform user or leave it as it is???
+              }   
+            }         
           break;
-
-
 
           case Sucofunkey::ENCODER_1:             
             if ( t == SongStructure::SAMPLE || t == SongStructure::PARAMETER_CHANGE_SAMPLE || t == SongStructure::MIDINOTE) {
