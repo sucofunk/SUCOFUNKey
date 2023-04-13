@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -79,7 +79,7 @@ void SampleSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
             break;
         case Sucofunkey::CURSOR_DOWN:
             if (event.pressed) {
-                if (_activeItem < 4 && _sampleCount > _activeItem) { 
+                if (_activeItem < 4 && _sampleCount-1 > _activeItem) { 
                     _activeItem++;
                     drawSampleSelector();
                 } else {
@@ -91,9 +91,16 @@ void SampleSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::SET:
         case Sucofunkey::ENCODER_1_PUSH:
             if (event.pressed) {
-                    _fsio->setSelectedSamplePathFromSD(_offset + _activeItem);
-                    _keyboard->addApplicationEventToQueue(Sucofunkey::SAMPLE_LIBRARY_SELECTED);
-                }                
+                    String s = _fsio->getSampleName(_activeItem);
+
+                    if (s[0] == '/') {
+                        _fsio->readLibrarySamplesFromSD(_fsio->getLibrarySamples(), s);
+                        drawSampleSelector();
+                    } else {
+                        _fsio->setSelectedSamplePathFromSD(_offset + _activeItem);
+                        _keyboard->addApplicationEventToQueue(Sucofunkey::SAMPLE_LIBRARY_SELECTED);
+                    }
+            }                
             break;
 
         case Sucofunkey::FN_SET:

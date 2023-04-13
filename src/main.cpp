@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -128,7 +128,7 @@ Screen screen(&tft, PIN_SCREEN_BL, 110);
 
 FSIO fsio;
 // store the filenames from /SAMPLES from the SD card in this array for fast access
-DMAMEM FSIO::LibrarySample librarySamples[500];
+DMAMEM FSIO::LibrarySample librarySamples[1024]; // do not change the size, as is used hardcoded in FSIO for cleaning the array
 
 SampleFSIO sfsio(extmemArray, sizeof(extmemArray), &screen);
 
@@ -493,7 +493,7 @@ void setup() {
   globalTickTimer.begin(globalTick, globalTickInterval);
   globalTickTimerRec.begin(globalTickRec, globalTickIntervalRec);
 
-  fsio.readLibrarySamplesFromSD(librarySamples);
+  fsio.readLibrarySamplesFromSD(librarySamples, "/SAMPLES");
 
   delay(400); // small delay for better readability on screen
   

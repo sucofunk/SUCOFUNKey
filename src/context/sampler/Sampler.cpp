@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -61,7 +61,22 @@ Sampler::Sampler(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *s
 void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
 
     if (currentState == SAMPLER_LIBRARY_OPEN && event.index != Sucofunkey::SAMPLE_LIBRARY_SELECTED && event.index != Sucofunkey::SAMPLE_LIBRARY_CANCEL) {
-        _samplerScreen.handleEvent(event);
+        
+        // play other samples to check if they fit with the current selection from the library        
+        if (event.type == Sucofunkey::KEY_NOTE) {
+          if (event.pressed) {          
+            // is there a sample in this slot?
+            if (_sfsio->sampleBanksStatus[_activeBank-1][_keyboard->getSampleIdByEventKey(event.index)-1]) {
+              _audioResources->playSdRaw.play(_sfsio->sampleFilename[_keyboard->getBank()-1][_keyboard->getSampleIdByEventKey(event.index)-1]);
+            }
+          } else {
+            _audioResources->playSdRaw.stop();
+          }
+        } else {
+          // pass event to component..
+          _samplerScreen.handleEvent(event);
+        }
+        
         return;
     }
 
@@ -256,6 +271,8 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::BLACKKEY_NAV_ITEM1:
           // save          
           saveActiveSample();
+
+
           break;
         case Sucofunkey::BLACKKEY_NAV_ITEM2:
           saveActiveSampleAs();

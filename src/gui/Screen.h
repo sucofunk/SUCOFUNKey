@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -183,7 +183,7 @@ class Screen {
 
         Area AREA_CENTER_TEXT = { AREA_SCREEN.x1, AREA_SCREEN.y1+100, AREA_SCREEN.x2, AREA_SCREEN.y2-100, false, C_ORANGE}; // content line in the middle of the screen for system check
 
-        Area AREA_LOADING_BAR = { 110, AREA_SCREEN.y2/2+20, 210, AREA_SCREEN.y2/2+27, C_BLACK };
+        Area AREA_LOADING_BAR = { 110, AREA_SCREEN.y2/2+20, 210, AREA_SCREEN.y2/2+27, false, C_BLACK };
 
         Area AREA_BOTTOM_MENU = {0, AREA_SCREEN.y2-25, AREA_SCREEN.x2, AREA_SCREEN.y2, false, C_BLACK};   
         Area AREA_BOTTOM_MENU_ITEM1 = {0, AREA_BOTTOM_MENU.y1, static_cast<int>(AREA_BOTTOM_MENU.x2*0.33), AREA_BOTTOM_MENU.y2, false, C_BLACK};

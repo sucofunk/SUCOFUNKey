@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -203,7 +203,7 @@ boolean SampleFSIO::copyFile(const char *f1, const char *f2) {
 
   File from;
   File to;
-  byte buffer[256];
+  byte buffer[2048];
   int bufferSize = sizeof(buffer);
 
   from = SD.open(f1);
@@ -235,6 +235,9 @@ boolean SampleFSIO::copyFile(const char *f1, const char *f2) {
   to.close();
   return true;
 }
+
+
+
 
 boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart, long byteEnd, float volumeScaleFactor) {
 
@@ -274,9 +277,6 @@ boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart,
     byteEnd = fromSize;
   }
 
-  Serial.print("File size: ");
-  Serial.println(fromSize);
-
   if (fromSize <  byteStart || byteStart >= byteEnd) {
       Serial.println("operation not possible as we cannot shift back in time");
       return false;
@@ -285,7 +285,7 @@ boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart,
   from.seek(byteStart);
   
   int16_t intBuff = 0;
-  byte byteBuffer[256];
+  byte byteBuffer[2048];
   char t1;
   char t2;
   long offset = 0;
@@ -318,6 +318,7 @@ boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart,
 
   from.close();
   to.close();
+
   return true;
 }
 

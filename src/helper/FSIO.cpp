@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -74,37 +74,92 @@ void FSIO::listDirectory(File dir, int numTabs) {
 }
 
 
-void FSIO::readLibrarySamplesFromSD(LibrarySample *librarySamples) {
-    Serial.println("reading sample library");
+void FSIO::readLibrarySamplesFromSD(LibrarySample *librarySamples, String path) {
     _librarySamples = librarySamples;
 
-        int sc = 0;
-
-        if (!SD.exists("/SAMPLES/")) return;
-
-        File sampleDir;
-        sampleDir = SD.open("/SAMPLES/");
-        
-        String tempString;
-
-        if (sampleDir.isDirectory()) {
-            File nextFile = sampleDir.openNextFile();
-            
-            // todo: implement directories for browsing, too
-
-            while (nextFile) {
-                if (!nextFile.isDirectory() && nextFile.name()[0] != '.' ) {
-                    tempString = nextFile.name();                        
-                    tempString.toCharArray(_librarySamples[sc].sampleFilename, tempString.length()+1);
-                    sc++;                    
-                }
-                nextFile = sampleDir.openNextFile();
-            }
+    // 1024 files max per directory.. as defined in main.cpp when initializing the array
+    for (int i=0; i<1024; i++) {
+        for (int j=0; i<255; i++) {
+            _librarySamples[i].sampleFilename[j] = ' ';            
         }
+    }
 
-        _librarySamplesCount = sc;
+    // sample counter
+    int sc = 0;
+    boolean isRoot = false;
 
-        sampleDir.close();
+    if (strlen(path.c_str()) == 1 && path[0] == '/') {
+        _libraryPath = "/";
+        isRoot = true;
+    } else {        
+        if(path.equals("/..")) {
+            // go one directory back
+            int lidx = _libraryPath.lastIndexOf('/');
+            if (lidx != 0) {
+                _libraryPath[lidx] = ' ';
+                lidx = _libraryPath.lastIndexOf('/');
+                _libraryPath = _libraryPath.substring(0, lidx);
+                _libraryPath.append("/");
+                if (_libraryPath.equals("/")) isRoot = true;
+            }            
+        } else {
+            // change to subfolder
+            if (path[0] == '/') {
+                _libraryPath.append(path.substring(1));
+                _libraryPath.append("/");
+            }            
+        }
+    }
+
+    if (!SD.exists(_libraryPath.c_str())) {
+        //Serial.println("Path does not exist!");
+        return;
+    } 
+
+    File sampleDir;
+    sampleDir = SD.open(_libraryPath.c_str());
+
+    String tempString;
+
+    if (!isRoot) {
+        tempString = "/..";
+        tempString.toCharArray(_librarySamples[sc].sampleFilename, tempString.length()+1);
+        sc++;
+    }
+
+    // first run for directories
+    if (sampleDir.isDirectory()) {            
+        File nextFile = sampleDir.openNextFile();
+        
+        while (nextFile) {
+            if (nextFile.isDirectory() && nextFile.name()[0] != '.') {
+                tempString = "/";
+                tempString.append(nextFile.name());
+                tempString.toCharArray(_librarySamples[sc].sampleFilename, tempString.length()+1);
+                sc++;
+            }
+            nextFile = sampleDir.openNextFile();
+        }        
+    }
+    sampleDir.close();
+
+    sampleDir = SD.open(_libraryPath.c_str());
+    // first run for directories
+    if (sampleDir.isDirectory()) {            
+        File nextFile = sampleDir.openNextFile();
+        
+        while (nextFile) {
+            if (!nextFile.isDirectory() && nextFile.name()[0] != '.' ) {
+                tempString = nextFile.name();                        
+                tempString.toCharArray(_librarySamples[sc].sampleFilename, tempString.length()+1);
+                sc++;                    
+            }
+            nextFile = sampleDir.openNextFile();
+        }        
+    }
+    sampleDir.close();
+
+    _librarySamplesCount = sc;        
 }
 
 
@@ -246,15 +301,15 @@ String FSIO::getSampleName(int number) {
 
 void FSIO::setSelectedSamplePathFromSD(int number) {
     // get sample name and add samplelibrary path to _selectedSamplePathFromSD
-    String basePath = "/SAMPLES/";
-    char filename[40];
+    String basePath = _libraryPath;
+    char filename[255];
     getSampleName(number, filename);
-    basePath.append(filename);    
-    basePath.toCharArray(_selectedSamplePathFromSD, basePath.length()+1);  
+    basePath.append(filename);
+    basePath.toCharArray(_selectedSamplePathFromSD, basePath.length()+1);
 };
 
 void FSIO::setSelectedSamplePathFromSD(char *sampleName) {
-    String basePath = "/SAMPLES/";
+    String basePath = _libraryPath;
     basePath.append(sampleName);    
     basePath.toCharArray(_selectedSamplePathFromSD, basePath.length()+1);
 };
@@ -262,4 +317,9 @@ void FSIO::setSelectedSamplePathFromSD(char *sampleName) {
 
 char* FSIO::getSelectedSamplePathFromSD() {
   return _selectedSamplePathFromSD;
+};
+
+
+FSIO::LibrarySample * FSIO::getLibrarySamples() {
+    return _librarySamples;
 };

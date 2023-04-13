@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -39,14 +39,14 @@ class FSIO {
 
     public:
         typedef struct {
-            char sampleFilename[13] = "            ";
+            char sampleFilename[255] = "            ";
         } LibrarySample;
 
         FSIO();
         void listAllFiles();
         void listDirectory(File dir, int numTabs);
         
-        void readLibrarySamplesFromSD(LibrarySample *librarySamples);
+        void readLibrarySamplesFromSD(LibrarySample *librarySamples, String path);
 
         byte createSong(String filename);
         int getSongCount();
@@ -59,6 +59,8 @@ class FSIO {
         void setSelectedSamplePathFromSD(char *sampleName);
         char * getSelectedSamplePathFromSD();
 
+        LibrarySample * getLibrarySamples();
+
     private:
         char _selectedSamplePathFromSD[40];
         
@@ -66,7 +68,8 @@ class FSIO {
         // all samples from the samplelibrary on the SD card at /SAMPLES
         LibrarySample *_librarySamples;
         uint16_t _librarySamplesCount = 0;
-        
+
+        String _libraryPath = "/";        
 };
 
 #endif
