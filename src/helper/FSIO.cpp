@@ -116,6 +116,7 @@ void FSIO::readLibrarySamplesFromSD(LibrarySample *librarySamples, String path) 
         return;
     } 
 
+
     File sampleDir;
     sampleDir = SD.open(_libraryPath.c_str());
 

@@ -91,11 +91,13 @@ void SampleSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::SET:
         case Sucofunkey::ENCODER_1_PUSH:
             if (event.pressed) {
-                    String s = _fsio->getSampleName(_activeItem);
+                    String s = _fsio->getSampleName(_activeItem+_offset);
 
                     if (s[0] == '/') {
                         _fsio->readLibrarySamplesFromSD(_fsio->getLibrarySamples(), s);
-                        _activeItem = 0; // set cursor to first entry in list/viewport after changing a directory
+                        // set cursor to first entry in list/viewport after changing a directory
+                        _activeItem = 0; 
+                        _offset = 0;
                         drawSampleSelector();
                     } else {
                         _fsio->setSelectedSamplePathFromSD(_offset + _activeItem);
