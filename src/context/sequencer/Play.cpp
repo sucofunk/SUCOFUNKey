@@ -514,7 +514,9 @@ void Play::arrangementPlayNext() {
   if (!_arrangementIsPlaying) return;
 
   for (int c=0; c<8; c++) {
-    playMixedSample(c, _playPositionArrangement, -1);
+    if (_song.getPosition(c, _playPositionArrangement).type != SongStructure::UNDEFINED) {
+      playMixedSample(c, _playPositionArrangement, -1);
+    }
   }
 
   // end of sheet reached?  
