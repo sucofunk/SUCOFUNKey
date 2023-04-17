@@ -101,6 +101,9 @@ void Play::stopAllChannels() {
   _audioResources->playMemLive6.stop();
   _audioResources->playMemLive7.stop();
   _audioResources->playMemLive8.stop();
+
+  // bToDO: make configurable in settings?
+  //_keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_ALL_NOTE_OFF_ALL_CHANNELS, 0, 0, 0);
 };
 
 Play::MixerSamplePlayMemory Play::prepareMixerRouting(byte channel) {;

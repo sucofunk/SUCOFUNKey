@@ -779,6 +779,17 @@ void handleKeyboardEventQueue() {
           MIDI.sendNoteOff(event.data1, 0, event.data3);
           break;
 
+        case Sucofunkey::MIDI_SEND_ALL_NOTE_OFF:
+          // data3 = CHANNEL
+          MIDI.sendControlChange(123, 123, event.data3);
+          break;
+
+        case Sucofunkey::MIDI_SEND_ALL_NOTE_OFF_ALL_CHANNELS:
+          for (byte i=1; i<=16; i++) {
+            MIDI.sendControlChange(123, 123, i);
+          }
+          break;
+
         default:
           break;
       }      

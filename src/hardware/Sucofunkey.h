@@ -302,6 +302,8 @@ class Sucofunkey {
 
         static const int MIDI_SEND_NOTE_ON = 500;
         static const int MIDI_SEND_NOTE_OFF = 501;
+        static const int MIDI_SEND_ALL_NOTE_OFF = 502;
+        static const int MIDI_SEND_ALL_NOTE_OFF_ALL_CHANNELS = 503;
 
         // just for debugging to Serial
         void printQueue();
