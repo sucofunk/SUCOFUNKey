@@ -419,9 +419,9 @@ void SampleFSIO::removeSampleFromMemory(byte sampleId) {
 
   if (nextOffsetId < 72) {
     // calculate offset and move all remaining bits in extmem down    
-    long offset = nextOffset - sampleOffsetToRemove;
+    unsigned long offset = nextOffset - sampleOffsetToRemove;
 
-    long o = nextOffset;
+    unsigned long o = nextOffset;
     
     // shift everything in extmem at a higher position down
     while (o < sizeof(_extmemArray)/4) {

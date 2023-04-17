@@ -51,6 +51,8 @@
 #include <Adafruit_ST7789.h>
 //#include <Adafruit_ILI9341.h>
 
+#define VERSIONNUMBER "0.9.1 nightly build"
+
 // PINs on the Teensy 4.1 to receive Interrupts from the 5 MCP23017 chips used as port expanders to receive updated from the 36 Buttons and 4 rotary encoders
 // The MCP23017s control the 32 LEDs in the SUCOFUNKey, too
 
@@ -453,12 +455,14 @@ void setup() {
     delay(20);
   };
 
-  delay(200);
+  startupContext.showMessage(VERSIONNUMBER, false);
+
   // draw orange subline "beatmaker's sketchbook"
   tft.drawBitmap(0, 155, startup_logo_subline, 320, 11, screen.C_ORANGE);
-  delay(750);
+  delay(1000);
 
   currentAppContext = AppContext::STARTUP;
+  
   startupContext.showMessage("system health check", false);
 
   keyboard.setBank(0);

@@ -89,6 +89,8 @@ byte Zoom::getZoomlevelOffset() {
     default:
       break;
   }
+  // should never be returned.. just to get rid of the compiler warning..
+  return 4;
 }
 
 float Zoom::getZoomlevelFactor() {
@@ -113,4 +115,6 @@ float Zoom::getZoomlevelFactor() {
     default:
       break;
   }
+  // should never be returned.. just to get rid of the compiler warning..
+  return 1.0;  
 }

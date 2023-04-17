@@ -39,7 +39,7 @@ StartupScreen::StartupScreen(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, c
     _screen = screen;    
     _fsio = fsio;
     _activeSongName = activeSongName;
-    _messageArea = {_screen->AREA_SCREEN.x1, _screen->AREA_SCREEN.y2-12, _screen->AREA_SCREEN.x2, _screen->AREA_SCREEN.y2, false, _screen->C_STARTUP_BG};
+    _messageArea = {_screen->AREA_SCREEN.x1, _screen->AREA_SCREEN.y2-20, _screen->AREA_SCREEN.x2, _screen->AREA_SCREEN.y2-2, false, _screen->C_STARTUP_BG};
     _songSelector = SongSelector(_keyboard, _screen, _fsio, _activeSongName);
 }
 

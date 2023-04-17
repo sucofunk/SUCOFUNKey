@@ -1377,7 +1377,9 @@ boolean SongStructure::saveMetadataToSD(char *songPath) {
     strcpy(buff, songPath);
     strcat(buff, "/PATTERN/META.DAT");
 
-    if (SD.exists(buff)) { SD.remove(buff); }
+    if (SD.exists(buff)) { 
+        SD.remove(buff); 
+    }
 
     writeFile = SD.open(buff, FILE_WRITE);
 
@@ -1385,6 +1387,7 @@ boolean SongStructure::saveMetadataToSD(char *songPath) {
     writeFile.write(bufferBlocks, sizeof(MetaInfos));
  
     writeFile.close();
+    return true;
 }
 
 

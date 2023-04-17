@@ -77,11 +77,11 @@ void FSIO::listDirectory(File dir, int numTabs) {
 void FSIO::readLibrarySamplesFromSD(LibrarySample *librarySamples, String path) {
     _librarySamples = librarySamples;
 
-    // 1024 files max per directory.. as defined in main.cpp when initializing the array
+    // 1024 files max per directory.. as defined in main.cpp when initializing the array    
     for (int i=0; i<1024; i++) {
-        for (int j=0; i<255; i++) {
-            _librarySamples[i].sampleFilename[j] = ' ';            
-        }
+        // create empty string, filled with spaces..
+        memset(_librarySamples[i].sampleFilename, ' ', 255);
+        _librarySamples[i].sampleFilename[255] = '\0';
     }
 
     // sample counter

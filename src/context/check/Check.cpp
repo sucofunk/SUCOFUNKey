@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -47,50 +47,62 @@ void Check::handleEvent(Sucofunkey::keyQueueStruct event) {
 
       switch(event.index) {        
         case Sucofunkey::FUNCTION:
-            drawInfotext("funk");
+            strcpy(_tempChar,"funk");
+            drawInfotext(_tempChar);
             break;
         case Sucofunkey::MENU:
-            drawInfotext("menu");
+            strcpy(_tempChar,"menu");
+            drawInfotext(_tempChar);
             break;
         case Sucofunkey::SET:
-            drawInfotext("set");
+            strcpy(_tempChar,"set");
+            drawInfotext(_tempChar);
             break;
         case Sucofunkey::ZOOM:
-            drawInfotext("select");
-            break;                 
+            strcpy(_tempChar,"select");
+            drawInfotext(_tempChar);
+        break;                 
         case Sucofunkey::PLAY:
             _keyboard->setLEDState(_keyboard->LED_PLAY, false);
-            drawInfotext("play");
+            strcpy(_tempChar,"play");
+            drawInfotext(_tempChar);
             playSound();
             break;            
         case Sucofunkey::PAUSE:
-            drawInfotext("stop");
+            strcpy(_tempChar,"pause");
+            drawInfotext(_tempChar);
             stopSound();
             break;
         case Sucofunkey::RECORD:
             _keyboard->setLEDState(_keyboard->LED_RECORD, false);
-            drawInfotext("record");
+            strcpy(_tempChar,"record");
+            drawInfotext(_tempChar);
             break;
         case Sucofunkey::INPUTSELECTOR:
             _keyboard->setLEDState(_keyboard->LED_INPUT_LINE, false);
             _keyboard->setLEDState(_keyboard->LED_INPUT_MIC, false);
             _keyboard->setLEDState(_keyboard->LED_INPUT_RESAMPLE, false);
-            drawInfotext("input");
+            strcpy(_tempChar,"input");
+            drawInfotext(_tempChar);
             break;            
         case Sucofunkey::CURSOR_LEFT:
-            drawInfotext("left");
+            strcpy(_tempChar,"left");
+            drawInfotext(_tempChar);
             break;            
         case Sucofunkey::CURSOR_RIGHT:
-            drawInfotext("right");
+            strcpy(_tempChar,"right");
+            drawInfotext(_tempChar);
             break;            
         case Sucofunkey::CURSOR_UP:
-            drawInfotext("up");
+            strcpy(_tempChar,"up");
+            drawInfotext(_tempChar);
             break;            
         case Sucofunkey::CURSOR_DOWN:
             _keyboard->setLEDState(_keyboard->LED_BANK_1, false);
             _keyboard->setLEDState(_keyboard->LED_BANK_2, false);            
             _keyboard->setLEDState(_keyboard->LED_BANK_3, false);
-            drawInfotext("down");
+            strcpy(_tempChar,"down");
+            drawInfotext(_tempChar);
             break;
         case Sucofunkey::ENCODER_1_PUSH:
             encoderAction(1, 1);

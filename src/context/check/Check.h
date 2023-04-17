@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -54,6 +54,7 @@ class Check {
         byte _activeBank = 1;
         int _lastFaderPosition = 0;
         int _lastVolume = 0;
+        char _tempChar[20];
 };
 
 #endif
