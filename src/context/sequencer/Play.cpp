@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -186,8 +186,6 @@ Play::MixerSamplePlayMemory Play::prepareMixerRouting(byte channel) {;
 // plays one sample from the sequencer grid, as defined at channel/position
 // snippet == -1 -> take original channels from sequencer
 
-// ToDo: add midi events!
-
 void Play::playMixedSample(byte channel, uint16_t position, int snippetSlot) {
   Play::MixerSamplePlayMemory mixSPM;
 
@@ -234,6 +232,7 @@ void Play::playMixedSample(byte channel, uint16_t position, int snippetSlot) {
     boolean reverse = false;
 
     byte swingExpression;
+    boolean isMidi = false;
 
     switch (sps.type) {
       case SongStructure::SAMPLE:
@@ -257,12 +256,23 @@ void Play::playMixedSample(byte channel, uint16_t position, int snippetSlot) {
         reverse = _song.getParameterChangeFromBucketId(sps.typeIndex).reverse;
         break;
 
+      case SongStructure::MIDINOTE:
+        isMidi = true;
+        if (random(100) <= _song.getMidiNoteFromBucketId(sps.typeIndex).probability) {
+          if (_song.getMidiNoteFromBucketId(sps.typeIndex).velocity > 0) {
+            _keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_NOTE_ON, _song.getMidiNoteFromBucketId(sps.typeIndex).note, _song.getMidiNoteFromBucketId(sps.typeIndex).velocity, _song.getMidiNoteFromBucketId(sps.typeIndex).channel);
+          } else {
+            _keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_NOTE_OFF, _song.getMidiNoteFromBucketId(sps.typeIndex).note, 0, _song.getMidiNoteFromBucketId(sps.typeIndex).channel);
+          }      
+        }
+        break;
+
       default:
         break;
     }
 
     // is there something to do? -> sample probability OK or a parameter change. then go!
-    if (random(100) <= probability || sps.type == SongStructure::PARAMETER_CHANGE_SAMPLE) {
+    if (!isMidi && (random(100) <= probability || sps.type == SongStructure::PARAMETER_CHANGE_SAMPLE)) {
 
       if (stereoPosition < 64) {
         mixSPM.playMemoryMixerL->gain(mixSPM.playMemoryMixerGain, (velocity/127.0)*1.0);
@@ -287,6 +297,8 @@ void Play::playMixedSample(byte channel, uint16_t position, int snippetSlot) {
         mixSPM.playMemory->playPitched(_extmemArray + _sfsio->getExtmemOffset(sampleNumber), 60, pitchedNote, shiftSamples, reverse);
       }
     }
+
+
   }
 }
 

@@ -274,10 +274,6 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
             }
             break;            
         
-        case Sucofunkey::FN_ENCODER_3_PUSH:
-            // ToDo: move cursor to the middle of the viewport
-            break;
-
         // set probability from fader          
         case Sucofunkey::ENCODER_4_PUSH:
             if (_song->getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE) {
@@ -326,22 +322,41 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
         // ToDo: basenote setzen FN+NoteKey? -> eher in sampler??? -> da wird dann ja auch ADSR Hüllkurve gesetzt..
 
         if (_song->isSomethingAt(_cursorChannel, _cursorPosition)) {
-          // is it a sample? -> set reference as origin in piano keyboard
+          // set reference as origin in piano keyboard
           if (_song->getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE) {
+            // play sample
             _pianoKeyboard.setOriginReference(_cursorChannel, _cursorPosition);
-            _song->setPitchByMidiNote(_pianoKeyboard.getOriginChannel(), _pianoKeyboard.getOriginPosition(), (_keyboard->getBank()*24)+sampleId1+4);          
+            _song->setPitchByMidiNote(_pianoKeyboard.getOriginChannel(), _pianoKeyboard.getOriginPosition(), (_keyboard->getBank()*24)+sampleId1+4);
             _play->playMixedSample(_pianoKeyboard.getOriginChannel(), _pianoKeyboard.getOriginPosition(), -1);
             _sequencerScreen.updateSampleInfoPitch(_cursorChannel, _cursorPosition);
           }
-          // ToDo: add for midi 
 
+          if (_song->getPosition(_cursorChannel, _cursorPosition).type == SongStructure::MIDINOTE) {
+            // play midi note
+            _pianoKeyboard.setOriginReference(_cursorChannel, _cursorPosition);
+            _song->setPitchByMidiNote(_pianoKeyboard.getOriginChannel(), _pianoKeyboard.getOriginPosition(), (_keyboard->getBank()*24)+sampleId1+4);
+            _keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_NOTE_ON, _song->getMidiNoteFromBucketId(_song->getPosition(_cursorChannel, _cursorPosition).typeIndex).note, _song->getMidiNoteFromBucketId(_song->getPosition(_cursorChannel, _cursorPosition).typeIndex).velocity, _song->getMidiNoteFromBucketId(_song->getPosition(_cursorChannel, _cursorPosition).typeIndex).channel);
+            _sequencerScreen.updateSampleInfoPitch(_cursorChannel, _cursorPosition);
+          }          
         } else {
           // empty cell -> copy piano origin, if available
           if (_pianoKeyboard.hasOrigin()) {
-            _song->copyPosition(_pianoKeyboard.getOriginChannel(), _pianoKeyboard.getOriginPosition(), _cursorChannel, _cursorPosition, false);
-            _song->setPitchByMidiNote(_cursorChannel, _cursorPosition, (_keyboard->getBank()*24)+sampleId1+4);
-            _play->playMixedSample(_cursorChannel, _cursorPosition, -1);
-            _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+            if (_song->getPosition(_pianoKeyboard.getOriginChannel(), _pianoKeyboard.getOriginPosition()).type == SongStructure::SAMPLE) {
+              // play sample
+              _song->copyPosition(_pianoKeyboard.getOriginChannel(), _pianoKeyboard.getOriginPosition(), _cursorChannel, _cursorPosition, false);
+              _song->setPitchByMidiNote(_cursorChannel, _cursorPosition, (_keyboard->getBank()*24)+sampleId1+4);
+              _play->playMixedSample(_cursorChannel, _cursorPosition, -1);
+              _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+            }
+
+            if (_song->getPosition(_pianoKeyboard.getOriginChannel(), _pianoKeyboard.getOriginPosition()).type == SongStructure::MIDINOTE) {
+              // play midi note
+              _song->copyPosition(_pianoKeyboard.getOriginChannel(), _pianoKeyboard.getOriginPosition(), _cursorChannel, _cursorPosition, false);
+              _song->setPitchByMidiNote(_cursorChannel, _cursorPosition, (_keyboard->getBank()*24)+sampleId1+4);              
+              _keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_NOTE_ON, _song->getMidiNoteFromBucketId(_song->getPosition(_cursorChannel, _cursorPosition).typeIndex).note, _song->getMidiNoteFromBucketId(_song->getPosition(_cursorChannel, _cursorPosition).typeIndex).velocity, _song->getMidiNoteFromBucketId(_song->getPosition(_cursorChannel, _cursorPosition).typeIndex).channel);              
+              _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+            }
+
           }
         }
 
@@ -354,6 +369,19 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
 
       }
     }
+
+    // note key release
+    if (event.type == Sucofunkey::KEY_NOTE && !event.pressed) {
+        if (_currentMenuState == MENU_PIANO) {
+          // stop midi note                
+          if (_song->isSomethingAt(_cursorChannel, _cursorPosition)) {
+            if (_song->getPosition(_cursorChannel, _cursorPosition).type == SongStructure::MIDINOTE) {
+              _keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_NOTE_OFF, _song->getMidiNoteFromBucketId(_song->getPosition(_cursorChannel, _cursorPosition).typeIndex).note, 0, _song->getMidiNoteFromBucketId(_song->getPosition(_cursorChannel, _cursorPosition).typeIndex).channel);
+            }
+          } 
+      }
+    }
+
 
     // pre-listen samples (in NORMAL STATE) --> ToDo: setBaseNote (in PIANO PITCH WHATEVER STATE)
     if (event.type == Sucofunkey::KEY_FN_NOTE) {
@@ -424,6 +452,8 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               }   
             }         
           break;
+
+          // --------------------------------------------------------
 
           case Sucofunkey::ENCODER_1:             
             if ( t == SongStructure::SAMPLE || t == SongStructure::PARAMETER_CHANGE_SAMPLE || t == SongStructure::MIDINOTE) {
@@ -662,7 +692,7 @@ boolean Sequencer::setMenuState(MenuState state) {
         // only switch to piano, if a sample ist selected -> otherwise there would be nothing to play
         // ToDo: add for midi, too?
 
-        if (_song->getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE) {
+        if (_song->getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE || _song->getPosition(_cursorChannel, _cursorPosition).type == SongStructure::MIDINOTE) {
           _blackKeyMenu.hideMenu();
           _pianoKeyboard.show();
           _pianoKeyboard.setOriginReference(_cursorChannel, _cursorPosition);
@@ -1030,7 +1060,7 @@ void Sequencer::debugInfos() {
 
 
 void Sequencer::_clearSong() {
-    // 1 empty sample ram
+  // 1 empty sample ram
   _sfsio->clearSampleMemory();
 
   // 2 clear all data structures or initialize it new

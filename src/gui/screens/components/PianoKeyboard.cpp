@@ -46,7 +46,7 @@ void PianoKeyboard::show() {
 //    _screen->drawLine(20, _screen->AREA_PIANO_ROLL.y2-10, 300, _screen->AREA_PIANO_ROLL.y2-10, _screen->C_WHITE);
     _visible = true;
     _lastBank = _keyboard->getBank();
-    Serial.print("store bank setting::");
+    //Serial.print("store bank setting::");
     Serial.println(_lastBank);
     _keyboard->setBank(2);
 };
@@ -56,7 +56,7 @@ void PianoKeyboard::hide() {
     _visible = false;
     removeOriginReference();
 
-    Serial.print("re-store bank setting::");
+    //Serial.print("re-store bank setting::");
     Serial.println(_lastBank);
 
     _keyboard->setBank(_lastBank);

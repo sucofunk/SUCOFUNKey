@@ -746,7 +746,7 @@ void SongStructure::decreaseVelocity(uint8_t channel, uint16_t position) {
                 break;
             case MIDINOTE:
                 if (_midiNoteBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].velocity > 1) {
-                    _midiNoteBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].velocity -= 2;
+                    _midiNoteBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].velocity -= 2;                    
                 }
             default:
                 break;
@@ -1326,7 +1326,7 @@ boolean SongStructure::loadFromSD(char *songPath) {
 
     // read _midiNoteBucket
     strcpy(buff, songPath);
-    strcat(buff, "/PATTERN/MIDINOBKT.DAT");
+    strcat(buff, "/PATTERN/MIDINBKT.DAT");
 
     readFile = SD.open(buff, FILE_READ);
 
