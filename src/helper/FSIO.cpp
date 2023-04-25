@@ -145,7 +145,6 @@ void FSIO::readLibrarySamplesFromSD(LibrarySample *librarySamples, String path) 
     sampleDir.close();
 
     sampleDir = SD.open(_libraryPath.c_str());
-    // first run for directories
     if (sampleDir.isDirectory()) {            
         File nextFile = sampleDir.openNextFile();
         
@@ -287,6 +286,27 @@ boolean FSIO::getSongName(int number, char *lineBuffer) {
 boolean FSIO::getSampleName(int number, char *lineBuffer) {
     if (number < _librarySamplesCount) {
         String t = _librarySamples[number].sampleFilename;
+        String tempString;
+
+        if (t.length() >= 39) {
+            tempString = t.substring(0, 13);
+            tempString.append(" ... ");
+            tempString.append(t.substring(t.length()-20, t.length()));
+        } else {
+            tempString = t;
+        }
+
+        tempString.toCharArray(lineBuffer, tempString.length()+1);
+        return true;
+    }
+
+    return false;
+}
+
+boolean FSIO::getSampleFileName(int number, char *lineBuffer) {
+    if (number < _librarySamplesCount) {
+        String t = _librarySamples[number].sampleFilename;
+
         t.toCharArray(lineBuffer, t.length()+1);
         return true;
     }
@@ -294,17 +314,39 @@ boolean FSIO::getSampleName(int number, char *lineBuffer) {
     return false;
 }
 
+
 String FSIO::getSampleName(int number) {
+    String t = _librarySamples[number].sampleFilename;
+    String tempString = "";
+
+    if (number < _librarySamplesCount) {
+        String t = _librarySamples[number].sampleFilename;
+        String tempString;
+
+        if (t.length() >= 20) {
+            tempString = t.substring(1, 10);
+            tempString.append(" ... ");
+            tempString.append(t.substring(t.length()-10, t.length()));
+        } else {
+            tempString = t;
+        }
+    }
+
+    return tempString;
+}
+
+String FSIO::getSampleFileName(int number) {
     String t = _librarySamples[number].sampleFilename;
     return t;
 }
+
 
 
 void FSIO::setSelectedSamplePathFromSD(int number) {
     // get sample name and add samplelibrary path to _selectedSamplePathFromSD
     String basePath = _libraryPath;
     char filename[255];
-    getSampleName(number, filename);
+    getSampleFileName(number, filename);
     basePath.append(filename);
     basePath.toCharArray(_selectedSamplePathFromSD, basePath.length()+1);
 };
@@ -313,6 +355,15 @@ void FSIO::setSelectedSamplePathFromSD(char *sampleName) {
     String basePath = _libraryPath;
     basePath.append(sampleName);    
     basePath.toCharArray(_selectedSamplePathFromSD, basePath.length()+1);
+};
+
+void FSIO::setSelectedSamplePathFromSD(String sampleName) {
+    String basePath = _libraryPath;
+    basePath.append(sampleName);
+    basePath.toCharArray(_selectedSamplePathFromSD, basePath.length()+1);
+    
+    //Serial.print("setSelectedSamplePathFromSD :: ");
+    //Serial.println(_selectedSamplePathFromSD);
 };
 
 

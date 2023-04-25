@@ -53,19 +53,20 @@ class FSIO {
         int getSamplesCount(); // counts files in /SAMPLES directory -> global sample library
         boolean getSongName(int number, char *lineBuffer);
         boolean getSampleName(int number, char *lineBuffer);
+        boolean getSampleFileName(int number, char *lineBuffer);
         String getSampleName(int number);
+        String getSampleFileName(int number);
 
         void setSelectedSamplePathFromSD(int number);
         void setSelectedSamplePathFromSD(char *sampleName);
+        void setSelectedSamplePathFromSD(String sampleName);
         char * getSelectedSamplePathFromSD();
 
         LibrarySample * getLibrarySamples();
 
     private:
-        char _selectedSamplePathFromSD[40];
+        char _selectedSamplePathFromSD[1024];
         
-        // ToDo: work with subdirectories
-        // all samples from the samplelibrary on the SD card at /SAMPLES
         LibrarySample *_librarySamples;
         uint16_t _librarySamplesCount = 0;
 

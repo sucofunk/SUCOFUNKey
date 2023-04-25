@@ -618,7 +618,7 @@ void loop() {
   // On every 200th loop, check if the volume potentiometer was changed and adjust the volume.
   if (zz == 20) {    
     volumeTempValue = 0.8-((analogRead(PIN_VOLUME)/1023.0)*0.8);
-    
+
     if (abs(volumeValue-volumeTempValue) > 0.05) {
       volumeValue = volumeTempValue;
       audioResources.audioShield.volume(volumeValue);

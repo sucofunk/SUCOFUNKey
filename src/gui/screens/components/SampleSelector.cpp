@@ -90,16 +90,19 @@ void SampleSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
             break;            
         case Sucofunkey::SET:
         case Sucofunkey::ENCODER_1_PUSH:
+            // something in the list selected
             if (event.pressed) {
-                    String s = _fsio->getSampleName(_activeItem+_offset);
+                    String s = _fsio->getSampleFileName(_activeItem+_offset);
 
                     if (s[0] == '/') {
+                        // directory
                         _fsio->readLibrarySamplesFromSD(_fsio->getLibrarySamples(), s);
                         // set cursor to first entry in list/viewport after changing a directory
                         _activeItem = 0; 
                         _offset = 0;
                         drawSampleSelector();
                     } else {
+                        // file
                         _fsio->setSelectedSamplePathFromSD(_offset + _activeItem);
                         _keyboard->addApplicationEventToQueue(Sucofunkey::SAMPLE_LIBRARY_SELECTED);
                     }
@@ -128,9 +131,8 @@ void SampleSelector::drawSampleSelector() {
 
     if (_offset <= _sampleCount-1) {
         getLineDescription(_offset, _line1);
-
-        if (_activeItem == 0) _fsio->setSelectedSamplePathFromSD(_line1);
-
+        // used to store filename for pre-listening the sample (done in SamperScreen, as it handles the component) 
+        if (_activeItem == 0) _fsio->setSelectedSamplePathFromSD(_fsio->getSampleFileName(_offset));
         _screen->drawTextInArea(_AREA_SONGSELECTOR_LINE_1, _screen->TEXTPOSITION_LEFT_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _line1);
     }
 
@@ -139,9 +141,7 @@ void SampleSelector::drawSampleSelector() {
 
     if (_offset+1 <= _sampleCount-1) {
         getLineDescription(_offset+1, _line2);
-        
-        if (_activeItem == 1) _fsio->setSelectedSamplePathFromSD(_line2);    
-        
+        if (_activeItem == 1) _fsio->setSelectedSamplePathFromSD(_fsio->getSampleFileName(_offset+1));            
         _screen->drawTextInArea(_AREA_SONGSELECTOR_LINE_2, _screen->TEXTPOSITION_LEFT_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _line2);
     }
 
@@ -150,9 +150,7 @@ void SampleSelector::drawSampleSelector() {
 
     if (_offset+2 <= _sampleCount-1) {
         getLineDescription(_offset+2, _line3);
-
-        if (_activeItem == 2) _fsio->setSelectedSamplePathFromSD(_line3);    
-
+        if (_activeItem == 2) _fsio->setSelectedSamplePathFromSD(_fsio->getSampleFileName(_offset+2));    
         _screen->drawTextInArea(_AREA_SONGSELECTOR_LINE_3, _screen->TEXTPOSITION_LEFT_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _line3);
     }
 
@@ -161,7 +159,7 @@ void SampleSelector::drawSampleSelector() {
 
     if (_offset+3 <= _sampleCount-1) {
         getLineDescription(_offset+3, _line4);
-        if (_activeItem == 3) _fsio->setSelectedSamplePathFromSD(_line4); 
+        if (_activeItem == 3) _fsio->setSelectedSamplePathFromSD(_fsio->getSampleFileName(_offset+3)); 
         _screen->drawTextInArea(_AREA_SONGSELECTOR_LINE_4, _screen->TEXTPOSITION_LEFT_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _line4);
     }
 
@@ -169,7 +167,7 @@ void SampleSelector::drawSampleSelector() {
 
     if (_offset+4 <= _sampleCount-1) {
         getLineDescription(_offset+4, _line5);
-        if (_activeItem == 4) _fsio->setSelectedSamplePathFromSD(_line5); 
+        if (_activeItem == 4) _fsio->setSelectedSamplePathFromSD(_fsio->getSampleFileName(_offset+4)); 
         _screen->drawTextInArea(_AREA_SONGSELECTOR_LINE_5, _screen->TEXTPOSITION_LEFT_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _line5);
     }
 

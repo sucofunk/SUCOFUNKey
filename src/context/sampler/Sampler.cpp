@@ -73,7 +73,7 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
             _audioResources->playSdRaw.stop();
           }
         } else {
-          // pass event to component..
+          // pass event to component..          
           _samplerScreen.handleEvent(event);
         }
         

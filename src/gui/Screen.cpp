@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -132,7 +132,7 @@ void Screen::drawTextInArea(Area area, TextPosition textPosition, boolean eraseF
 
   setTextSize(textSize, monoSpaced);
 
-  _tft->getTextBounds(text, 100, 100, &_dx, &_dy, &_dw, &_dh);
+  _tft->getTextBounds(text, 1, 100, &_dx, &_dy, &_dw, &_dh);
 
   float heightManipulator = 0;
   heightManipulator = _dh-100+_dy;
@@ -151,7 +151,8 @@ void Screen::drawTextInArea(Area area, TextPosition textPosition, boolean eraseF
           y = static_cast<int>(area.y1+((area.y2-area.y1)/2)+(_dh/2))-2;
           break;
         case TEXTPOSITION_RIGHT_VCENTER:
-          x = static_cast<int>(area.x2-_dw-(_dx-100))-2;
+          //x = static_cast<int>(area.x2-_dw-(_dx-100))-2;
+          x = static_cast<int>(area.x2-_dw-(_dx-1))-2;
           y = static_cast<int>(area.y1+((area.y2-area.y1)/2)+(_dh/2))-2;
           break;
 
@@ -164,7 +165,8 @@ void Screen::drawTextInArea(Area area, TextPosition textPosition, boolean eraseF
           y = abs(area.y1+_dh+(heightManipulator/(heightManipulator > 2 ? -2 : 1)));
           break;
         case TEXTPOSITION_RIGHT_TOP:
-          x = area.x2-_dw-(_dx-100)-2;
+          //x = area.x2-_dw-(_dx-100)-2;
+          x = area.x2-_dw-(_dx-1)-2;
           y = area.y1+_dh+(heightManipulator/(heightManipulator > 2 ? -2 : 1));
           break;
 
@@ -178,7 +180,8 @@ void Screen::drawTextInArea(Area area, TextPosition textPosition, boolean eraseF
           y = static_cast<int>(area.y2-(_dh/2))+(heightManipulator > 2 ? 1 : 0);
           break;
         case TEXTPOSITION_RIGHT_BOTTOM:
-          x = static_cast<int>(area.x2-_dw-(_dx-100))-2;
+          //x = static_cast<int>(area.x2-_dw-(_dx-100))-2;
+          x = static_cast<int>(area.x2-_dw-(_dx-1))-2;
           y = static_cast<int>(area.y2-(_dh/2))+(heightManipulator > 2 ? 1 : 0);
           break;
         default:
@@ -221,9 +224,6 @@ uint16_t Screen::RGBtoColor(byte r, byte g, byte b) {
   color = color + (tg << 5);
   color = color + tb;  
   return color;
-
-
-  //return _tft->color565(r, g, b);
 };
 
 void Screen::drawText(const char *text,int x, int y, uint16_t color, const GFXfont *font) {
@@ -232,7 +232,6 @@ void Screen::drawText(const char *text,int x, int y, uint16_t color, const GFXfo
   _tft->setTextColor(color);
   _tft->print(text);
 }
-
 
 void Screen::drawText(const char *text,int x, int y, TextSize textSize, uint16_t color) {
   setTextSize(textSize, false);
