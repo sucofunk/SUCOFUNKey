@@ -38,7 +38,8 @@ HomeScreen::HomeScreen(Sucofunkey *keyboard, Screen *screen, char *activeSongNam
     _keyboard = keyboard;
     _screen = screen;    
     _activeSongName = activeSongName;
-    _supporter = SupporterScreen(keyboard, screen);
+    _supporter = SupporterScreen(keyboard, screen);     
+    _songSelector = SongSelector(_keyboard, _screen, _fsio, _activeSongName);
 }
 
 void HomeScreen::handleEvent(Sucofunkey::keyQueueStruct event) {
@@ -49,7 +50,14 @@ void HomeScreen::handleEvent(Sucofunkey::keyQueueStruct event) {
                     showGeneralInformation();
                 } else {
                     _supporter.handleEvent(event);
-                }
+                }                
+                break;
+            case SONGSELECTOR:
+                if (event.index == Sucofunkey::MENU_BACK) {
+                    showGeneralInformation();
+                } else {
+                    _songSelector.handleEvent(event);
+                }                
                 
                 break;
             default:
@@ -59,41 +67,98 @@ void HomeScreen::handleEvent(Sucofunkey::keyQueueStruct event) {
 }
 
 boolean HomeScreen::passEventsToMe() {
-    if (_activeComponent == SUPPORTER) return true;
+    if (_activeComponent == SUPPORTER || _activeComponent == SONGSELECTOR) return true;
     return false;
 }
 
 long HomeScreen::receiveTimerTick() {
-    if (_activeComponent == SUPPORTER) {
-        return _supporter.receiveTimerTick();
+    if (_activeComponent != NONE) {
+        if (_activeComponent == SUPPORTER) { return _supporter.receiveTimerTick(); }
+        if (_activeComponent == SONGSELECTOR) { return _songSelector.receiveTimerTick(); }
     } else {
         return 100000;
     }
 }
 
-
 void HomeScreen::showGeneralInformation() {
     _activeComponent = NONE;
-
-    Screen::Area text1 = {_screen->AREA_SCREEN.x1, 90, _screen->AREA_SCREEN.x2-21, 130, false, _screen->C_ORANGE};
     Screen::Area projectTitle = {_screen->AREA_SCREEN.x1, _screen->AREA_SCREEN.y1, _screen->AREA_SCREEN.x2, _screen->AREA_SCREEN.x1 + 90, false, _screen->C_BLACK};
+
 
     _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);
 
+    // Song title
     _screen->drawTextInArea(projectTitle, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _activeSongName);
-    
-    _screen->fillArea(text1, _screen->C_ORANGE);
-    // right arrow
-    _screen->drawTriangle(text1.x2, text1.y1, text1.x2, text1.y2, text1.x2+20, 110, true, _screen->C_ORANGE);
 
-    // black triangle + rectancle |> to make the arrow "empty"
-    _screen->drawTriangle(text1.x2-5, text1.y1, text1.x2-5, text1.y2, text1.x2+15, 110, true, _screen->C_BLACK);    
-    _screen->fillRect(text1.x2-12, text1.y1, 7, 41, _screen->C_BLACK);
-    
-    // draw the left arrowhead
-    _screen->drawTriangle(text1.x2-12, text1.y1, text1.x2-12, text1.y2, text1.x2+8, 110, true, _screen->C_ORANGE);    
 
-    _screen->drawText("   sample     sketch     arrange     play", _screen->AREA_SCREEN.x1 + 5, 115, _screen->TEXTSIZE_MEDIUM, _screen->C_WHITE);
+    int encYPos = 140;
+    int radius = 20;
+    int menuSpacing = 5;
+    int menuWidthHalf = 6; 
+    int spacingWidth = 15;
+    int legendSpacing = 15;
+
+
+    int encX[4] = {40, 120, 200, 280};
+
+/*    Screen::Area encoder1Area = {encX[0]-20, encYPos + radius + legendSpacing, encX[0]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
+    Screen::Area encoder2Area = {encX[1]-20, encYPos + radius + legendSpacing, encX[1]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
+    Screen::Area encoder3Area = {encX[2]-20, encYPos + radius + legendSpacing, encX[2]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
+    Screen::Area encoder4Area = {encX[3]-20, encYPos + radius + legendSpacing, encX[3]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
+*/
+
+    Screen::Area text1Area = {encX[0]-20, encYPos - radius - legendSpacing - 12, encX[0]+20, encYPos - radius - legendSpacing, false, _screen->C_BLACK};
+    Screen::Area text2Area = {encX[1]-20, encYPos - radius - legendSpacing - 12, encX[1]+20, encYPos - radius - legendSpacing, false, _screen->C_BLACK};
+    Screen::Area text3Area = {encX[2]-20, encYPos - radius - legendSpacing - 12, encX[2]+20, encYPos - radius - legendSpacing, false, _screen->C_BLACK};
+    Screen::Area text4Area = {encX[3]-20, encYPos - radius - legendSpacing - 12, encX[3]+20, encYPos - radius - legendSpacing, false, _screen->C_BLACK};
+
+
+    for (int i=0; i<4; i++) {
+        // Encoder circle
+        _screen->drawCircle(encX[i], encYPos, radius, false, _screen->C_WHITE);
+
+        // Encoder Marker
+        switch (i) {
+            case 0:
+                // bottom left
+                _screen->fillRect(encX[i]-radius, encYPos+radius-spacingWidth, spacingWidth, spacingWidth, _screen->C_BLACK);
+            break;            
+            case 1:
+                // top left
+                _screen->fillRect(encX[i]-radius, encYPos-radius, spacingWidth, spacingWidth, _screen->C_BLACK);
+            break;
+            case 2:
+                // top right
+                _screen->fillRect(encX[i]+radius-spacingWidth, encYPos-radius, spacingWidth, spacingWidth, _screen->C_BLACK);
+            break;
+            case 3:
+                // bottom right
+                _screen->fillRect(encX[i]+radius-spacingWidth, encYPos+radius-spacingWidth, spacingWidth, spacingWidth, _screen->C_BLACK);            
+            break;
+            default:
+            break;
+        }
+        
+
+        // Burger Menu icon
+        _screen->drawFastHLine(encX[i]-menuWidthHalf, encYPos, menuWidthHalf*2, _screen->C_LIGHTGREY);
+        _screen->drawFastHLine(encX[i]-menuWidthHalf, encYPos-menuSpacing, menuWidthHalf*2, _screen->C_LIGHTGREY);
+        _screen->drawFastHLine(encX[i]-menuWidthHalf, encYPos+menuSpacing, menuWidthHalf*2, _screen->C_LIGHTGREY);
+
+    }
+    
+    // Text ENC 1,2,3,4
+/*    _screen->drawTextInArea(encoder1Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "ENC 1");
+    _screen->drawTextInArea(encoder2Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "ENC 2");
+    _screen->drawTextInArea(encoder3Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "ENC 3");
+    _screen->drawTextInArea(encoder4Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "ENC 4");
+*/
+
+    // Text Sample, SKETCH, ARRANGE, PLAY
+    _screen->drawTextInArea(text1Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_ORANGE, "SAMPLE");
+    _screen->drawTextInArea(text2Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_ORANGE, "SKETCH");
+    _screen->drawTextInArea(text3Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_ORANGE, "ARRANGE");
+    _screen->drawTextInArea(text4Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_ORANGE, "PLAY");
 };
 
 
@@ -101,3 +166,10 @@ void HomeScreen::showSupporterScreen() {
     _activeComponent = SUPPORTER;
     _supporter.show();
 }
+
+void HomeScreen::showSongSelector() {
+    _activeComponent = SONGSELECTOR;
+    _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);
+    _songSelector.drawSongSelector();
+}
+

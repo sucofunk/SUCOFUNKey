@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -34,7 +34,7 @@
 #include "../../hardware/Sucofunkey.h"
 #include "../../gui/Screen.h"
 #include "../../gui/screens/HomeScreen.h"
-#include "../../gui/screens/components/BottomMenu.h"
+#include "../../gui/screens/components/BlackKeyMenu.h"
 
 class Home {
     public:
@@ -49,7 +49,7 @@ class Home {
         char *_activeSongName;
         boolean _isActive = false;
 
-        BottomMenu _bottomMenu;
+        BlackKeyMenu _blackKeyMenu;
         HomeScreen _homeScreen;        
 };
 

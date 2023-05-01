@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -39,10 +39,12 @@ Home::Home(Sucofunkey *keyboard, Screen *screen, char *activeSongPath, char *act
     _activeSongPath = activeSongPath;
     _activeSongName = activeSongName;
     _homeScreen = HomeScreen(_keyboard, _screen, _activeSongName);
-    _bottomMenu = BottomMenu(_keyboard, _screen, "Instructions", 0, "Settings", 0, "Supporter", 0);
-    _bottomMenu.disableItem(1);
-    _bottomMenu.disableItem(2);
-    _bottomMenu.selectItem(3);
+    
+    _blackKeyMenu = BlackKeyMenu(_keyboard, _screen);
+    _blackKeyMenu.setOption(1, "SNG");  // song selector
+    _blackKeyMenu.setOption(4, "LIN");  // route line in trough
+    _blackKeyMenu.setOption(5, "CFG");  // settings/config
+    _blackKeyMenu.setOption(10, "SUP"); // supporter screen
 }
 
 void Home::handleEvent(Sucofunkey::keyQueueStruct event) {
@@ -53,42 +55,39 @@ void Home::handleEvent(Sucofunkey::keyQueueStruct event) {
 
     if (event.pressed) {
       switch(event.index) {
-        case Sucofunkey::CURSOR_LEFT: 
-              if (_bottomMenu.isVisible()) {
-                _bottomMenu.handleEvent({_keyboard->CURSOR_LEFT, true, false, _keyboard->KEY_OPERATION});
-              }
-              break;
-        case Sucofunkey::CURSOR_RIGHT:
-              if (_bottomMenu.isVisible()) {
-                _bottomMenu.handleEvent({_keyboard->CURSOR_RIGHT, true, false, _keyboard->KEY_OPERATION});
-              }
-              break;
-        case Sucofunkey::SET:
-              if (_bottomMenu.isVisible()) {
-                _bottomMenu.handleEvent({_keyboard->SET, true, false, _keyboard->KEY_OPERATION});
-              }
-              break;              
         case Sucofunkey::MENU:
-              if (_bottomMenu.isVisible()) {
-                _bottomMenu.showMenu(false);
+              if (_blackKeyMenu.isVisible()) {
+                _blackKeyMenu.hideMenu();
               } else {
-                _bottomMenu.showMenu(true);
+                _blackKeyMenu.showMenu();
               }
               break;
       }
 
       if (event.type == Sucofunkey::EVENT_APPLICATION) {
         switch(event.index) {
-          case Sucofunkey::BOTTOM_NAV_ITEM3:
-            _bottomMenu.showMenu(false);
+          case Sucofunkey::BLACKKEY_NAV_ITEM1:
+            _blackKeyMenu.hideMenu();
+            _homeScreen.showSongSelector();
+            break;
+
+          case Sucofunkey::BLACKKEY_NAV_ITEM10:
+            _blackKeyMenu.hideMenu();
             _homeScreen.showSupporterScreen();
             break;
+
           default: 
             break;  
         }
       }
-    }
 
+      if (event.type == Sucofunkey::KEY_NOTE) {
+        // handle menu keys
+        if (_blackKeyMenu.isVisible()) {
+          _blackKeyMenu.handleEvent(event);
+        } 
+      }
+    } // event pressed
 }
 
 long Home::receiveTimerTick() {
@@ -101,10 +100,10 @@ void Home::setActive(boolean active) {
     _isActive = true;
     _keyboard->setBank(0);
     _homeScreen.showGeneralInformation();
-    _bottomMenu.showMenu(false);
+    _blackKeyMenu.showMenu();
   } else {
     _isActive = false;
     _keyboard->setBank(0);
-    _bottomMenu.showMenu(false);
+    _blackKeyMenu.hideMenu();
   }
 }

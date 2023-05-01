@@ -35,6 +35,7 @@
 #include "../../hardware/Sucofunkey.h"
 #include "../../helper/FSIO.h"
 #include "../Screen.h"
+#include "components/SongSelector.h"
 #include "SupporterScreen.h"
 
 class HomeScreen {
@@ -46,14 +47,14 @@ class HomeScreen {
         boolean passEventsToMe();
         void showSupporterScreen();
         void showGeneralInformation();
+        void showSongSelector();
 
     private:
         enum Components
         {
             NONE = 0,
-            INSTRUCTIONS = 1,
-            SETTINGS = 2,
-            SUPPORTER = 3
+            SUPPORTER = 1,
+            SONGSELECTOR = 2
         };
 
         Sucofunkey *_keyboard;
@@ -62,7 +63,9 @@ class HomeScreen {
         char *_activeSongName;
         char *_songsBasePath;
         SupporterScreen _supporter;
-        Components _activeComponent = NONE;
+        SongSelector _songSelector;
+
+        Components _activeComponent = NONE;        
 };
 
 #endif

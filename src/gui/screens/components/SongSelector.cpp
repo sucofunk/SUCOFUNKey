@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -36,7 +36,6 @@
 // ToDo:
 //  - sort songs alphabetically
 //  - delete song (recursive)
-//  - move to SDFat2 ?
 //  - get rid of flickering while scrolling songs
 //  - get rid of flickering while typing e.g. A -> _ -> c -> g -> E -> Q
 
@@ -125,6 +124,11 @@ void SongSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
                 }
             }                
             break;
+
+        case Sucofunkey::FN_SET:
+            _keyboard->addApplicationEventToQueue(Sucofunkey::MENU_BACK);
+            break;
+
         default:
             break;
       }    
@@ -179,6 +183,7 @@ void SongSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
 }
 
 void SongSelector::drawSongSelector() {    
+    _activeComponent = 0;
     _songCount = _fsio->getSongCount();
 
     _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "Song collection");
