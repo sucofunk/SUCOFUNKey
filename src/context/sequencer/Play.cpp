@@ -208,7 +208,7 @@ void Play::playMixedSample(byte channel, uint16_t position, int snippetSlot) {
 
     // something went wrong
     if (playingSnippetsIndex == -1) {
-      Serial.println("Fehler!");
+      Serial.println("ERROR!");
       return;
     }
 

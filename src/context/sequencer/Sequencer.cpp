@@ -1025,6 +1025,21 @@ boolean Sequencer::isPlaying() {
 }
 
 
+// saves the empty song structure to the temp folder on the sd card -> will be called on startup to have the latest file format in temp folder
+void Sequencer::saveTemp() {
+  String s = "/TEMP";
+  char buff[40];
+  strcpy(buff, s.c_str());
+  _song->saveToSD(buff);
+};
+
+// reloads empty song structure from temp folder on sd card
+void Sequencer::loadTemp() {
+  String s = "/TEMP";
+  char buff[40];
+  strcpy(buff, s.c_str());
+  _song->loadFromSD(buff);
+};
 
 
 void Sequencer::loadFromSD(boolean drawGrid) {
@@ -1064,11 +1079,15 @@ void Sequencer::_clearSong() {
   _sfsio->clearSampleMemory();
 
   // 2 clear all data structures or initialize it new
-  _song->clearSelection(0, 0, 7, _song->getSongLength());
+  //  _song->clearSelection(0, 0, 7, _song->getSongLength());
 
   // 3 set defaults for meta data
-  _song->setMetadataToDefault();
+  //  _song->setMetadataToDefault();
 
+  loadTemp();
+  // next line commented out.. if you think cleaning the song was a bad idea, go straight to the main menu and reload the song.. the empty temp song is not saved yet!
+  //  saveToSD(); 
+  
   // 4 redraw grid
   _cursorPosition = 0;
   _cursorChannel = 0;

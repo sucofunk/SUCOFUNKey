@@ -1224,43 +1224,55 @@ boolean SongStructure::loadFromSD(char *songPath) {
     char buff[40];
     File readFile;
     byte *bufferBlocks;
+    String tempString = "/TEMP";
+
 
     // read _meta
     strcpy(buff, songPath);
     strcat(buff, "/PATTERN/META.DAT");
 
-    readFile = SD.open(buff, FILE_READ);
+    if (SD.exists(buff)) {    
+        readFile = SD.open(buff, FILE_READ);
 
-    bufferBlocks = (byte *) &_meta;
+        bufferBlocks = (byte *) &_meta;
 
-    for (uint16_t j=0; j<sizeof(MetaInfos); j++) {
-        if (readFile.available()) {
-            *(bufferBlocks + j) = readFile.read();
-        }
-    }            
+        for (uint16_t j=0; j<sizeof(MetaInfos); j++) {
+            if (readFile.available()) {
+                *(bufferBlocks + j) = readFile.read();
+            }
+        }            
 
-    readFile.close();
-
+        readFile.close();
+    } else {
+        Serial.print("ERROR reading ");
+        Serial.println(buff);
+        return false;
+    }
 
 
     // read _blocks
     strcpy(buff, songPath);
     strcat(buff, "/PATTERN/BLOCKS.DAT");
 
-    readFile = SD.open(buff, FILE_READ);
+    if (SD.exists(buff)) {
+        readFile = SD.open(buff, FILE_READ);
 
-    for (uint16_t i=0; i<sizeof(_blocks)/sizeof(blockStruct); i++) {
-        bufferBlocks = (byte *) &_blocks[i];
+        for (uint16_t i=0; i<sizeof(_blocks)/sizeof(blockStruct); i++) {
+            bufferBlocks = (byte *) &_blocks[i];
 
-        for (uint16_t j=0; j<sizeof(blockStruct); j++) {
-            if (readFile.available()) {
-                *(bufferBlocks + j) = readFile.read();
-            }
-        }            
+            for (uint16_t j=0; j<sizeof(blockStruct); j++) {
+                if (readFile.available()) {
+                    *(bufferBlocks + j) = readFile.read();
+                }
+            }            
+        }
+
+        readFile.close();
+    } else {
+        Serial.print("ERROR reading ");
+        Serial.println(buff);
+        return false;
     }
-
-    readFile.close();
-    
 
 
 
@@ -1268,100 +1280,125 @@ boolean SongStructure::loadFromSD(char *songPath) {
     strcpy(buff, songPath);
     strcat(buff, "/PATTERN/SMPLPTR.DAT");
 
-    readFile = SD.open(buff, FILE_READ);
+    if (SD.exists(buff)) {
+        readFile = SD.open(buff, FILE_READ);
 
-    for (uint16_t i=0; i<sizeof(_samplePointers)/sizeof(samplePointerStruct); i++) {
-        bufferBlocks = (byte *) &_samplePointers[i];
+        for (uint16_t i=0; i<sizeof(_samplePointers)/sizeof(samplePointerStruct); i++) {
+            bufferBlocks = (byte *) &_samplePointers[i];
 
-        for (uint16_t j=0; j<sizeof(samplePointerStruct); j++) {
-            if (readFile.available()) {
-                *(bufferBlocks + j) = readFile.read();
-            }
-        }            
+            for (uint16_t j=0; j<sizeof(samplePointerStruct); j++) {
+                if (readFile.available()) {
+                    *(bufferBlocks + j) = readFile.read();
+                }
+            }            
+        }
+
+        readFile.close();
+    } else {
+        Serial.print("ERROR reading ");
+        Serial.println(buff);
+        return false;
     }
-
-    readFile.close();
-
 
 
     // read _sampleBucket
     strcpy(buff, songPath);
     strcat(buff, "/PATTERN/SMPLBKT.DAT");
 
-    readFile = SD.open(buff, FILE_READ);
+    if (SD.exists(buff)) {
+        readFile = SD.open(buff, FILE_READ);
 
-    for (uint16_t i=0; i<sizeof(_sampleBucket)/sizeof(sampleStruct); i++) {
-        bufferBlocks = (byte *) &_sampleBucket[i];
+        for (uint16_t i=0; i<sizeof(_sampleBucket)/sizeof(sampleStruct); i++) {
+            bufferBlocks = (byte *) &_sampleBucket[i];
 
-        for (uint16_t j=0; j<sizeof(sampleStruct); j++) {
-            if (readFile.available()) {
-                *(bufferBlocks + j) = readFile.read();
-            }
-        }            
+            for (uint16_t j=0; j<sizeof(sampleStruct); j++) {
+                if (readFile.available()) {
+                    *(bufferBlocks + j) = readFile.read();
+                }
+            }            
+        }
+
+        readFile.close();
+    } else {
+        Serial.print("ERROR reading ");
+        Serial.println(buff);
+        return false;
     }
-
-    readFile.close();
-
 
 
     // read _parameterChangeSampleBucket
     strcpy(buff, songPath);
     strcat(buff, "/PATTERN/SPSBKT.DAT");
 
-    readFile = SD.open(buff, FILE_READ);
+    if (SD.exists(buff)) {
+        readFile = SD.open(buff, FILE_READ);
 
-    for (uint16_t i=0; i<sizeof(_parameterChangeSampleBucket)/sizeof(parameterChangeSampleStruct); i++) {
-        bufferBlocks = (byte *) &_parameterChangeSampleBucket[i];
+        for (uint16_t i=0; i<sizeof(_parameterChangeSampleBucket)/sizeof(parameterChangeSampleStruct); i++) {
+            bufferBlocks = (byte *) &_parameterChangeSampleBucket[i];
 
-        for (uint16_t j=0; j<sizeof(parameterChangeSampleStruct); j++) {
-            if (readFile.available()) {
-                *(bufferBlocks + j) = readFile.read();
-            }
-        }            
+            for (uint16_t j=0; j<sizeof(parameterChangeSampleStruct); j++) {
+                if (readFile.available()) {
+                    *(bufferBlocks + j) = readFile.read();
+                }
+            }            
+        }
+
+        readFile.close();
+    } else {
+        Serial.print("ERROR reading ");
+        Serial.println(buff);
+        return false;
     }
-
-    readFile.close();
-
 
 
     // read _midiNoteBucket
     strcpy(buff, songPath);
     strcat(buff, "/PATTERN/MIDINBKT.DAT");
 
-    readFile = SD.open(buff, FILE_READ);
+    if (SD.exists(buff)) {
+        readFile = SD.open(buff, FILE_READ);
 
-    for (uint16_t i=0; i<sizeof(_midiNoteBucket)/sizeof(midiNoteStruct); i++) {
-        bufferBlocks = (byte *) &_midiNoteBucket[i];
+        for (uint16_t i=0; i<sizeof(_midiNoteBucket)/sizeof(midiNoteStruct); i++) {
+            bufferBlocks = (byte *) &_midiNoteBucket[i];
 
-        for (uint16_t j=0; j<sizeof(midiNoteStruct); j++) {
-            if (readFile.available()) {
-                *(bufferBlocks + j) = readFile.read();
-            }
-        }            
+            for (uint16_t j=0; j<sizeof(midiNoteStruct); j++) {
+                if (readFile.available()) {
+                    *(bufferBlocks + j) = readFile.read();
+                }
+            }            
+        }
+
+        readFile.close();
+    } else {
+        Serial.print("ERROR reading ");
+        Serial.println(buff);
+        return false;
     }
-
-    readFile.close();
-
 
     // read _snippets
     strcpy(buff, songPath);
     strcat(buff, "/PATTERN/SNIPPETS.DAT");
 
-    readFile = SD.open(buff, FILE_READ);
+    if (SD.exists(buff)) {
+        readFile = SD.open(buff, FILE_READ);
 
-    for (uint16_t i=0; i<sizeof(_snippets)/sizeof(Selection::SelectionStruct); i++) {
-        bufferBlocks = (byte *) &_snippets[i];
+        for (uint16_t i=0; i<sizeof(_snippets)/sizeof(Selection::SelectionStruct); i++) {
+            bufferBlocks = (byte *) &_snippets[i];
 
-        for (uint16_t j=0; j<sizeof(Selection::SelectionStruct); j++) {
-            if (readFile.available()) {
-                *(bufferBlocks + j) = readFile.read();
-            }
-        }            
+            for (uint16_t j=0; j<sizeof(Selection::SelectionStruct); j++) {
+                if (readFile.available()) {
+                    *(bufferBlocks + j) = readFile.read();
+                }
+            }            
+        }
+
+        readFile.close();
+    } else {
+        Serial.print("ERROR reading ");
+        Serial.println(buff);
+        return false;
     }
-
-    readFile.close();
-
-
+    
     return true;
 };
 
@@ -1385,11 +1422,19 @@ boolean SongStructure::saveMetadataToSD(char *songPath) {
 
     bufferBlocks = (byte *) &_meta;
     writeFile.write(bufferBlocks, sizeof(MetaInfos));
- 
+
     writeFile.close();
+
+    delay(100);
+
+    if (SD.exists(buff)) {
+        return true;
+    } else {
+        return false;
+    }
+        
     return true;
 }
-
 
 boolean SongStructure::saveToSD(char *songPath) {
     
@@ -1401,7 +1446,6 @@ boolean SongStructure::saveToSD(char *songPath) {
     File writeFile;
     byte *bufferBlocks;
  
-
     // write _blocks
     strcpy(buff, songPath);
     strcat(buff, "/PATTERN/BLOCKS.DAT");

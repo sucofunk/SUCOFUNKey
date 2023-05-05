@@ -490,6 +490,19 @@ void setup() {
       startupContext.showMessage("SD card not available", true);
       ok = false;
   } else {
+      // create temp directories, if they do not already exist
+      if (!SD.exists("/TEMP")) {
+        SD.mkdir("/TEMP");
+      } 
+
+      if (!SD.exists("/TEMP/PATTERN")) {
+        SD.mkdir("/TEMP/PATTERN");
+      } 
+
+      // save the empty song structure (as at this state no song is lesected) to /TEMP on the SD card
+      // this way there is always the latest data structure available
+      sequencerContext.saveTemp();
+
       startupContext.showMessage("OK", false);
   }
 
@@ -751,11 +764,15 @@ void handleKeyboardEventQueue() {
           // generate new _activeSongPath after selecting or creating a song
           strcpy(activeSongPath, songsBasePath);
           strcat(activeSongPath, activeSongName);
-          sfsio.setSongPath(activeSongPath);
+          sfsio.setSongPath(activeSongPath);                    
+          sfsio.clearSampleMemory();
           screen.loadingScreen(0.0);
           sfsio.writeAllSamplesToWaveformBuffer();
 
-          // load sequencer data from SD card
+          // first load empty temp project to have a clean song in memory..
+          sequencerContext.loadTemp();
+
+          // .. and override it with sequencer data from SD card, if available.
           sequencerContext.loadFromSD(false);
 
           changeContext(AppContext::HOME);          
