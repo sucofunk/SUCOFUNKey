@@ -78,6 +78,8 @@ long HomeScreen::receiveTimerTick() {
     } else {
         return 100000;
     }
+    
+    return 100000;
 }
 
 void HomeScreen::showGeneralInformation() {

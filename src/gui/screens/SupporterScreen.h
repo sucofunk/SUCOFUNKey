@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -69,7 +69,7 @@ class SupporterScreen {
         uint8_t _updatesCount = 0;
         uint8_t _supporterCount = 7;
         uint8_t _supporterPosition = 0;
-        String _supporterText[7] = {"Thanks for your support... ", "Richie Hawtin ", "Halil Kleinmann ", "MrKabelbruch ", "STRANGE BOUND ", "www.sucofunk.com/donate ", "www.sucofunk.com/donate "};
+        String _supporterText[8] = {"Thanks for your support... ", "Richie Hawtin ", "Halil Kleinmann ", "MrKabelbruch ", "STRANGE BOUND ", "Joe Spiller ", "www.sucofunk.com/donate ", "www.sucofunk.com/donate "};
 };
 
 #endif

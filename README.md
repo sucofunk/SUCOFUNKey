@@ -5,16 +5,17 @@
 Beatmaker's sketchbook is an open source alternative to different commercial electronic music devices like the [MPC](https://en.wikipedia.org/wiki/Akai_MPC) or [OP-1](https://en.wikipedia.org/wiki/Teenage_Engineering_OP-1).
 
 The goal is to enable everyone interested in the topic to easily build and customize its own device without spending a lot of money.
-As sampling is an essential part of the Hip-Hop culture, SUCOFUNKey might be an option for amateur beat makers. It is battery powered, includes a stereo speaker and can be used everywhere.
+As sampling is an essential part of the Hip-Hop culture, SUCOFUNKey might be an option for amateur beat makers. It is battery powered, can include a stereo speaker and can be used everywhere.
 
-The PCB is designed without any SMD components and can be soldered with a standard soldering iron from a local hardware store. Difficult to solder SMD components are pluggable.
+- The classic PCB is designed without any SMD components and can be soldered with a standard soldering iron from a local hardware store. Difficult to solder SMD components are pluggable.
+- The mini Version is completely SMD and will be produced.
 
 Check out [@sucofunkey on Instagram](https://www.instagram.com/sucofunkey/) for a visual impression of the device and progress.
 You can sign up to the newsletter on [www.sucofunk.com](https://sucofunk.com), check some background infos, contact me and stay up to date.
 
 To see the implemented features, read the [user manual](doc/manual.md).
 
-If you are interested in participating, just send me a message. I spend a lot of time into the project without any return yet. If you want to support the project and help to keep the costs (office/workshop rent, hosting, etc.) as low as possible and speed the project up, I would be happy when you donate via Paypal. If you spend more than 25€, your name will be listed on the supporter screen in the device. Leave our name or nickname in the comment field of the donation process. [Donate](https://www.paypal.com/donate/?hosted_button_id=H9K23YHV95UXC)
+If you are interested in participating, just send me a message. I spend a lot of time into the project without any return yet. If you want to support the project and help to keep the costs (office/workshop rent, hosting, etc.) as low as possible and speed the project up, I would be happy when you donate via Paypal. If you spend more than 25€, your name will be listed on the supporter screen in the device. Leave your name or nickname in the comment field of the donation process. [Donate](https://www.paypal.com/donate/?hosted_button_id=H9K23YHV95UXC)
 
 
 ## Hardware
@@ -28,10 +29,13 @@ Beatmaker's sketchbook houses:
 - 32 LEDs
 - built in microphone 
 - built in stereo speakers, driven by a small [amplifier](https://www.adafruit.com/product/987)
+  - optional for classic devices
 - headphone output
 - volume control
 - 3.5mm line-in and line-out
 - MIDI-in and MIDI-out
+  - TRS-A (mini Version with option to solder additional DIN MIDI Sockets -> sockets exceed enclosure size)
+  - DIN MIDI
 - built-in LiPo battery with [charger](https://www.adafruit.com/product/1944)
 
 
@@ -46,7 +50,7 @@ Read the [user manual](doc/manual.md) for details.
 
 ### Hardware
 - is ready and DIY kits can be purchased at [www.sucofunk.com](https://sucofunk.com)
-- transfering PCB design to SMD to have the option for producing a larger amount of boards, if needed.
+- <del>transfering PCB design to SMD to have the option for producing a larger amount of boards, if needed.</del> DONE
 
 ## Next steps
 Currently I am creating almost everything by myself. So the next steps might take a while, hopefully not too long.
@@ -62,17 +66,17 @@ Currently I am creating almost everything by myself. So the next steps might tak
 - <del>Improve the website</del>
 
 ### On device / Firmware
-- Option to change Songs from main menu
-- Extend the Sample file browser
+- <del>Option to change Songs from main menu</del>
+- <del>Extend the Sample file browser</del>
 - Extend Sampler:
-  - Option to give samples a name instead of the standard numbers (1..72)
+  - <del>Option to give samples a name instead of the standard numbers (1..72)</del>
+  - Make samplenames editable after they are set once
   - Set a base note for a sample e.g. C4 to map chromatic pitching to note keys
   - ADSR envelope
   - Bitcrusher
 - Move settings from code to a configuration menu within the device
 - add feature to <del>select and</del> move blocks in the sequencer
 - copy and paste selections in the sequencer to re-use them
-- fix bugs
 - <del>Implement Arrange Mode</del>
 - <del>Patterns in Sequencer</del>  
 - <del>Optimize menu structure and create a main menu</del>
@@ -82,7 +86,12 @@ Currently I am creating almost everything by myself. So the next steps might tak
 - <del>Implementation Song mode (chaining multiple pattern to a song)</del>
 - <del>add snippets to the sequencer</del>
 - <del>add another zoom level to the sequencer</del>
-
+- Extend Live/Play Mode
+  - Funky Fader effects
+  - Send MIDI Chords
+  - Send MIDI Program Change
+- Fix bugs
+  
 ## Roadmap
 - Timestretching samples
 - Effects channels
@@ -91,4 +100,3 @@ Currently I am creating almost everything by myself. So the next steps might tak
 - Synthesizer (maybe.. if there is enough RAM left)
 - <del>Add MIDI to the sequencer to control external sound devices<del>
 - <del>Live mode with <del>MIDI Integration</del> and snippets</del>
-
