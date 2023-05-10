@@ -61,11 +61,13 @@ class FSIO {
         void setSelectedSamplePathFromSD(char *sampleName);
         void setSelectedSamplePathFromSD(String sampleName);
         char * getSelectedSamplePathFromSD();
+        char * getSelectedSampleNameFromSD();
 
         LibrarySample * getLibrarySamples();
 
     private:
         char _selectedSamplePathFromSD[1024];
+        char _selectedSampleNameFromSD[256];
         
         LibrarySample *_librarySamples;
         uint16_t _librarySamplesCount = 0;

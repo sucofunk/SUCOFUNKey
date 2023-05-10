@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -363,17 +363,18 @@ void LiveScreen::drawMIDIinWaitForTraining(boolean show) {
 
 void LiveScreen::showSelectSample(Play::LiveSlotDefinitionStruct slot, boolean initial) {
     if (initial) _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);    
-    _screen->drawTextInArea(_slotTypeSelectionAreaLeft, Screen::TEXTPOSITION_RIGHT_BOTTOM, false, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "Sample");
+//    _screen->drawTextInArea(_slotTypeSelectionAreaLeft, Screen::TEXTPOSITION_RIGHT_BOTTOM, false, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "Sample");
+//    _screen->drawTextInArea(_slotTypeSelectionAreaRight, Screen::TEXTPOSITION_LEFT_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, slot.sampleNumber == 255 ? "NONE" : _sfsio->getSampleInfosName(slot.sampleNumber));
 
-    sprintf(_cBuff3, "%d", slot.sampleNumber);
-    _screen->drawTextInArea(_slotTypeSelectionAreaRight, Screen::TEXTPOSITION_LEFT_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, slot.sampleNumber == 255 ? "NONE" : _cBuff3);
+    _screen->drawTextInArea(_waveFormArea, Screen::TEXTPOSITION_HCENTER_VCENTER, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, slot.sampleNumber == 255 ? "NONE" : _sfsio->getSampleInfosName(slot.sampleNumber));  
+
 };
 
 void LiveScreen::showSampleConfig(Play::LiveSlotDefinitionStruct slot) {
     _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);
 
-    sprintf(_cBuff10, "Sample %d", slot.sampleNumber);
-    _screen->drawTextInArea(_snippetNameArea, Screen::TEXTPOSITION_HCENTER_VCENTER, false, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff10);
+    //sprintf(_cBuff10, "Sample %d", slot.sampleNumber);
+    _screen->drawTextInArea(_snippetNameArea, Screen::TEXTPOSITION_HCENTER_VCENTER, false, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _sfsio->getSampleInfosName(slot.sampleNumber));
 
     sprintf(_cBuff10, "%d Note", slot.midiNote);
     _screen->drawTextInArea(_snippetsMIDIArea, Screen::TEXTPOSITION_RIGHT_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE , _cBuff10);

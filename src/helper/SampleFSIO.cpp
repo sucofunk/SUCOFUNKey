@@ -365,6 +365,9 @@ long SampleFSIO::copyRawFromSdToMemory(const char *filename, long startOffset) {
 
   // extend sample to to prevent clipping with the next sample in memory, when playing pitched samples
   // A VERY DIRTY HACK AND WASTES A LOT OF EXTMEM, but otherwise the wavetable syth object needs to be rewritten. Any volunt here? ;)
+  
+  // ToDo: hey.. we are not using this WAVETABLE thing anymore.. should be checked and deleted.. this dirty hack..
+  
   for (long i=0; i<10240; i++) {
     _extmemArray[startOffset+c+i] = 0;
   }
@@ -554,6 +557,113 @@ void SampleFSIO::clearSampleMemory() {
   }
 };
 
+
+
+boolean SampleFSIO::loadSampleInfosFromSD() {
+  // check if file exists.. if not, save empty array
+
+    char buff[40];
+    File readFile;
+    byte *bufferBlocks;
+
+    // read _sampleInfos
+    strcpy(buff, getSongPath());
+    strcat(buff, "/SMPLINFO.DAT");
+
+    if (SD.exists(buff)) {    
+        Serial.println(".. from file");
+        readFile = SD.open(buff, FILE_READ);
+
+        for (uint16_t i=0; i<sizeof(_sampleInfos)/sizeof(sampleInfosStruct); i++) {
+            bufferBlocks = (byte *) &_sampleInfos[i];
+
+            for (uint16_t j=0; j<sizeof(sampleInfosStruct); j++) {
+                if (readFile.available()) {
+                    *(bufferBlocks + j) = readFile.read();
+                }
+            }            
+        }
+
+        readFile.close();
+    } else {
+      // does not exist? write empty array to file
+      Serial.println(".. saving empty array first");
+      return saveSampleInfosToSD();
+    }
+
+  return true;
+};
+
+boolean SampleFSIO::saveSampleInfosToSD() {
+  // save _sampleInfos to SD/songname/SMPLINFO.DAT
+
+  // correct empty strings to sample slot numbers
+  String t;
+  for (int i=0; i<72; i++) {
+     t = _sampleInfos[i].name;
+     if (t.length() == 0) {
+        t = "";
+        t.append(i+1); 
+        t.toCharArray(_sampleInfos[i].name, t.length()+1);
+     }
+  }
+
+  char buff[40];
+  File writeFile;
+  byte *bufferBlocks;
+
+  // write _blocks
+  strcpy(buff, getSongPath());
+  strcat(buff, "/SMPLINFO.DAT");
+
+  if (SD.exists(buff)) { SD.remove(buff); }
+
+  writeFile = SD.open(buff, FILE_WRITE);
+
+  for (uint16_t i=0; i<sizeof(_sampleInfos)/sizeof(sampleInfosStruct); i++) {
+      bufferBlocks = (byte *) &_sampleInfos[i];
+      writeFile.write(bufferBlocks, sizeof(_sampleInfos[i]));
+  }
+
+  writeFile.close();
+
+  return true;
+};
+
+void SampleFSIO::setSampleInfosName(int sampleId1, String name) {
+  char buff[40];
+
+  String tempString;
+
+  if (name.length() >= 39) {
+      tempString = name.substring(0, 13);
+      tempString.append(" ... ");
+      tempString.append(name.substring(name.length()-20, name.length()));
+  } else {
+      tempString = name;
+  }
+
+  // ToDO: remove suffix .raw from filename
+
+  tempString.toCharArray(_sampleInfos[sampleId1-1].name, tempString.length()+1);
+  saveSampleInfosToSD();
+};
+
+
+void SampleFSIO::resetSampleInfos(int sampleId1) {
+  // restore sample number and set it as a name
+  String t = "";
+  t.append(sampleId1);
+  t.toCharArray(_sampleInfos[sampleId1-1].name, t.length()+1);
+
+  // ToDo: fill up remaining values, when implemented!
+
+  saveSampleInfosToSD();
+};
+
+char * SampleFSIO::getSampleInfosName(int sampleId1) {
+  return _sampleInfos[sampleId1-1].name;
+};
 
 void SampleFSIO::debugInfos() {
 /*    Serial.println("----------");

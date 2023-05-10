@@ -320,6 +320,9 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
           _sfsio->copyFile(_fsio->getSelectedSamplePathFromSD(), _sfsio->sampleFilename[_keyboard->getBank()-1][_activeSampleSlot-1]);
           _sfsio->generateWaveFormBufferForSample(_keyboard->getBank()-1, _activeSampleSlot-1);
 
+          // update sample meta infos
+          _sfsio->setSampleInfosName(((_keyboard->getBank()-1)*24)+_activeSampleSlot , _fsio->getSelectedSampleNameFromSD());
+
           _samplerScreen.showSampleInfo(_keyboard->getBank()-1, _activeSampleSlot-1, 1.0);
           _sfsio->readSampleBankStatusFromSD();
 
@@ -582,9 +585,13 @@ void Sampler::deleteActiveSample() {
 
   currentState = SAMPLER_DELETE_CONFIRMED;
 
-  // remove sample from extmem, if it is loaded
+  // remove other references..
   if (sample72 < 72) {
-    _sfsio->removeSampleFromMemory(sample72);
+    // remove sample from extmem, if it is loaded
+    _sfsio->removeSampleFromMemory(sample72+1);
+
+    // remove sample infos
+    _sfsio->resetSampleInfos(sample72+1);
 
     _samplerScreen.showNoSampleInfo();
     _blinkSampleSlot(_activeSampleSlot, true);

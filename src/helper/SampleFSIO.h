@@ -42,6 +42,20 @@ class SampleFSIO {
     public:
         SampleFSIO(unsigned int *extmemArray, long extmemSize, Screen *screen);    
 
+
+        typedef struct  {
+            char name[40]; // display name
+            uint32_t envelopeA = 0;
+            uint32_t envelopeD = 0;
+            uint32_t envelopeS = 0;
+            uint32_t envelopeR = 0;
+            uint32_t loopStart = 0;
+            uint32_t loopEnd = 0;
+            byte baseMidiNote = 60;
+            boolean loop = false;
+        } sampleInfosStruct;
+        
+
         void writeAllSamplesToWaveformBuffer();
 
         boolean copyFile(const char *f1, const char *f2);
@@ -72,8 +86,9 @@ class SampleFSIO {
                                             {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
                                             {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false}};
         
+        // ToDo: save RAM and delete these two arrays.. will become obsolete with _sampleInfos, but needs to be refactored!
         char sampleFilename[3][24][40];
-        char sampleDisplayTitle[3][24][40];
+        //char sampleDisplayTitle[3][24][40];
         char recorderFilename[40]; // waveformbuffer is saved at position 72 (--> bank0=3, sample0=0)
 
         void setSongPath(char *songPath);
@@ -90,8 +105,16 @@ class SampleFSIO {
         
         boolean sampleAvailable(byte sampleId); // 0..71
         boolean sampleInMemory(byte sampleId); // 0..71
-
+        
         void clearSampleMemory();
+
+        // -------- SampleInfos --------
+        boolean loadSampleInfosFromSD();
+        boolean saveSampleInfosToSD();
+        void setSampleInfosName(int sampleId1, String name);
+        char * getSampleInfosName(int sampleId1);
+        void resetSampleInfos(int sampleId1);
+        // -----------------------------
 
         void debugInfos();
 
@@ -104,6 +127,8 @@ class SampleFSIO {
 
         long _nextOffset = 0;
         long _sampleOffsets[72] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+
+        sampleInfosStruct _sampleInfos[72];
 };
 
 #endif

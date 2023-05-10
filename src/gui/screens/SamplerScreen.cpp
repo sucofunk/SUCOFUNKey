@@ -90,11 +90,7 @@ void SamplerScreen::showSampleInfo(byte sampleId72, float volumeScaleFactor) {
     if (sampleId72 == 72) {
         _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_TOP, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "Latest Recording");
     } else {
-
-        // ToDo: change to sample name
-        
-        sprintf(_cBuff20, "Sample %d", sampleId72+1);
-        _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_TOP, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff20);
+        _screen->drawTextInArea(_screen->AREA_HEADLINE, _screen->TEXTPOSITION_HCENTER_TOP, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _sfsio->getSampleInfosName(sampleId72+1));
     }
 
     // draw zero line

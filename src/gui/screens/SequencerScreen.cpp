@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -408,8 +408,8 @@ void SequencerScreen::showSampleInfos(byte channel, uint16_t position, boolean f
   if (fullInfo) {
     SongStructure::samplePointerStruct sps = _song->getPosition(channel, position);
     if (sps.type == SongStructure::SAMPLE) {
-      sprintf(_cBuff3, "%d", _song->getSampleFromBucketId(sps.typeIndex).sampleNumber);
-      _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTIONS_SAMPLENAME, _screen->TEXTPOSITION_LEFT_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff3);
+      //sprintf(_cBuff3, "%d", _song->getSampleFromBucketId(sps.typeIndex).sampleNumber);
+      _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTIONS_SAMPLENAME, _screen->TEXTPOSITION_LEFT_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _sfsio->getSampleInfosName(_song->getSampleFromBucketId(sps.typeIndex).sampleNumber));
       
       drawSwingInfoFromExpression(_song->getSampleFromBucketId(sps.typeIndex).swing);
     }

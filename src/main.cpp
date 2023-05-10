@@ -746,17 +746,10 @@ void handleKeyboardEventQueue() {
   while(keyboard.hasEvents()) {
     Sucofunkey::keyQueueStruct event = keyboard.getNextEvent();
 
-
-/*    Serial.print(event.index);
-    Serial.print("::");
-    Serial.print(event.pressed);
-    Serial.print("::");
-    Serial.println(event.type);
-*/
-
 //    Serial.print("MaxAudioMemoryUsed:: ");
 //    Serial.println(AudioMemoryUsageMax());
 
+    // global events - not necessarily connected to a specific context
 
     if (event.type == Sucofunkey::EVENT_APPLICATION) {
       switch(event.index) {
@@ -769,13 +762,16 @@ void handleKeyboardEventQueue() {
           screen.loadingScreen(0.0);
           sfsio.writeAllSamplesToWaveformBuffer();
 
-          // first load empty temp project to have a clean song in memory..
+          // load sample infos
+          sfsio.loadSampleInfosFromSD();
+
+          // load empty temp project to have a clean song in memory..
           sequencerContext.loadTemp();
 
           // .. and override it with sequencer data from SD card, if available.
           sequencerContext.loadFromSD(false);
 
-          changeContext(AppContext::HOME);          
+          changeContext(AppContext::HOME);
           break;
 
         case Sucofunkey::RECORDED:
