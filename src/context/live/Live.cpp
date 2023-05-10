@@ -871,12 +871,12 @@ void Live::_handleOverviewEncoders(byte encoder, boolean function, int action) {
   }
 
   if (encoder == 1 && !function && action == 0) {
-    // set bpm to fader value
+    // set bpm to fader value (ENCODER_1 PUSH)
     _changeBPM(_keyboard->getFaderValue(30, 300));
   }
 
   if (encoder == 1 && function && action == 0) {
-    // reset bpm to default from sequencer
+    // reset bpm to default from sequencer (FN + ENCODER_1 PUSH)
     _changeBPM(_play->getSong()->getPlayBackSpeed());
   }
 

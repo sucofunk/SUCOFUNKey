@@ -575,6 +575,11 @@ void Sampler::editActiveSample() {
 void Sampler::deleteActiveSample() {
   byte sample72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
 
+  if (_audioResources->playSdRaw.isPlaying()) {
+    _audioResources->playSdRaw.stop();
+    delay(10);
+  }
+
   _sfsio->deleteFile( _activeSampleSlot == 0 ? _sfsio->recorderFilename : _sfsio->sampleFilename[_tempBank-1][_activeSampleSlot-1]);
   
   _sfsio->readSampleBankStatusFromSD();
@@ -588,7 +593,7 @@ void Sampler::deleteActiveSample() {
   // remove other references..
   if (sample72 < 72) {
     // remove sample from extmem, if it is loaded
-    _sfsio->removeSampleFromMemory(sample72+1);
+    _sfsio->removeSampleFromMemory(sample72);
 
     // remove sample infos
     _sfsio->resetSampleInfos(sample72+1);

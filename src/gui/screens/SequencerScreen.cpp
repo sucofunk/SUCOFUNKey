@@ -399,6 +399,7 @@ void SequencerScreen::drawPlayStepIndicator(uint16_t position, boolean draw) {
 // !fullInfo = velocity, panning, pitch
 void SequencerScreen::showSampleInfos(byte channel, uint16_t position, boolean fullInfo) {
   _sampleInfosVisible = true;
+  
 
   //_screen->hr(_screen->AREA_SEQUENCER_OPTIONS_SAMPLENAME, 1, _screen->C_GRID_DARK);
   _screen->vr(_screen->AREA_SEQUENCER_OPTION1, 1, _screen->C_GRID_DARK);  
@@ -408,9 +409,8 @@ void SequencerScreen::showSampleInfos(byte channel, uint16_t position, boolean f
   if (fullInfo) {
     SongStructure::samplePointerStruct sps = _song->getPosition(channel, position);
     if (sps.type == SongStructure::SAMPLE) {
-      //sprintf(_cBuff3, "%d", _song->getSampleFromBucketId(sps.typeIndex).sampleNumber);
-      _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTIONS_SAMPLENAME, _screen->TEXTPOSITION_LEFT_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _sfsio->getSampleInfosName(_song->getSampleFromBucketId(sps.typeIndex).sampleNumber));
-      
+      _sfsio->getSampleInfosName(_song->getSampleFromBucketId(sps.typeIndex).sampleNumber, 29, _cBuff30);
+      _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTIONS_SAMPLENAME, _screen->TEXTPOSITION_LEFT_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff30);      
       drawSwingInfoFromExpression(_song->getSampleFromBucketId(sps.typeIndex).swing);
     }
   }

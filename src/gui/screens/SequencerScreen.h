@@ -108,6 +108,7 @@ class SequencerScreen {
         char _cBuff3[3];
         char _cBuff2[2];
         char _cBuff10[10];
+        char _cBuff30[31];
 
         char _cBuff5_1[5];
         char _cBuff5_2[5];

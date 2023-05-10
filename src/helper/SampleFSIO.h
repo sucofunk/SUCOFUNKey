@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -113,6 +113,7 @@ class SampleFSIO {
         boolean saveSampleInfosToSD();
         void setSampleInfosName(int sampleId1, String name);
         char * getSampleInfosName(int sampleId1);
+        char * getSampleInfosName(int sampleId1, int maxLength, char* returnArray);
         void resetSampleInfos(int sampleId1);
         // -----------------------------
 

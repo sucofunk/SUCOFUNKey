@@ -412,6 +412,8 @@ void SampleFSIO::removeSampleFromMemory(byte sampleId) {
   long sampleOffsetToRemove = _sampleOffsets[sampleId];
 
   byte nextOffsetId = 72;
+  _sampleOffsets[sampleId] = -1;
+
   long nextOffset = LONG_MAX;
   // find next sampleIdOffset
   for (int i=0; i<72; i++) {
@@ -528,7 +530,7 @@ void SampleFSIO::readSampleBankStatusFromSD() {
 
 void SampleFSIO::deleteFile(const char *filename) {
 
-    // ToDo: check if it is still playing -> stop playing
+    // ToDo: check if it is still playing -> stop playing    
 
     if (SD.exists(filename)) {
         SD.remove(filename);
@@ -571,7 +573,6 @@ boolean SampleFSIO::loadSampleInfosFromSD() {
     strcat(buff, "/SMPLINFO.DAT");
 
     if (SD.exists(buff)) {    
-        Serial.println(".. from file");
         readFile = SD.open(buff, FILE_READ);
 
         for (uint16_t i=0; i<sizeof(_sampleInfos)/sizeof(sampleInfosStruct); i++) {
@@ -631,19 +632,16 @@ boolean SampleFSIO::saveSampleInfosToSD() {
 };
 
 void SampleFSIO::setSampleInfosName(int sampleId1, String name) {
-  char buff[40];
-
   String tempString;
 
   if (name.length() >= 39) {
-      tempString = name.substring(0, 13);
+      tempString = name.substring(0, 23);
       tempString.append(" ... ");
-      tempString.append(name.substring(name.length()-20, name.length()));
+      // get end of filename and remove suffix .raw from filename (quich and dirty four chars cut)
+      tempString.append(name.substring(name.length()-14, name.length()-4));
   } else {
       tempString = name;
   }
-
-  // ToDO: remove suffix .raw from filename
 
   tempString.toCharArray(_sampleInfos[sampleId1-1].name, tempString.length()+1);
   saveSampleInfosToSD();
@@ -664,6 +662,18 @@ void SampleFSIO::resetSampleInfos(int sampleId1) {
 char * SampleFSIO::getSampleInfosName(int sampleId1) {
   return _sampleInfos[sampleId1-1].name;
 };
+
+char * SampleFSIO::getSampleInfosName(int sampleId1, int maxLength, char* returnArray) {
+  String t = _sampleInfos[sampleId1-1].name;
+
+  if (t.length() > maxLength) {
+    t = t.substring(1, maxLength);
+    t.toCharArray(returnArray, t.length()+1);
+  } else {
+    t.toCharArray(returnArray, t.length()+1);
+  }
+};
+
 
 void SampleFSIO::debugInfos() {
 /*    Serial.println("----------");
