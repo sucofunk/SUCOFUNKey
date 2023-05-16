@@ -67,9 +67,19 @@ class SupporterScreen {
 
         char _textBuffer[50];
         uint8_t _updatesCount = 0;
-        uint8_t _supporterCount = 11;
+        uint8_t _supporterCount = 12;
         uint8_t _supporterPosition = 0;
-        String _supporterText[11] = {"Thanks for your support... ", "Richie Hawtin ", "Halil Kleinmann ", "MrKabelbruch ", "STRANGE BOUND ", "Joe Spiller ", "anonymous supporter ", "Inxu ", "Dan O\'Carrol ", "www.sucofunk.com/donate ", "www.sucofunk.com/donate "};
+        String _supporterText[12] = { "Thanks for your support... ", 
+                                      "Richie Hawtin ", 
+                                      "Halil Kleinmann ", 
+                                      "MrKabelbruch ", 
+                                      "STRANGE BOUND ", 
+                                      "Joe Spiller ", 
+                                      "luukz ", 
+                                      "Inxu ", 
+                                      "Dan O\'Carrol ", 
+                                      "Aare imPuls ", 
+                                      "www.sucofunk.com/donate ", "www.sucofunk.com/donate "};
 };
 
 #endif
