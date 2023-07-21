@@ -37,6 +37,7 @@
 
 #include "Arduino.h"
 #include "AudioStream.h"
+#include "../../hardware/Sucofunkey.h"
 
 class AudioPlayMemorySUCO : public AudioStream
 {
@@ -54,7 +55,16 @@ public:
 	void adjustFrequencyByTick(int pitchChange);
     void reversePlayback(); // if it is already playing backward, it will play forward afterwards
 
+    void setKeyboardReference(Sucofunkey *keyboard);
+    void setPlayFaderPitched(boolean playFaderPitched);
+
 private:
+    Sucofunkey* _keyboard;
+    int _faderValue = 0;
+    boolean _isKeyboardSet = false;
+    boolean _playFaderPitched = false;
+    boolean _paused = false;
+
 	const unsigned int *next;
 	const unsigned int *beginning;
 	const unsigned int *_sampleData;
@@ -65,6 +75,7 @@ private:
     double _position = 1.0;
     uint32_t _positionInt = 1;
     double _increment = 1.0;
+    double _baseIncrementOffset = 0.0f;
 
     byte _baseNote = 60;
     byte _note = 60;

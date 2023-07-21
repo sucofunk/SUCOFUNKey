@@ -52,6 +52,15 @@ class Play {
 
             _swing = _song.getSwing();
             _snippets = Snippets(_keyboard, &_song);
+
+            _audioResources->playMemLive1.setKeyboardReference(keyboard);
+            _audioResources->playMemLive2.setKeyboardReference(keyboard);
+            _audioResources->playMemLive3.setKeyboardReference(keyboard);
+            _audioResources->playMemLive4.setKeyboardReference(keyboard);
+            _audioResources->playMemLive5.setKeyboardReference(keyboard);
+            _audioResources->playMemLive6.setKeyboardReference(keyboard);
+            _audioResources->playMemLive7.setKeyboardReference(keyboard);
+            _audioResources->playMemLive8.setKeyboardReference(keyboard);
         };
 
         typedef struct {
@@ -65,15 +74,8 @@ class Play {
         enum LiveSlotType {
             EMPTY = 0,
             SNIPPET = 1,
-            SAMPLE = 2
-        };
-
-        enum LiveSamplePlayType {
-            COMPLETE = 0,
-            STOPONRELEASE = 1,
-            HOLDFADER = 2,
-            PIANO = 3,
-            LOOP = 4
+            SAMPLE = 2,
+            MUTE_SCRATCHING = 3
         };
 
         typedef struct {
@@ -93,6 +95,8 @@ class Play {
 
             byte midiNote = 0;
             boolean isPiano = false;
+
+            boolean faderScratching = false; // if fader will be read while playing sample to scratch back and forth
 
         } LiveSlotDefinitionStruct;
 
@@ -125,7 +129,7 @@ class Play {
         void stopArrangement();
 
         // playing samples in live mode..
-        void playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, byte baseNote, byte note, boolean reverse, boolean play);
+        void playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, byte baseNote, byte note, boolean reverse, boolean scratchFader, boolean play);
         void handlePolyphonicAftertouch(byte sample1, byte velocity, byte stereoPosition);
         void polyChangeVelocity(byte polymem, byte velocity, byte stereoPosition);
 

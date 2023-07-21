@@ -323,6 +323,9 @@ class Sucofunkey {
         String getMIDINoteName(byte note);
         void scanI2C(); // for debugging reasons
 
+        void setScratchMute(boolean muted);
+        boolean isScratchMuted();
+
     private:
         // Interrupt Pins on Teensy from Sucokey
         int _intKeyPin1;
@@ -497,6 +500,9 @@ class Sucofunkey {
 
         byte _activeBank = 0;  // 1..3 defines the active bank (LED); 0 == all LEDs turned off
         byte _activeInput = INPUT_NONE;
+
+        // "global" status variable -> only accessible via getter/setter
+        boolean _scratchMute = false;
 };
 
 #endif

@@ -811,3 +811,13 @@ void Sucofunkey::scanI2C() {
   }
   Serial.println("");  
 }
+
+
+// for live playing -> mute sample playback in general
+void Sucofunkey::setScratchMute(boolean muted) {
+  _scratchMute = muted;
+}
+
+boolean Sucofunkey::isScratchMuted() {
+  return _scratchMute;
+}

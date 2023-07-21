@@ -91,7 +91,20 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
           }
 
           if (_currentState == SLOT_TYPE_SELECT) {
-            _slots[_editingSlotId].type = Play::SNIPPET;
+            switch(_slots[_editingSlotId].type) {
+              case Play::SAMPLE:
+                _slots[_editingSlotId].type = Play::SAMPLE;
+                break;
+              case Play::SNIPPET:
+                _slots[_editingSlotId].type = Play::SAMPLE;
+                break;
+              case Play::MUTE_SCRATCHING:
+                _slots[_editingSlotId].type = Play::SNIPPET;
+                break;
+              default:
+                break;                
+            }
+
             _handleSlotTypeSelection(_editingSlotBank, _editingSlotKey, false);
           }
 
@@ -112,7 +125,21 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
           }
 
           if (_currentState == SLOT_TYPE_SELECT) {
-            _slots[_editingSlotId].type = Play::SAMPLE;
+
+            switch(_slots[_editingSlotId].type) {
+              case Play::SAMPLE:
+                _slots[_editingSlotId].type = Play::SNIPPET;
+                break;
+              case Play::SNIPPET:
+                _slots[_editingSlotId].type = Play::MUTE_SCRATCHING;
+                break;
+              case Play::MUTE_SCRATCHING:
+                _slots[_editingSlotId].type = Play::MUTE_SCRATCHING;
+                break;
+              default:
+                break;                                
+            }
+
             _handleSlotTypeSelection(_editingSlotBank, _editingSlotKey, false);
           }
 
@@ -160,6 +187,10 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
           if (_currentState == SLOT_TYPE_SELECT) {
             if (_slots[_editingSlotId].type == Play::SNIPPET) { _changeState(WAIT_SNIPPET_SELECT); };
             if (_slots[_editingSlotId].type == Play::SAMPLE) { _changeState(WAIT_SAMPLE_SELECT); };
+            if (_slots[_editingSlotId].type == Play::MUTE_SCRATCHING) { 
+              _changeState(OVERVIEW);           
+              _cancel(); 
+            };
             break;
           }
 
@@ -229,7 +260,8 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
               _playSlot(_editingSlotId, 128, false, 128);
             }  else {
               _play->stopArrangement();
-            }     
+            }
+            _keyboard->setScratchMute(false);     
           break;
 
         case Sucofunkey::ENCODER_1_PUSH:
@@ -370,6 +402,12 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
           _editingSlotBank = _activeBank;
           _changeState(CONFIG_SAMPLE);
         }
+
+        if (_slots[slotsIndex].type == Play::MUTE_SCRATCHING) {
+          _slots[slotsIndex].type = Play::EMPTY;
+          _liveScreen.drawOverviewSlot(_slots[slotsIndex], slot);
+        }  
+
       }
     }
 
@@ -658,11 +696,21 @@ void Live::_playSlot(int slotIndex, byte velocity, boolean pressed, byte note) {
   if (slot.type == Play::SAMPLE) {
     if (pressed) {
       // play sample    
-      _play->playNextFreeMemory(slot.sampleNumber, velocity == 128 ? slot.velocity : velocity, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, true);
+      _play->playNextFreeMemory(slot.sampleNumber, velocity == 128 ? slot.velocity : velocity, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, slot.faderScratching ,true);
     } else {
       if (slot.immediateStopOnRelease || _currentState == PIANO) {
-        _play->playNextFreeMemory(slot.sampleNumber, 0, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, false);
+        _play->playNextFreeMemory(slot.sampleNumber, 0, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, false, false);
       }
+    }
+  }
+
+  if (slot.type == Play::MUTE_SCRATCHING) {    
+    if (pressed) {
+      // mute
+      _keyboard->setScratchMute(true);
+    } else {
+      // unmute
+      _keyboard->setScratchMute(false);
     }
   }
 
@@ -675,7 +723,7 @@ void Live::_handleSlotTypeSelection(byte bank, byte key, boolean initialize) {
     _editingSlotBank = bank; // 1..3
     _editingSlotKey = key; // 1..24
 
-    _slots[s].type = Play::SNIPPET; // selected by default  
+    _slots[s].type = Play::SAMPLE; // selected by default  
   }
     
   _liveScreen.showSlotTypeSelection(_slots[s], initialize);
@@ -822,6 +870,9 @@ void Live::_handleSampleConfiguration(byte encoder, boolean function, int action
       case 3:
         if (!function) {
           if (action == 0) {
+            // toggle sample scratching option
+            _slots[_editingSlotId].faderScratching = !_slots[_editingSlotId].faderScratching;
+            _liveScreen.updateSampleConfig(_slots[_editingSlotId], 3, true, LiveScreen::NONE);
           } else {
             if (action == -1 && _slots[_editingSlotId].pitchedNote > 29) _slots[_editingSlotId].pitchedNote--;
             if (action == 1 && _slots[_editingSlotId].pitchedNote < 100) _slots[_editingSlotId].pitchedNote++;

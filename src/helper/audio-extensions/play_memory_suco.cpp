@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -34,7 +34,6 @@
 
 #include <Arduino.h>
 #include "play_memory_suco.h"
-
 
 void AudioPlayMemorySUCO::play(const unsigned int *data)
 {
@@ -101,6 +100,35 @@ void AudioPlayMemorySUCO::stop(void)
 
 void AudioPlayMemorySUCO::update(void)
 {
+    // adjust increment/speed for scratching sample
+    if (playing && _playFaderPitched) {
+        _faderValue = _keyboard->getFaderValue(-50,50);
+
+        // left
+        if (_faderValue < -2) {
+            _reverse = true;
+            _paused = false;
+            _increment = ((_faderValue+2)*-0.0218);
+            _keyboard->switchFaderLED(false);            
+        } else {
+            // right
+            if (_faderValue > 2) {
+                _paused = false;
+                _reverse = false;
+                _increment = ((_faderValue-2)*0.0218);
+                _keyboard->switchFaderLED(false);
+            } else {
+                // middle position
+                _paused = true;
+                _reverse = false;
+                _increment = 0.0f;
+                _keyboard->switchFaderLED(true);
+            }            
+        }
+
+    }
+
+
 	audio_block_t *block;
 	const unsigned int *in;
 	int16_t *out;
@@ -117,11 +145,18 @@ void AudioPlayMemorySUCO::update(void)
 
     for (int i=0; i < AUDIO_BLOCK_SAMPLES; i += 2) {        
 
-        if (_startDelayRemainSamples > 0) {
-            _startDelayRemainSamples--;
+
+        // ToDo: mute option for scratching sample playback
+
+
+        // if delayed (swing) or paused, do not output anything
+        if (_startDelayRemainSamples > 0 || _paused) {
+            // decrease delay, if not paused                
+            if (!_paused) { _startDelayRemainSamples--; };            
             *out++ = 0;
             *out++ = 0;
         } else {
+            // .. or just play
             _positionInt = (int) _position;
 
             if ((uint32_t)_positionInt < length/2 && _position > -1) {
@@ -152,8 +187,15 @@ void AudioPlayMemorySUCO::update(void)
                         *out++ = (int16_t)((int16_t)(tmp32 >> 16))*_noteOffPercentage;
                     }
                 } else {
-                    *out++ = (int16_t)(tmp32 & 65535);
-                    *out++ = (int16_t)(tmp32 >> 16);
+
+                    if (_playFaderPitched && _keyboard->isScratchMuted()) {
+                        *out++ = 0;
+                        *out++ = 0;
+                    } else {
+                        *out++ = (int16_t)(tmp32 & 65535);
+                        *out++ = (int16_t)(tmp32 >> 16);
+                    }
+
                 }
             } else {
                 *out++ = 0;
@@ -162,9 +204,9 @@ void AudioPlayMemorySUCO::update(void)
             }
 
             if (_reverse) {
-                _position -= _increment;
+                _position -= (_increment - _baseIncrementOffset);
             } else {
-                _position += _increment;
+                _position += (_increment - _baseIncrementOffset);
             }        
         }
     }
@@ -173,6 +215,7 @@ void AudioPlayMemorySUCO::update(void)
     if (playing == 0) {
         _position = 0.0f;
         _increment = 1.0f;
+        _baseIncrementOffset = 0.0f;
         _reverse = false;
         _noteOffPercentage = 1.0f;
         _noteOff = false;
@@ -188,7 +231,8 @@ void AudioPlayMemorySUCO::setBaseMIDINote(byte baseNote) {
 
 void AudioPlayMemorySUCO::setFrequencyByMIDINote(byte note) {
     _note = note;
-    _increment = pow(2.0, (_note - _baseNote)/12.0);
+    // offset for note change.. apply before pitching e.g. with fader..
+    _baseIncrementOffset = 1.0 - pow(2.0, (_note - _baseNote)/12.0);
 };
 
 void AudioPlayMemorySUCO::adjustFrequencyByTick(int pitchChange) {
@@ -197,4 +241,16 @@ void AudioPlayMemorySUCO::adjustFrequencyByTick(int pitchChange) {
 
 void AudioPlayMemorySUCO::reversePlayback() {
     _reverse = !_reverse;
+};
+
+
+
+void AudioPlayMemorySUCO::setKeyboardReference(Sucofunkey *keyboard) {
+    _keyboard = keyboard;
+    _isKeyboardSet = true;
+    _playFaderPitched = false;    
+}
+
+void AudioPlayMemorySUCO::setPlayFaderPitched(boolean playFaderPitched) {
+    _playFaderPitched = playFaderPitched;
 };

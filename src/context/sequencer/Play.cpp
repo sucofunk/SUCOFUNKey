@@ -419,9 +419,6 @@ void Play::unqueueSnippet(int slot) {
 
 
 void Play::snippetsPlayNext() {
-  
-  // ToDo: don't forget MIDI!
-
   int snippetLength = 0;
   Selection::SelectionStruct snippet;
 
@@ -578,7 +575,7 @@ void Play::stopArrangement() {
 // --- Live --------------------------------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------------------------------------
 
-void Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, byte baseNote, byte note, boolean reverse, boolean play) {
+void Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, byte baseNote, byte note, boolean reverse, boolean scratchFader, boolean play) {
 
   // check if sample in extmem.. if not, load it now!
   if (!_sfsio->addSampleToMemory((sample1/24)+1, (sample1%24), false)) return;
@@ -592,6 +589,7 @@ void Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, 
   if (!_audioResources->playMemLive6.isPlaying()) { _polyMemIDs[5] = 0; }
   if (!_audioResources->playMemLive7.isPlaying()) { _polyMemIDs[6] = 0; }
   if (!_audioResources->playMemLive8.isPlaying()) { _polyMemIDs[7] = 0; }
+
 
 /*  
   for (int i=0; i<8; i++) {
@@ -613,34 +611,42 @@ void Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, 
         switch(i) {
           case 0:
             polyChangeVelocity(i, velocity, stereoPosition);
-            _audioResources->playMemLive1.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
+            _audioResources->playMemLive1.setPlayFaderPitched(scratchFader);
+            _audioResources->playMemLive1.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);            
             break;
           case 1:
-            polyChangeVelocity(i, velocity, stereoPosition);          
-            _audioResources->playMemLive2.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
+            polyChangeVelocity(i, velocity, stereoPosition);
+            _audioResources->playMemLive2.setPlayFaderPitched(scratchFader);          
+            _audioResources->playMemLive2.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);            
             break;
           case 2:
-            polyChangeVelocity(i, velocity, stereoPosition);          
-            _audioResources->playMemLive3.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
+            polyChangeVelocity(i, velocity, stereoPosition);
+            _audioResources->playMemLive3.setPlayFaderPitched(scratchFader);          
+            _audioResources->playMemLive3.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);            
             break;
           case 3:
-            polyChangeVelocity(i, velocity, stereoPosition);          
-            _audioResources->playMemLive4.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
+            polyChangeVelocity(i, velocity, stereoPosition);
+            _audioResources->playMemLive4.setPlayFaderPitched(scratchFader);          
+            _audioResources->playMemLive4.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);            
             break;
           case 4:
-            polyChangeVelocity(i, velocity, stereoPosition);          
-            _audioResources->playMemLive5.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
+            polyChangeVelocity(i, velocity, stereoPosition);
+            _audioResources->playMemLive5.setPlayFaderPitched(scratchFader);
+            _audioResources->playMemLive5.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);            
             break;
           case 5:
             polyChangeVelocity(i, velocity, stereoPosition);          
-            _audioResources->playMemLive6.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
+            _audioResources->playMemLive6.setPlayFaderPitched(scratchFader);
+            _audioResources->playMemLive6.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);            
             break;
           case 6:
             polyChangeVelocity(i, velocity, stereoPosition);          
-            _audioResources->playMemLive7.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
+            _audioResources->playMemLive7.setPlayFaderPitched(scratchFader);
+            _audioResources->playMemLive7.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);            
             break;
           case 7:
             polyChangeVelocity(i, velocity, stereoPosition);          
+            _audioResources->playMemLive8.setPlayFaderPitched(scratchFader);
             _audioResources->playMemLive8.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
             break;                                                                        
         }

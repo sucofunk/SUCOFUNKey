@@ -200,14 +200,21 @@ void LiveScreen::showEmptyOverview(boolean createAreas) {
         _slotTypeSelectionAreaLeft.bgColor = _screen->C_BLACK;
         _slotTypeSelectionAreaLeft.transparent = false;
         _slotTypeSelectionAreaLeft.x1 = 20;
-        _slotTypeSelectionAreaLeft.x2 = 140;
+        _slotTypeSelectionAreaLeft.x2 = 105;
         _slotTypeSelectionAreaLeft.y1 = _centerLineY - 10;
         _slotTypeSelectionAreaLeft.y2 = _centerLineY + 10;
 
+        _slotTypeSelectionAreaCenter.bgColor = _screen->C_BLACK;
+        _slotTypeSelectionAreaCenter.transparent = false;
+        _slotTypeSelectionAreaCenter.x1 = 107;
+        _slotTypeSelectionAreaCenter.x2 = 212;
+        _slotTypeSelectionAreaCenter.y1 = _centerLineY - 10;
+        _slotTypeSelectionAreaCenter.y2 = _centerLineY + 10;
+
         _slotTypeSelectionAreaRight.bgColor = _screen->C_BLACK;
         _slotTypeSelectionAreaRight.transparent = false;
-        _slotTypeSelectionAreaRight.x1 = 180;
-        _slotTypeSelectionAreaRight.x2 = 299;
+        _slotTypeSelectionAreaRight.x1 = 213;
+        _slotTypeSelectionAreaRight.x2 = 319;
         _slotTypeSelectionAreaRight.y1 = _centerLineY - 10;
         _slotTypeSelectionAreaRight.y2 = _centerLineY + 10;
 
@@ -253,7 +260,30 @@ void LiveScreen::showEmptyOverview(boolean createAreas) {
         _snippetsMIDIArea.y1 = _centerLineY - 75;
         _snippetsMIDIArea.y2 = _centerLineY - 55;
 
-    
+
+        _sampleCompleteArea.bgColor = _screen->C_BLACK;       
+        _sampleCompleteArea.transparent = false;        
+        _sampleCompleteArea.x1 = 0;
+        _sampleCompleteArea.x2 = 80;
+        _sampleCompleteArea.y1 = _centerLineY - 75;
+        _sampleCompleteArea.y2 = _centerLineY - 55;
+
+        _sampleDirectionArea.bgColor = _screen->C_BLACK;       
+        _sampleDirectionArea.transparent = false;        
+        _sampleDirectionArea.x1 = 81;
+        _sampleDirectionArea.x2 = 160;
+        _sampleDirectionArea.y1 = _centerLineY - 75;
+        _sampleDirectionArea.y2 = _centerLineY - 55;
+
+        _sampleScratchArea.bgColor = _screen->C_BLACK;       
+        _sampleScratchArea.transparent = false;        
+        _sampleScratchArea.x1 = 161;
+        _sampleScratchArea.x2 = 212; // asymmetrically smaller to match the wider MIDI config from snippets
+        _sampleScratchArea.y1 = _centerLineY - 75;
+        _sampleScratchArea.y2 = _centerLineY - 55;
+
+
+
         _waveFormArea.bgColor = _screen->C_BLACK;
         _waveFormArea.transparent = false;
         _waveFormArea.x1 = 0;
@@ -288,6 +318,9 @@ void LiveScreen::drawOverviewSlot(Play::LiveSlotDefinitionStruct slot, int slotN
                 color = _screen->C_LIVE_SAMPLE;
             }            
             break;
+        case Play::MUTE_SCRATCHING:
+            color = _screen->C_LIVE_SCRATCH_MUTE;
+            break;
         default:
             color = _screen->C_BLACK;
             break;            
@@ -307,8 +340,9 @@ void LiveScreen::drawBPM(float bpm) {
 
 void LiveScreen::showSlotTypeSelection(Play::LiveSlotDefinitionStruct slot, boolean initial) {
     if (initial) _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);    
-    _screen->drawTextInArea(_slotTypeSelectionAreaLeft, Screen::TEXTPOSITION_RIGHT_VCENTER, false, Screen::TEXTSIZE_MEDIUM, false, slot.type == Play::SNIPPET ? _screen->C_LIVE_SNIPPET : _screen->C_LIGHTGREY, "Snippet");
-    _screen->drawTextInArea(_slotTypeSelectionAreaRight, Screen::TEXTPOSITION_LEFT_VCENTER, false, Screen::TEXTSIZE_MEDIUM, false, slot.type == Play::SAMPLE ? _screen->C_LIVE_SAMPLE : _screen->C_LIGHTGREY, "Sample"); 
+    _screen->drawTextInArea(_slotTypeSelectionAreaLeft, Screen::TEXTPOSITION_HCENTER_TOP, false, Screen::TEXTSIZE_MEDIUM, false, slot.type == Play::SAMPLE ? _screen->C_LIVE_SNIPPET : _screen->C_LIGHTGREY, "Sample");
+    _screen->drawTextInArea(_slotTypeSelectionAreaCenter, Screen::TEXTPOSITION_HCENTER_TOP, false, Screen::TEXTSIZE_MEDIUM, false, slot.type == Play::SNIPPET ? _screen->C_LIVE_SAMPLE : _screen->C_LIGHTGREY, "Snippet");
+    _screen->drawTextInArea(_slotTypeSelectionAreaRight, Screen::TEXTPOSITION_HCENTER_TOP, false, Screen::TEXTSIZE_MEDIUM, false, slot.type == Play::MUTE_SCRATCHING ? _screen->C_LIVE_SCRATCH_MUTE : _screen->C_LIGHTGREY, "Mute Scratch");    
 };
 
 
@@ -426,7 +460,7 @@ void LiveScreen::updateSampleConfig(Play::LiveSlotDefinitionStruct slot, int enc
     switch (encoder) {
         case 1:
             if (push) {
-                _screen->drawTextInArea(_snippetsCompleteArea, Screen::TEXTPOSITION_LEFT_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, slot.immediateStopOnRelease ? "while hold" : "play complete");
+                _screen->drawTextInArea(_sampleCompleteArea, Screen::TEXTPOSITION_LEFT_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, slot.immediateStopOnRelease ? "while hold" : "complete");
             } else {
                 _tempInt = static_cast<int>(slot.velocity/2);
                 _screen->fillRect(_screen->AREA_SEQUENCER_OPTION1_VOLUME.x1+1+_tempInt, _screen->AREA_SEQUENCER_OPTION1_VOLUME.y1+1, 63-_tempInt, 7, _screen->C_BLACK);
@@ -436,7 +470,7 @@ void LiveScreen::updateSampleConfig(Play::LiveSlotDefinitionStruct slot, int enc
 
         case 2:
             if (push) {
-                _screen->drawTextInArea(_snippetsLoopArea, Screen::TEXTPOSITION_HCENTER_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, slot.reverse ? "REVERSE" : "FORWARD");
+                _screen->drawTextInArea(_sampleDirectionArea, Screen::TEXTPOSITION_HCENTER_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, slot.reverse ? "REV" : "FWD");
                 _drawSampleWaveform(slot.sampleNumber, slot.reverse);
             } else {
                 _tempInt = static_cast<int>(slot.stereoPosition/2);
@@ -449,10 +483,11 @@ void LiveScreen::updateSampleConfig(Play::LiveSlotDefinitionStruct slot, int enc
         
         case 3:
             if (push) {
-                _screen->drawTextInArea(_snippetsCompleteArea, Screen::TEXTPOSITION_LEFT_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, slot.immediateStopOnRelease ? "while hold" : "play complete");
+                _screen->drawTextInArea(_sampleScratchArea, Screen::TEXTPOSITION_HCENTER_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, slot.faderScratching ? "scratch" : "normal");
+
             } else {
                 _keyboard->getMIDINoteName(slot.pitchedNote).toCharArray(_cBuff5, 4);
-                _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff5);    
+                _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff5);
             }                
         break;
 
