@@ -315,12 +315,16 @@ void LiveScreen::drawOverviewSlot(Play::LiveSlotDefinitionStruct slot, int slotN
             if (slot.isPiano) {
                 color = _screen->C_LIVE_PIANO;
             } else {
-                color = _screen->C_LIVE_SAMPLE;
+                if (slot.faderScratching) {
+                    color = _screen->C_LIVE_SAMPLE_SCRATCH;
+                } else {
+                    color = _screen->C_LIVE_SAMPLE;
+                }
             }            
             break;
         case Play::MUTE_SCRATCHING:
             color = _screen->C_LIVE_SCRATCH_MUTE;
-            break;
+            break;        
         default:
             color = _screen->C_BLACK;
             break;            
