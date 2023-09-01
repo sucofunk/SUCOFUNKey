@@ -499,7 +499,7 @@ void setup() {
         SD.mkdir("/TEMP/PATTERN");
       } 
 
-      // save the empty song structure (as at this state no song is lesected) to /TEMP on the SD card
+      // save the empty song structure (as at this state no song is selected) to /TEMP on the SD card
       // this way there is always the latest data structure available
       sequencerContext.saveTemp();
 

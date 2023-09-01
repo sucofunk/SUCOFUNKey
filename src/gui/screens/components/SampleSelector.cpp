@@ -104,7 +104,7 @@ void SampleSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
                     } else {
                         // file
                         _fsio->setSelectedSamplePathFromSD(_offset + _activeItem);
-                        _keyboard->addApplicationEventToQueue(Sucofunkey::SAMPLE_LIBRARY_SELECTED);
+                        _keyboard->addApplicationEventToQueue(Sucofunkey::SAMPLE_LIBRARY_SELECTED);                                                
                     }
             }                
             break;
@@ -175,6 +175,8 @@ void SampleSelector::drawSampleSelector() {
     _screen->hr(_AREA_SONGSELECTOR, 1, _screen->C_STARTUP_HR);
     _screen->vr(_AREA_SONGSELECTOR, 0, _screen->C_STARTUP_HR);
     _screen->vr(_AREA_SONGSELECTOR, 1, _screen->C_STARTUP_HR);
+
+    _keyboard->addApplicationEventToQueue(Sucofunkey::SAMPLE_LIBRARY_PRELISTEN);
 }
 
 boolean SampleSelector::getLineDescription(int fileIndex, char *lineBuffer) {

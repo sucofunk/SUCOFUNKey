@@ -62,6 +62,11 @@ Sampler::Sampler(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *s
 
 void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
 
+    // handles sample librarc cancel/select events and stop playing, before doing anything else
+    if (event.index == _keyboard->SAMPLE_LIBRARY_CANCEL || event.index == _keyboard->SAMPLE_LIBRARY_SELECTED) {
+        _audioResources->playSdRaw.stop();
+    } 
+
     if (currentState == SAMPLER_LIBRARY_OPEN && event.index != Sucofunkey::SAMPLE_LIBRARY_SELECTED && event.index != Sucofunkey::SAMPLE_LIBRARY_CANCEL) {
         
         // play other samples to check if they fit with the current selection from the library        

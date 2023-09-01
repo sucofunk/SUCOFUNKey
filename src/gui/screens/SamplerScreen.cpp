@@ -46,12 +46,13 @@ void SamplerScreen::handleEvent(Sucofunkey::keyQueueStruct event) {
     switch(_activeComponent) {
         case 1: 
             // start prelistening selected sample from sample library
-            if (event.pressed && event.index == _keyboard->PLAY) {
+            if (event.pressed && (event.index == _keyboard->PLAY || event.index == _keyboard->SAMPLE_LIBRARY_PRELISTEN)) {
+                _audioResources->playSdRaw.stop();
                 _audioResources->playSdRaw.play(_fsio->getSelectedSamplePathFromSD());
             } 
             
             // stop prelistening selected sample from sample library
-            if (!event.pressed && event.index == _keyboard->PLAY) {
+            if ((!event.pressed && event.index == _keyboard->PLAY) || (event.pressed && event.index == _keyboard->PAUSE)) {
                 _audioResources->playSdRaw.stop();
             } 
 
