@@ -195,8 +195,14 @@ void BlackKeyMenu::showMenu() {
 
 void BlackKeyMenu::hideMenu() {
     _visible = false;
-    _screen->fillArea(_screen->AREA_BLACK_KEY_MENU, _screen->C_BLACK);
+    _screen->fillArea(_screen->AREA_BOTTOM_MENU, _screen->C_BLACK);
+    //_screen->fillArea(_screen->AREA_BLACK_KEY_MENU, _screen->C_BLACK);
 
+    removeExclusiveAndExceptions(false);
+};
+
+
+void BlackKeyMenu::removeExclusiveAndExceptions(boolean redraw) {
     // turn all LEDs off, if one is on AND delete all exclusive exceptions
     for (int i=0; i<10; i++) {
         _keyboard->setLEDState(_ledPINs[i], false);
@@ -205,8 +211,11 @@ void BlackKeyMenu::hideMenu() {
     
     // stop exclusive position -> hiding the menu is like canceling an option
     _exclusivePosition = 0;
-};
 
+    if (redraw) {
+        _redrawMenu();
+    }    
+}
 
 
 boolean BlackKeyMenu::isVisible() {

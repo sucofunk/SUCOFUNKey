@@ -58,7 +58,8 @@ class Sampler {
             SAMPLE_RENAME = 5,
             SAMPLER_WAIT_DELETE_CONFIRM = 6,
             SAMPLER_DELETE_CONFIRMED = 7,
-            SAMPLER_LIBRARY_OPEN = 8
+            SAMPLER_LIBRARY_OPEN = 8,
+            SAMPLER_ENVELOPE = 9
         };
 
         enum FaderState

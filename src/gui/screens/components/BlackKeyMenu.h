@@ -51,6 +51,8 @@ class BlackKeyMenu {
         void showMenu();
         void hideMenu();
 
+        void removeExclusiveAndExceptions(boolean redraw);
+
         boolean isVisible();
                 
     private:

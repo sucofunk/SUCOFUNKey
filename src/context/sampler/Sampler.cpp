@@ -47,15 +47,17 @@ Sampler::Sampler(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *s
     _blackKeyMenu.setOption(3, "DEL");
 
     _blackKeyMenu.setOption(4, "CUT");    
-//    _blackKeyMenu.setOption(5, "REV");
+    _blackKeyMenu.setOption(5, "ENV");
 
-    //_blackKeyMenu.setOption(6, "MUT");
-    //_blackKeyMenu.setOption(7, "OUT");
+    //_blackKeyMenu.setOption(6, "");
+    //_blackKeyMenu.setOption(7, "");
     //_blackKeyMenu.setOption(8, "");
 
     //_blackKeyMenu.setOption(9, "");
     //_blackKeyMenu.setOption(10, "");
     //_blackKeyMenu.hideMenu();
+
+    // reverse, mute, fade out?
 }
 
 void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
@@ -124,7 +126,7 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
                   _blackKeyMenu.hideMenu();
                   cancel();                  
                 } else {
-                  if (currentState == SAMPLE_WAIT_SAVE_SLOT) {
+                  if (currentState == SAMPLE_WAIT_SAVE_SLOT) {                    
                     cancel();
                   }
 
@@ -132,9 +134,10 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
                     
                     if (currentState == SAMPLE_SELECTED) {
                         _blinkSampleSlot(_activeSampleSlot, false);                        
+                        _blackKeyMenu.showMenu();
                     }
 
-                    _blackKeyMenu.showMenu();
+                    
                   }
                 }
               break;
@@ -143,10 +146,9 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::FN_SET:
               // abort save as..
               if (currentState == SAMPLE_WAIT_SAVE_SLOT) {
-                indicateFreeSamples(false,1);                
-                _keyboard->setBank(_tempBank);
+                cancel();
                 _blackKeyMenu.showMenu();
-                currentState = SAMPLE_SELECTED;
+                _blinkSampleSlot(_activeSampleSlot, false);
               }
               break;
 
@@ -271,8 +273,9 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::BLACKKEY_NAV_ITEM1:
           // save          
           saveActiveSample();
-
-
+          cancel();          
+          _blinkSampleSlot(_activeSampleSlot, false);
+          _blackKeyMenu.removeExclusiveAndExceptions(true);
           break;
         case Sucofunkey::BLACKKEY_NAV_ITEM2:
           saveActiveSampleAs();
@@ -294,14 +297,24 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::BLACKKEY_NAV_ITEM4:
           if (currentState == SAMPLE_EDIT_TRIM) {
             cancel();
+            _blackKeyMenu.setExclusiveAction(4, false);
             _blackKeyMenu.showMenu();
+            _blinkActiveSample = false;
           } else {
+            _blackKeyMenu.setExclusiveAction(4, true);
+            _blackKeyMenu.allowAdditionalToExclusive(1);
+            _blackKeyMenu.allowAdditionalToExclusive(2);
             editActiveSample();
           }
           
           // trim sample
           break;
         case Sucofunkey::BLACKKEY_NAV_ITEM5:
+          Serial.println("Envelope");
+          
+          //currentState = SAMPLER_ENVELOPE;
+
+          // envelope
           break;
         case Sucofunkey::BLACKKEY_NAV_ITEM6:
           break;
@@ -479,6 +492,8 @@ void Sampler::setActive(boolean active) {
     _isActive = true;
     _keyboard->setBank(_activeBank);
 
+    _blackKeyMenu.hideMenu();
+
     if (_sfsio->isRecodingAvailable()) {
       _activeSampleSlot = 0;
       _samplerScreen.showSampleInfo(3, 0, 1.0f);
@@ -650,7 +665,7 @@ void Sampler::saveActiveSample() {
   _resetTrimMarkerOffsets(true, true);
   _volumeScaleFactor = 1.0;
 
-  // reload the changed sample in extmem, if if was in there before
+  // reload the changed sample in extmem, if it was in there before
   if (reloadAfterSaving) {
     _sfsio->addSampleToMemory(_tempBank, _activeSampleSlot, false);
   }
@@ -679,7 +694,7 @@ void Sampler::cancel() {
     _blinkSampleSlot(_activeSampleSlot, true);
   }
   
-  _blackKeyMenu.hideMenu();
+  //_blackKeyMenu.hideMenu();
   _trimMarkerStartPosition = 0;
   _trimMarkerEndPosition = 319;
   _resetTrimMarkerOffsets(true, true);
