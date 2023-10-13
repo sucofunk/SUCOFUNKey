@@ -143,7 +143,16 @@ class Play {
         Snippets _snippets;
         Swing* _swing;        
 
+        AudioPlayMemorySUCO* _getPlayMemSlot(byte slot); // 0..7
+
         int _playbackTickSpeed = 10000;
+
+        byte _maxConcurrentSamples = 2; // Option: make it configurable per sample?
+
+        byte _tempCurrentlyPlaying = 0;
+        byte _tempFirstIndex = 127; // for temporarily saving the first play position
+        byte _freeMemChannelCount = 0;
+        boolean _keepReleaseSlotPlaying = false;
 
         boolean _playMemsInUse[16] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
         
@@ -159,11 +168,16 @@ class Play {
         void _setChannelFree(byte channel);
         int _freeChannelCount();
 
+
         // queue for polyphonic events. each entry corresponds to a playMemLive1..6
         // 0 = not playing 1..72 -> corresponding sample is playing 
         byte _polyMemIDs[8] = {0, 0, 0, 0, 0, 0, 0, 0};
         // stores the played note for each sample.. to stop the right sample, if playing a sample polyphonic
         byte _polyMemNotes[8] = {128, 128, 128, 128, 128, 128, 128, 128};
+
+        // counter, how many samples were triggered after this one playing. used to find out, which sample started first, if one is triggered twice or more often
+        byte _polyMemIncrement[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+
         float _tempVelocityL = 0.0;
         float _tempVelocityR = 0.0;
 

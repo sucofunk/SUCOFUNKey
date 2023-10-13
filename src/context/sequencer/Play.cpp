@@ -576,82 +576,66 @@ void Play::stopArrangement() {
 // -----------------------------------------------------------------------------------------------------------------
 
 void Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, byte baseNote, byte note, boolean reverse, boolean scratchFader, boolean play) {
-
   // check if sample in extmem.. if not, load it now!
   if (!_sfsio->addSampleToMemory((sample1/24)+1, (sample1%24), false)) return;
 
-  // sample still playing?
-  if (!_audioResources->playMemLive1.isPlaying()) { _polyMemIDs[0] = 0; }
-  if (!_audioResources->playMemLive2.isPlaying()) { _polyMemIDs[1] = 0; }  
-  if (!_audioResources->playMemLive3.isPlaying()) { _polyMemIDs[2] = 0; }
-  if (!_audioResources->playMemLive4.isPlaying()) { _polyMemIDs[3] = 0; }
-  if (!_audioResources->playMemLive5.isPlaying()) { _polyMemIDs[4] = 0; }    
-  if (!_audioResources->playMemLive6.isPlaying()) { _polyMemIDs[5] = 0; }
-  if (!_audioResources->playMemLive7.isPlaying()) { _polyMemIDs[6] = 0; }
-  if (!_audioResources->playMemLive8.isPlaying()) { _polyMemIDs[7] = 0; }
+  // sample still playing? and count free slots
+  _freeMemChannelCount = 0;
 
-
-/*  
   for (int i=0; i<8; i++) {
-    Serial.print(_polyMemIDs[i]);
-    Serial.print(" :: ");
+    if (!_getPlayMemSlot(i)->isPlaying()) {
+      _polyMemIDs[i] = 0; _polyMemIncrement[i] = 0;
+      _freeMemChannelCount++;
+    } else { 
+      _polyMemIncrement[i] = _polyMemIncrement[i] + 1;    
+    }
   }
 
-  Serial.println("");
-*/
+  if (play) {
+    _tempFirstIndex = 127;
+    _tempCurrentlyPlaying = 0;
+    _keepReleaseSlotPlaying = false;
 
-  if (play) {    
+    // check if this sample/note combination is already playing and save the index position of the first one
+    for (int i=0; i<8; i++) {
+      if (_polyMemIDs[i] == sample1 && _polyMemNotes[i] == note) {
+        _tempCurrentlyPlaying++;
+
+        if (_tempFirstIndex == 127 || _tempFirstIndex < i) { _tempFirstIndex = i; }
+
+        // stop first slot and remove it from _polyMemIDs.. if the maximum amount of concurrent playing samples is reached
+        if (_tempCurrentlyPlaying >= _maxConcurrentSamples) {
+          // stop first sample playing
+          _getPlayMemSlot(_tempFirstIndex)->noteOff();
+          _polyMemIncrement[_tempFirstIndex] = 0;
+          _polyMemIDs[i] = 0;
+          _polyMemNotes[i] = 128;
+          
+          // ignore the noteOff slot to release the sample propery, if there is another empty slot left for the triggered sample.
+          if (_freeMemChannelCount > 0) {
+            _keepReleaseSlotPlaying = true;
+          }          
+        }
+      }
+    }
+
     // search next free playmem and play..
     for (int i=0; i<8; i++) {
 
-      if (_polyMemIDs[i] == 0) {
+      // play at one of the next slots, as we know that there is a free one and the currently stopped sample can release as defined.
+      if (_keepReleaseSlotPlaying && _tempFirstIndex == i) { 
+        // anything else needed, to make the fade out more smooth??
+      } else {  
+        if (_polyMemIDs[i] == 0) {
           _polyMemIDs[i] = sample1;
           _polyMemNotes[i] = note;
         
-        switch(i) {
-          case 0:
-            polyChangeVelocity(i, velocity, stereoPosition);
-            _audioResources->playMemLive1.setPlayFaderPitched(scratchFader);
-            _audioResources->playMemLive1.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);            
-            break;
-          case 1:
-            polyChangeVelocity(i, velocity, stereoPosition);
-            _audioResources->playMemLive2.setPlayFaderPitched(scratchFader);          
-            _audioResources->playMemLive2.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);            
-            break;
-          case 2:
-            polyChangeVelocity(i, velocity, stereoPosition);
-            _audioResources->playMemLive3.setPlayFaderPitched(scratchFader);          
-            _audioResources->playMemLive3.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);            
-            break;
-          case 3:
-            polyChangeVelocity(i, velocity, stereoPosition);
-            _audioResources->playMemLive4.setPlayFaderPitched(scratchFader);          
-            _audioResources->playMemLive4.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);            
-            break;
-          case 4:
-            polyChangeVelocity(i, velocity, stereoPosition);
-            _audioResources->playMemLive5.setPlayFaderPitched(scratchFader);
-            _audioResources->playMemLive5.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);            
-            break;
-          case 5:
-            polyChangeVelocity(i, velocity, stereoPosition);          
-            _audioResources->playMemLive6.setPlayFaderPitched(scratchFader);
-            _audioResources->playMemLive6.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);            
-            break;
-          case 6:
-            polyChangeVelocity(i, velocity, stereoPosition);          
-            _audioResources->playMemLive7.setPlayFaderPitched(scratchFader);
-            _audioResources->playMemLive7.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);            
-            break;
-          case 7:
-            polyChangeVelocity(i, velocity, stereoPosition);          
-            _audioResources->playMemLive8.setPlayFaderPitched(scratchFader);
-            _audioResources->playMemLive8.playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
-            break;                                                                        
-        }
+          polyChangeVelocity(i, velocity, stereoPosition);
+          _getPlayMemSlot(i)->setPlayFaderPitched(scratchFader);
+          _getPlayMemSlot(i)->playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
 
-        return;
+          return;
+        }
       }
     }  
   } else {
@@ -659,49 +643,15 @@ void Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, 
     for (int i=0; i<8; i++) {
       if (_polyMemIDs[i] == sample1 && _polyMemNotes[i] == note) {
           _polyMemIDs[i] = 0;
-          //_polyMemIDs[i] = 128;
+          _polyMemNotes[i] = 128;
 
-          switch(i) {
-            case 0:
-              _audioResources->playMemLive1.noteOff();
-              //_audioResources->playMemLive1.stop();
-              break;
-            case 1:
-              _audioResources->playMemLive2.noteOff();
-              //_audioResources->playMemLive2.stop();
-              break;
-            case 2:
-              _audioResources->playMemLive3.noteOff();
-              //_audioResources->playMemLive3.stop();
-              break;
-            case 3:
-              _audioResources->playMemLive4.noteOff();
-              //_audioResources->playMemLive4.stop();
-              break;
-            case 4:
-              _audioResources->playMemLive5.noteOff();
-              //_audioResources->playMemLive5.stop();
-              break;
-            case 5:
-              _audioResources->playMemLive6.noteOff();
-              //_audioResources->playMemLive6.stop();
-              break;
-            case 6:
-              _audioResources->playMemLive7.noteOff();
-              //_audioResources->playMemLive7.stop();
-              break;
-            case 7:
-              _audioResources->playMemLive8.noteOff();
-              //_audioResources->playMemLive8.stop();
-              break;
-          }
-
+          _getPlayMemSlot(i)->noteOff();
         return;
       }
     }  
   }
 }
-
+ 
 
 void Play::polyChangeVelocity(byte polymem, byte velocity, byte stereoPosition) {
 
@@ -757,4 +707,37 @@ void Play::handlePolyphonicAftertouch(byte sample1, byte velocity, byte stereoPo
       return;
     }
   }
+}
+
+AudioPlayMemorySUCO* Play::_getPlayMemSlot(byte slot) {
+  switch(slot) {
+    case 0:
+      return &_audioResources->playMemLive1;
+      break;
+    case 1:
+      return &_audioResources->playMemLive2;
+      break;
+    case 2:
+      return &_audioResources->playMemLive3;
+      break;
+    case 3:
+      return &_audioResources->playMemLive4;
+      break;
+    case 4:
+      return &_audioResources->playMemLive5;
+      break;
+    case 5:
+      return &_audioResources->playMemLive6;
+      break;
+    case 6:
+      return &_audioResources->playMemLive7;
+      break;
+    case 7:
+      return &_audioResources->playMemLive8;
+      break;
+    default:
+      Serial.print("This should never happen! Fix me! :: ");
+      Serial.println(slot);
+      return &_audioResources->playMemLive1;      
+  }  
 }

@@ -145,10 +145,6 @@ void AudioPlayMemorySUCO::update(void)
 
     for (int i=0; i < AUDIO_BLOCK_SAMPLES; i += 2) {        
 
-
-        // ToDo: mute option for scratching sample playback
-
-
         // if delayed (swing) or paused, do not output anything
         if (_startDelayRemainSamples > 0 || _paused) {
             // decrease delay, if not paused                
