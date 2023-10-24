@@ -204,7 +204,7 @@ boolean SampleFSIO::copyFile(const char *f1, const char *f2) {
   File from;
   File to;
   byte buffer[2048];
-  int bufferSize = sizeof(buffer);
+  int bufferSize;
 
   from = SD.open(f1);
   to = SD.open(f2, FILE_WRITE);
@@ -220,16 +220,20 @@ boolean SampleFSIO::copyFile(const char *f1, const char *f2) {
     return false;
   }
 
-  // File smaller than buffer? switch down to 1 byte per r/w operation
-  // ToDo: same for from.available < bufferSize????
-  if (from.size() < sizeof(buffer)) {
-    bufferSize = 1;
-  } 
+  int available = 0;
 
-  while (from.available()) {
+  while (from.available() > 0) {
+    available = from.available();
+
+    if (available >= sizeof(buffer)) {
+      bufferSize = sizeof(buffer);
+    } else {
+      bufferSize = available;
+    }
+
     from.read(buffer,bufferSize);
     to.write(buffer,bufferSize);
-  }    
+  }
 
   from.close();
   to.close();
@@ -238,22 +242,15 @@ boolean SampleFSIO::copyFile(const char *f1, const char *f2) {
 
 
 
-
 boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart, long byteEnd, float volumeScaleFactor) {
-
-  // ToDo: after updating a slot, check if the sample is already in sampleram and update it, too
-  //       - another option would be forcing a reload in the sampler after using this function -> implement defragmentation!
 
   if (SD.exists(f2)) {
     Serial.println("removing destination file");
     SD.remove(f2);
   }
 
-  File from;
-  File to;
-
-  from = SD.open(f1);
-  to = SD.open(f2, FILE_WRITE);
+  File from = SD.open(f1);
+  File to = SD.open(f2, FILE_WRITE);
 
   if (!from) {
     Serial.println("unable to open source file");
@@ -268,14 +265,8 @@ boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart,
   }
 
   long fromSize = from.size();
-  
-  if (byteEnd == 0) {
-      byteEnd = from.size();
-  }
 
-  if (byteEnd > fromSize) {
-    byteEnd = fromSize;
-  }
+  if (byteEnd == 0 || byteEnd > fromSize) { byteEnd = fromSize; }
 
   if (fromSize <  byteStart || byteStart >= byteEnd) {
       Serial.println("operation not possible as we cannot shift back in time");
@@ -285,13 +276,50 @@ boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart,
   from.seek(byteStart);
   
   int16_t intBuff = 0;
+  int16_t tempBuff = 0;
+  long lastZeroCut = 0;
+  long firstZeroCut = -1;
+
+  int c = 0;
   byte byteBuffer[2048];
   char t1;
   char t2;
   long offset = 0;
   int bufferCount = 0;
+  boolean firstCutFound = false;
 
-  while (from.available() && byteStart+offset < byteEnd) {
+  // find the first and last zero cut offset positions
+  while (from.available() > 0 && byteStart+offset <= byteEnd) {
+    from.read(&intBuff, sizeof(intBuff));
+
+    intBuff = intBuff*volumeScaleFactor;
+
+    if ((tempBuff > 0 && intBuff <= 0) || (tempBuff < 0 && intBuff >= 0) || (!firstCutFound && intBuff == 0)) {
+      // find first zero cut
+      if (!firstCutFound) {
+        firstZeroCut = byteStart + offset;
+        firstCutFound = true;
+      }
+
+      lastZeroCut = byteStart + offset - 2;
+    }
+
+    // for finding the zero cuts
+    tempBuff = intBuff;
+    offset += 2;
+  }
+
+  offset = 0;
+  from.seek(firstZeroCut);
+
+  // start with a zero
+  byteBuffer[0] = 0;
+  byteBuffer[1] = 0;
+  to.write(byteBuffer, 2);
+
+  offset = 0;
+
+  while (from.available() > 0 && firstZeroCut+offset <= lastZeroCut) {
     from.read(&intBuff, sizeof(intBuff));
 
     intBuff = intBuff*volumeScaleFactor;
@@ -312,9 +340,12 @@ boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart,
     offset += 2;
   }
 
-  if (bufferCount > 0) {
-    to.write(byteBuffer, bufferCount);
-  }
+  // adding a zero to the end
+  byteBuffer[bufferCount] = 0;
+  byteBuffer[bufferCount+1] = 0;
+  bufferCount += 2;
+
+  to.write(byteBuffer, bufferCount);
 
   from.close();
   to.close();

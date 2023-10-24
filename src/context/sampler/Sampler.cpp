@@ -628,7 +628,10 @@ void Sampler::saveActiveSample() {
 
   int sampleId72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
   uint32_t start = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerStartPosition + _trimMarkerStartSampleCountOffset;
-  uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerEndPosition + _trimMarkerEndSampleCountOffset;
+  uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * (_trimMarkerEndPosition + 1) + _trimMarkerEndSampleCountOffset;
+
+  // mark correct end with a zero!
+  if (_trimMarkerEndPosition == 319) end = 0;
 
   char * filename = _activeSampleSlot == 0 ? _sfsio->recorderFilename : _sfsio->sampleFilename[_tempBank-1][_activeSampleSlot-1];
 
