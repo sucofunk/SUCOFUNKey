@@ -280,7 +280,6 @@ boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart,
   long lastZeroCut = 0;
   long firstZeroCut = -1;
 
-  int c = 0;
   byte byteBuffer[2048];
   char t1;
   char t2;
@@ -394,18 +393,9 @@ long SampleFSIO::copyRawFromSdToMemory(const char *filename, long startOffset) {
     _extmemArray[startOffset+i] = (buff[0] << 16) + (buff[1]);
   }
 
-  // extend sample to to prevent clipping with the next sample in memory, when playing pitched samples
-  // A VERY DIRTY HACK AND WASTES A LOT OF EXTMEM, but otherwise the wavetable syth object needs to be rewritten. Any volunt here? ;)
-  
-  // ToDo: hey.. we are not using this WAVETABLE thing anymore.. should be checked and deleted.. this dirty hack..
-  
-  for (long i=0; i<10240; i++) {
-    _extmemArray[startOffset+c+i] = 0;
-  }
-
   f.close();
 
-  return startOffset+c+2+10240;
+  return startOffset+c+2;
 }
 
 // sampleNumber according to array 0..71
@@ -694,7 +684,7 @@ char * SampleFSIO::getSampleInfosName(int sampleId1) {
   return _sampleInfos[sampleId1-1].name;
 };
 
-char * SampleFSIO::getSampleInfosName(int sampleId1, int maxLength, char* returnArray) {
+void SampleFSIO::getSampleInfosName(int sampleId1, int maxLength, char* returnArray) {
   String t = _sampleInfos[sampleId1-1].name;
 
   if (t.length() > maxLength) {

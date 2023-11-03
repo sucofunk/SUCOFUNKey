@@ -113,7 +113,7 @@ class SampleFSIO {
         boolean saveSampleInfosToSD();
         void setSampleInfosName(int sampleId1, String name);
         char * getSampleInfosName(int sampleId1);
-        char * getSampleInfosName(int sampleId1, int maxLength, char* returnArray);
+        void getSampleInfosName(int sampleId1, int maxLength, char* returnArray);
         void resetSampleInfos(int sampleId1);
         // -----------------------------
 
