@@ -537,12 +537,12 @@ void Sucofunkey::setBank(byte nr) {
              setLEDState(LED_BANK_2, false);
              setLEDState(LED_BANK_3, false);
              break;
-    case 2:  setLEDState(LED_BANK_1, false);
+    case 2:  setLEDState(LED_BANK_1, true);
              setLEDState(LED_BANK_2, true);
              setLEDState(LED_BANK_3, false);
              break;
-    case 3:  setLEDState(LED_BANK_1, false);
-             setLEDState(LED_BANK_2, false);
+    case 3:  setLEDState(LED_BANK_1, true);
+             setLEDState(LED_BANK_2, true);
              setLEDState(LED_BANK_3, true);
              break;
     default: setLEDState(LED_BANK_1, false);

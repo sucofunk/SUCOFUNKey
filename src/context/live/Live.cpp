@@ -309,6 +309,13 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
         
         case OVERVIEW:
             if (_slots[slotsIndex].type != Play::EMPTY) {
+
+/*              Serial.print("Type::");
+              Serial.print(event.index);
+              Serial.print("::");
+              Serial.println(event.pressed);
+*/
+
               _playSlot(slotsIndex, 128, event.pressed, 128);
             } 
 
@@ -374,7 +381,7 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
     }
 
 
-    if (event.type == Sucofunkey::KEY_FN_NOTE && event.pressed) {
+    if (event.type == Sucofunkey::KEY_FN_NOTE && event.pressed && _currentState != SLOT_TYPE_SELECT) {
       int slot = _keyboard->getSampleIdByEventKey(event.index);
       int slotsIndex = (slot-1)+((_activeBank-1)*24);
 
@@ -655,43 +662,84 @@ void Live::_changeState(LiveState state) {
 // velocity == 128 -> take velocity from slot
 void Live::_playSlot(int slotIndex, byte velocity, boolean pressed, byte note) {
   Play::LiveSlotDefinitionStruct slot = _slots[slotIndex];
+  Play::LiveSlotDefinitionStruct slotHold;
+  boolean success = true;
 
   if (slot.type == Play::EMPTY) return;
 
-  if (slot.type == Play::SNIPPET) {
-    if (pressed) {
-      if (slot.snippet != -1) {
-        
-        if (slot.loopSnippet) {
-          if (!_LEDHighlightSlots[slotIndex]) {
-            // start looping snippet
-            _play->queueSnippet(slot.snippet, true, true);
-            _LEDHighlightSlots[slotIndex] = true;
-          } else {
-            // stop looping
-            if (slot.immediateStopOnRelease) {
-              // immediately stop
-              _play->unqueueSnippet(slot.snippet);
-              _LEDHighlightSlots[slotIndex] = false;
-            } else {
-              // remove loop flag to stop snippet when it is played
-              _play->removeLoopFlagFromSnippet(slot.snippet);
-              _LEDHighlightSlots[slotIndex] = false;
-            }
-          }
-        } else {
-          // just queue a snippet to play once
-          _play->queueSnippet(slot.snippet, true, false);
-        }
-        _updateAllLoopingLEDs();
-      }  
+  if (pressed && slot.type == Play::SNIPPET) {    
+    if (_holdSlotIndex == -1) {
+      _holdSlotIndex = slotIndex;      
     } else {
-      // stop snippet, if it is playing only while holding the note key
-      if (!slot.loopSnippet && slot.immediateStopOnRelease) {
-        _play->unqueueSnippet(slot.snippet);
-      }
+      slotHold = _slots[_holdSlotIndex];
+      
+    }
+  } else {
+    if (_holdSlotIndex == slotIndex) {
+      _holdSlotIndex = -1;
     }
   }
+
+  // SNIPPETS
+
+  if (slot.type == Play::SNIPPET) {
+    
+    // key pressed
+    if (pressed) {
+
+      if (slot.snippet != -1) {
+
+        // chaining a snippet to another (up to two)
+        if ((_holdSlotIndex != -1 && _holdSlotIndex != slotIndex) && _play->isSnippetPlaying(slotHold.snippet)) {
+
+          success = _play->chainSnippet(slotHold.snippet, slot.snippet, slot.loopSnippet);
+          
+          _LEDHighlightSlots[slotIndex] = success;
+          _updateAllLoopingLEDs();
+
+          _holdSlotAction = true;          
+        }
+
+      }
+    
+    // key released
+    } else {
+      if (slot.snippet != -1 && !_holdSlotAction) {
+
+          // queue unsynced snippet
+          if (slot.loopSnippet) {
+            if (!_LEDHighlightSlots[slotIndex]) {
+              // start looping snippet
+              _play->queueSnippet(slot.snippet, false, true);
+              _LEDHighlightSlots[slotIndex] = true;
+            } else {
+              // stop looping
+              if (slot.immediateStopOnRelease) {
+                // immediately stop
+                _play->unqueueSnippet(slot.snippet);
+                _LEDHighlightSlots[slotIndex] = false;
+              } else {
+                // remove loop flag to stop snippet when it is played
+                _play->removeLoopFlagFromSnippet(slot.snippet);
+                _LEDHighlightSlots[slotIndex] = false;
+              }
+            }
+          } else {
+            // just queue a snippet to play once
+            _play->queueSnippet(slot.snippet, true, false);
+          }
+          _updateAllLoopingLEDs();
+      }
+
+
+      if (_holdSlotIndex == -1 && _holdSlotAction) {
+        _holdSlotAction = false;
+      }
+
+    }
+  }
+
+  // SAMPLES
 
   if (slot.type == Play::SAMPLE) {
     if (pressed) {
@@ -703,6 +751,8 @@ void Live::_playSlot(int slotIndex, byte velocity, boolean pressed, byte note) {
       }
     }
   }
+
+  // SCRATCH MUTE
 
   if (slot.type == Play::MUTE_SCRATCHING) {    
     if (pressed) {

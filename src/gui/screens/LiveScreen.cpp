@@ -344,8 +344,8 @@ void LiveScreen::drawBPM(float bpm) {
 
 void LiveScreen::showSlotTypeSelection(Play::LiveSlotDefinitionStruct slot, boolean initial) {
     if (initial) _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);    
-    _screen->drawTextInArea(_slotTypeSelectionAreaLeft, Screen::TEXTPOSITION_HCENTER_TOP, false, Screen::TEXTSIZE_MEDIUM, false, slot.type == Play::SAMPLE ? _screen->C_LIVE_SNIPPET : _screen->C_LIGHTGREY, "Sample");
-    _screen->drawTextInArea(_slotTypeSelectionAreaCenter, Screen::TEXTPOSITION_HCENTER_TOP, false, Screen::TEXTSIZE_MEDIUM, false, slot.type == Play::SNIPPET ? _screen->C_LIVE_SAMPLE : _screen->C_LIGHTGREY, "Snippet");
+    _screen->drawTextInArea(_slotTypeSelectionAreaLeft, Screen::TEXTPOSITION_HCENTER_TOP, false, Screen::TEXTSIZE_MEDIUM, false, slot.type == Play::SAMPLE ? _screen->C_LIVE_SAMPLE : _screen->C_LIGHTGREY, "Sample");
+    _screen->drawTextInArea(_slotTypeSelectionAreaCenter, Screen::TEXTPOSITION_HCENTER_TOP, false, Screen::TEXTSIZE_MEDIUM, false, slot.type == Play::SNIPPET ? _screen->C_LIVE_SNIPPET : _screen->C_LIGHTGREY, "Snippet");
     _screen->drawTextInArea(_slotTypeSelectionAreaRight, Screen::TEXTPOSITION_HCENTER_TOP, false, Screen::TEXTSIZE_MEDIUM, false, slot.type == Play::MUTE_SCRATCHING ? _screen->C_LIVE_SCRATCH_MUTE : _screen->C_LIGHTGREY, "Mute Scratch");    
 };
 

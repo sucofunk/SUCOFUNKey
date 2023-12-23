@@ -118,7 +118,11 @@ class Play {
         int calculatePlaybackTickSpeed(float bpm);
         void checkIfAllSamplesAreLoaded();
         
+        boolean isSnippetPlaying(int slot);        
         boolean queueSnippet(int slot, boolean allowMultiple, boolean loop);
+        
+        // chain a snippet to another snippet. it will start when the "syncSlot" ends
+        boolean chainSnippet(int syncSlot, int chainSlot, boolean loop);
         void unqueueSnippet(int slot);
         void snippetsPlayNext();
         void removeLoopFlagFromSnippet(int slot);
@@ -159,6 +163,10 @@ class Play {
         // up to four snippets can play in parallel.. the slots are listed in here
         int _playingSnippets[4] = {-1, -1, -1, -1};
         boolean _loopPlayingSnippets[4] = {false, false, false, false};
+
+        int _chainedSnippets[4][2] = {{-1, -1}, {-1, -1}, {-1, -1}, {-1, -1}};
+        boolean _loopChainedSnippets[4][2] = {{false, false}, {false, false}, {false, false}, {false, false}};
+        
         int _playPositionSnippets[4] = {-1, -1, -1, -1};
         
         // {channel1, channel2, .. channel8} <- channels in sequencer filled with index to _playmems

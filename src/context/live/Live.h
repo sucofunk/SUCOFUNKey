@@ -91,6 +91,9 @@ class Live {
         byte _editingSlotKey = 0;
         int _editingSlotId = -1;
         
+        int _holdSlotIndex = -1; // used to determine, if a key is hold to chain another snippet/sample
+        int _holdSlotAction = false; // used to determine, if another snippet/sample was selected while holding the key
+
         float _bpm;
 
         Play::LiveSlotDefinitionStruct _slots[72];

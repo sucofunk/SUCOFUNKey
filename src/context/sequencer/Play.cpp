@@ -356,6 +356,44 @@ void Play::checkIfAllSamplesAreLoaded() {
 // --- Snippets ----------------------------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------------------------------------
 
+boolean Play::isSnippetPlaying(int slot) {
+  for (int i=0; i<4; i++) {
+    if (_playingSnippets[i] == slot) return true;
+  }
+  return false;
+};
+
+boolean Play::chainSnippet(int syncSlot, int chainSlot, boolean loop) {
+  for (int i=0; i<4; i++) {
+    if (_playingSnippets[i] == syncSlot) {
+      
+      if (_chainedSnippets[i][0] == -1) {
+        _chainedSnippets[i][0] = chainSlot;
+        _loopChainedSnippets[i][0] = loop;
+      } else {
+      
+        for (int c=0; c<2; c++) {        
+          if (_chainedSnippets[i][c] == chainSlot) {
+            _chainedSnippets[i][c] = -1;
+            _loopChainedSnippets[i][c] = false;
+            return false;
+          }
+        }
+
+        if (_chainedSnippets[i][1] == -1) {
+          _chainedSnippets[i][1] = chainSlot;
+          _loopChainedSnippets[i][1] = loop;
+        } else {
+          return false;
+        }
+      }
+      
+      return true;            
+    }
+  }
+  return false;
+};
+
 boolean Play::queueSnippet(int slot, boolean allowMultiple, boolean loop) {
   Selection::SelectionStruct s = _song.getSnippet(slot);
   int channels = s.endY-s.startY+1;
@@ -364,11 +402,7 @@ boolean Play::queueSnippet(int slot, boolean allowMultiple, boolean loop) {
 
 
   // playing a snippet multiple times is not allowed? check first if it is already in queue
-  if (!allowMultiple) {
-    for (int i=0; i<4; i++) {
-      if (_playingSnippets[i] == slot) return false;
-    }
-  }
+  if (!allowMultiple && isSnippetPlaying(slot)) return false;
      
   for (int i=0; i<4; i++) {
     if (_playingSnippets[i] == -1) {
@@ -413,8 +447,12 @@ void Play::unqueueSnippet(int slot) {
       _setChannelFree(_snippetChannels[playingSnippetsIndex][c]);
     }
 
-    _snippetChannels[playingSnippetsIndex][c] = 0;
+    _snippetChannels[playingSnippetsIndex][c] = 0;    
   }
+
+  // ToDo: send application message that a snippet stopped playing.. to update the LEDs
+  //       send application message that snippet is chained and waiting to play
+  //       send application message that snippet started playing
 };
 
 
@@ -444,6 +482,13 @@ void Play::snippetsPlayNext() {
           _playPositionSnippets[s] = 0;
         }
         
+        // start chained snippet, if there is one
+        for (int i=0; i<2; i++) {        
+          if (_chainedSnippets[s][i] != -1) {
+            queueSnippet(_chainedSnippets[s][i], false, _loopChainedSnippets[s][i]);
+            _chainedSnippets[s][i] = -1;
+          }
+        }     
       }
     }    
   }
