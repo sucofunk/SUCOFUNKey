@@ -364,18 +364,32 @@ boolean Play::isSnippetPlaying(int slot) {
 };
 
 boolean Play::chainSnippet(int syncSlot, int chainSlot, boolean loop) {
+  int freeSnippets = 4;
+
+  // check if there is an additional free slot for the snippet..
   for (int i=0; i<4; i++) {
+    if (_playingSnippets[i] != -1) { 
+      freeSnippets--;
+    }
+  }
+  // .. if not, chaining a new snippet is not possible
+  if ((freeSnippets - _waitingInChainQueue) <= 0) { 
+    return false; 
+  };
+
+  for (int i=0; i<4; i++) {    
     if (_playingSnippets[i] == syncSlot) {
       
       if (_chainedSnippets[i][0] == -1) {
         _chainedSnippets[i][0] = chainSlot;
-        _loopChainedSnippets[i][0] = loop;
+        _loopChainedSnippets[i][0] = loop;        
       } else {
       
         for (int c=0; c<2; c++) {        
           if (_chainedSnippets[i][c] == chainSlot) {
             _chainedSnippets[i][c] = -1;
             _loopChainedSnippets[i][c] = false;
+            _keyboard->addApplicationEventWithDataToQueue(_keyboard->LIVE_SNIPPET_CANCEL_CHAINED, chainSlot, 0, 0);
             return false;
           }
         }
@@ -384,13 +398,18 @@ boolean Play::chainSnippet(int syncSlot, int chainSlot, boolean loop) {
           _chainedSnippets[i][1] = chainSlot;
           _loopChainedSnippets[i][1] = loop;
         } else {
+          _keyboard->addApplicationEventWithDataToQueue(_keyboard->LIVE_SNIPPET_CANCEL_CHAINED, chainSlot, 0, 0);
           return false;
         }
       }
       
+      // send application event: LIVE_SNIPPET_WAITING_CHAINED
+      _keyboard->addApplicationEventWithDataToQueue(_keyboard->LIVE_SNIPPET_WAITING_CHAINED, chainSlot, 0, 0);
+      _waitingInChainQueue++;
       return true;            
     }
   }
+  
   return false;
 };
 
@@ -425,11 +444,14 @@ boolean Play::queueSnippet(int slot, boolean allowMultiple, boolean loop) {
     _snippetChannels[playingSnippetsIndex][c] = _getFreeChannel();
   }
 
+  // send application event: LIVE_SNIPPET_START
+  _keyboard->addApplicationEventWithDataToQueue(_keyboard->LIVE_SNIPPET_START, slot, 0, 0);
+
   return true;
 };
 
 
-void Play::unqueueSnippet(int slot) {
+void Play::unqueueSnippet(int slot) {  
   int playingSnippetsIndex = -1;
 
   for (int i=0; i<4; i++) {
@@ -448,11 +470,10 @@ void Play::unqueueSnippet(int slot) {
     }
 
     _snippetChannels[playingSnippetsIndex][c] = 0;    
-  }
+  }  
 
-  // ToDo: send application message that a snippet stopped playing.. to update the LEDs
-  //       send application message that snippet is chained and waiting to play
-  //       send application message that snippet started playing
+  // send application event: LIVE_SNIPPET_STOP
+  _keyboard->addApplicationEventWithDataToQueue(_keyboard->LIVE_SNIPPET_STOP, slot, 0, 0);
 };
 
 
@@ -477,7 +498,7 @@ void Play::snippetsPlayNext() {
       } else {
         // end of snippet reached.. remove it from queue if not looping
         if (!_loopPlayingSnippets[s]) {
-          unqueueSnippet(_playingSnippets[s]);
+          unqueueSnippet(_playingSnippets[s]);          
         } else {
           _playPositionSnippets[s] = 0;
         }
@@ -487,6 +508,7 @@ void Play::snippetsPlayNext() {
           if (_chainedSnippets[s][i] != -1) {
             queueSnippet(_chainedSnippets[s][i], false, _loopChainedSnippets[s][i]);
             _chainedSnippets[s][i] = -1;
+            _waitingInChainQueue--;
           }
         }     
       }

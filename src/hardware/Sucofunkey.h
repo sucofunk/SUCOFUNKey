@@ -306,6 +306,12 @@ class Sucofunkey {
         static const int MIDI_SEND_ALL_NOTE_OFF = 502;
         static const int MIDI_SEND_ALL_NOTE_OFF_ALL_CHANNELS = 503;
 
+        static const int LIVE_SNIPPET_START = 600;
+        static const int LIVE_SNIPPET_STOP = 601;
+        static const int LIVE_SNIPPET_WAITING_CHAINED = 602;
+        static const int LIVE_SNIPPET_CANCEL_CHAINED = 603;
+
+
         // just for debugging to Serial
         void printQueue();
 

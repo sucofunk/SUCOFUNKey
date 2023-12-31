@@ -100,8 +100,10 @@ class Live {
 
         int _playbackTickSpeed = 10000;
         boolean _playLEDon = false;
+        boolean _chainBlinking = false;
         boolean _isInitialized = false;
         boolean _LEDHighlightSlots[72];
+        boolean _LEDHighlightSlotsBlinking[72];
 
         // Snippets are stored with slotIndex (0..71) and -1 if not in use
         int _midiNoteToSlot[128];
@@ -130,6 +132,8 @@ class Live {
         void _removeSlot(int slotIndex);
 
         void _playPiano(byte note, byte velocity, boolean play);
+
+        int _getSlotIndexBySnippet(int snippet);
 };
 
 #endif

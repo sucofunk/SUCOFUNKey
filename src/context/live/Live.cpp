@@ -46,6 +46,7 @@ Live::Live(Sucofunkey* keyboard, Screen* screen, FSIO* fsio, SampleFSIO* sfsio, 
 
     for (int i=0; i<72; i++) {
       _LEDHighlightSlots[i] = false;
+      _LEDHighlightSlotsBlinking[i] = false;
     }
 
     for (int i=0; i<128; i++) {
@@ -72,6 +73,14 @@ long Live::receiveTimerTick() {
     _blinkPosition++;
   } else {
     _blinkPosition = 0;
+  }
+
+  // blink chained Snippets!
+  _chainBlinking = !_chainBlinking;
+  for (int i=0; i<24; i++) {
+    if (_LEDHighlightSlotsBlinking[i+((_activeBank-1)*24)]) {
+      _keyboard->setLEDState(_keyboard->getLEDPinBySampleId(i+1), _chainBlinking);
+    }    
   }
 
   return _playbackTickSpeed;
@@ -295,7 +304,6 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
     }
 
 
-
     if (event.type == Sucofunkey::KEY_NOTE) {
       int slot = _keyboard->getSampleIdByEventKey(event.index);
       boolean tempBool;
@@ -309,13 +317,6 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
         
         case OVERVIEW:
             if (_slots[slotsIndex].type != Play::EMPTY) {
-
-/*              Serial.print("Type::");
-              Serial.print(event.index);
-              Serial.print("::");
-              Serial.println(event.pressed);
-*/
-
               _playSlot(slotsIndex, 128, event.pressed, 128);
             } 
 
@@ -448,6 +449,39 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
           break;
       }          
     }
+
+    int tempInt;
+
+    if (event.type == Sucofunkey::EVENT_APPLICATION) {
+      switch (event.index) {
+        case Sucofunkey::LIVE_SNIPPET_START:                
+          tempInt = _getSlotIndexBySnippet(event.data1);
+          _LEDHighlightSlots[tempInt] = true;
+          _LEDHighlightSlotsBlinking[tempInt] = false;
+          _updateAllLoopingLEDs(); // ToDo: update only one, not all!
+          break;
+        case Sucofunkey::LIVE_SNIPPET_STOP:
+          tempInt = _getSlotIndexBySnippet(event.data1);
+          _LEDHighlightSlots[tempInt] = false;
+          _LEDHighlightSlotsBlinking[tempInt] = false;
+          _updateAllLoopingLEDs(); // ToDo: update only one, not all!
+          break;
+        case Sucofunkey::LIVE_SNIPPET_WAITING_CHAINED:
+          tempInt = _getSlotIndexBySnippet(event.data1);
+          _LEDHighlightSlotsBlinking[tempInt] = true;   
+          _updateAllLoopingLEDs(); // ToDo: update only one, not all!
+          break;
+        case Sucofunkey::LIVE_SNIPPET_CANCEL_CHAINED:
+          tempInt = _getSlotIndexBySnippet(event.data1);
+          _LEDHighlightSlotsBlinking[tempInt] = false;
+          _updateAllLoopingLEDs(); // ToDo: update only one, not all!
+          break;
+        default:
+          break;
+      }
+    }
+
+
 }
 
 void Live::setActive(boolean active) {
@@ -622,7 +656,6 @@ void Live::_updateAllLoopingLEDs() {
 }
 
 
-
 void Live::_changeState(LiveState state) {
   _editingSlotId = (_editingSlotBank-1)*24+_editingSlotKey-1;
 
@@ -692,14 +725,11 @@ void Live::_playSlot(int slotIndex, byte velocity, boolean pressed, byte note) {
         // chaining a snippet to another (up to two)
         if ((_holdSlotIndex != -1 && _holdSlotIndex != slotIndex) && _play->isSnippetPlaying(slotHold.snippet)) {
 
-          success = _play->chainSnippet(slotHold.snippet, slot.snippet, slot.loopSnippet);
-          
-          _LEDHighlightSlots[slotIndex] = success;
-          _updateAllLoopingLEDs();
-
-          _holdSlotAction = true;          
+          if (!_play->isSnippetPlaying(slot.snippet)) {
+            success = _play->chainSnippet(slotHold.snippet, slot.snippet, slot.loopSnippet);                                
+          }
+          _holdSlotAction = true;
         }
-
       }
     
     // key released
@@ -711,17 +741,14 @@ void Live::_playSlot(int slotIndex, byte velocity, boolean pressed, byte note) {
             if (!_LEDHighlightSlots[slotIndex]) {
               // start looping snippet
               _play->queueSnippet(slot.snippet, false, true);
-              _LEDHighlightSlots[slotIndex] = true;
             } else {
               // stop looping
               if (slot.immediateStopOnRelease) {
                 // immediately stop
                 _play->unqueueSnippet(slot.snippet);
-                _LEDHighlightSlots[slotIndex] = false;
               } else {
                 // remove loop flag to stop snippet when it is played
                 _play->removeLoopFlagFromSnippet(slot.snippet);
-                _LEDHighlightSlots[slotIndex] = false;
               }
             }
           } else {
@@ -1060,3 +1087,11 @@ void Live::_removeSlot(int slotIndex) {
 void Live::_playPiano(byte note, byte velocity, boolean play) {  
     _playSlot(_pianoSampleSlotIndex, velocity, play, note);
 };
+
+
+int Live::_getSlotIndexBySnippet(int snippet) {
+  for (int i=0; i<72; i++) {
+    if (_slots[i].snippet == snippet) return i;
+  }
+  return -1;
+}

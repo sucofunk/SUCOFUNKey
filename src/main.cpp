@@ -51,7 +51,7 @@
 #include <Adafruit_ST7789.h>
 //#include <Adafruit_ILI9341.h>
 
-#define VERSIONNUMBER "0.9.5.1 - Raumwunder"
+#define VERSIONNUMBER "0.9.6 - Snippy23"
 
 // PINs on the Teensy 4.1 to receive Interrupts from the 5 MCP23017 chips used as port expanders to receive updated from the 36 Buttons and 4 rotary encoders
 // The MCP23017s control the 32 LEDs in the SUCOFUNKey, too
