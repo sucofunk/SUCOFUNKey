@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2024 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -75,6 +75,11 @@ void FSIO::listDirectory(File dir, int numTabs) {
 
 
 void FSIO::readLibrarySamplesFromSD(LibrarySample *librarySamples, String path) {
+   boolean isRoot = _libraryPath.equals("/");
+
+    // do nothing if we are trying to go one folder back in root folder (cursor left in root dir)
+    if (isRoot && path.equals("/..")) return;
+
     _librarySamples = librarySamples;
 
     // 1024 files max per directory.. as defined in main.cpp when initializing the array    
@@ -86,13 +91,13 @@ void FSIO::readLibrarySamplesFromSD(LibrarySample *librarySamples, String path) 
 
     // sample counter
     int sc = 0;
-    boolean isRoot = false;
-
+   
     if (strlen(path.c_str()) == 1 && path[0] == '/') {
         _libraryPath = "/";
         isRoot = true;
     } else {        
         if(path.equals("/..")) {
+
             // go one directory back
             int lidx = _libraryPath.lastIndexOf('/');
             if (lidx != 0) {
@@ -100,7 +105,7 @@ void FSIO::readLibrarySamplesFromSD(LibrarySample *librarySamples, String path) 
                 lidx = _libraryPath.lastIndexOf('/');
                 _libraryPath = _libraryPath.substring(0, lidx);
                 _libraryPath.append("/");
-                if (_libraryPath.equals("/")) isRoot = true;
+                if (_libraryPath.equals("/")) isRoot = true;                        
             }            
         } else {
             // change to subfolder

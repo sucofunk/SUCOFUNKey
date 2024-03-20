@@ -197,6 +197,7 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
             if (_slots[_editingSlotId].type == Play::SNIPPET) { _changeState(WAIT_SNIPPET_SELECT); };
             if (_slots[_editingSlotId].type == Play::SAMPLE) { _changeState(WAIT_SAMPLE_SELECT); };
             if (_slots[_editingSlotId].type == Play::MUTE_SCRATCHING) { 
+              saveConfig();
               _changeState(OVERVIEW);           
               _cancel(); 
             };

@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2024 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@
    ---------------------------------------------------------------------------------------------- */
 
 #include <Arduino.h>
-
+#include "hardware/Configuration.h"
 #include "helper/AudioResources.h"
 #include "hardware/Sucofunkey.h"
 #include "helper/FSIO.h"
@@ -48,31 +48,15 @@
 #include "context/check/Check.h"
 #include <Audio.h>
 #include <MIDI.h>
-#include <Adafruit_ST7789.h>
-//#include <Adafruit_ILI9341.h>
 
-#define VERSIONNUMBER "0.9.6 - Snippy23"
+#ifdef SCREEN_ILI9341
+    #include <Adafruit_ILI9341.h>
+#endif 
 
-// PINs on the Teensy 4.1 to receive Interrupts from the 5 MCP23017 chips used as port expanders to receive updated from the 36 Buttons and 4 rotary encoders
-// The MCP23017s control the 32 LEDs in the SUCOFUNKey, too
+#ifdef SCREEN_ST7789
+    #include <Adafruit_ST7789.h>
+#endif
 
-int PIN_SUCOKEY_INT_1 = 28; 
-int PIN_SUCOKEY_INT_2 = 29; 
-int PIN_SUCOKEY_INT_3 = 30; 
-int PIN_SUCOKEY_INT_4 = 31;
-int PIN_SUCOKEY_INT_5 = 32; 
-
-// PINs for the display 
-int PIN_SCREEN_SCK = 27;
-int PIN_SCREEN_MOSI = 26; // labeled as DIN on the Waveshare display
-int PIN_SCREEN_CS = 38;
-int PIN_SCREEN_DC = 39;
-int PIN_SCREEN_RST = 37;
-int PIN_SCREEN_BL = 36;
-
-
-// Analog PIN where volume potentiometer is connected to
-int PIN_VOLUME = 22;
 float volumeValue = 0;
 float volumeTempValue = 0;
 
@@ -118,8 +102,13 @@ void globalTickRec();
 AudioResources audioResources;
 
 // Hardware SPI for LCD Screen
-Adafruit_ST7789 tft(&SPI1, PIN_SCREEN_CS, PIN_SCREEN_DC, PIN_SCREEN_RST);
-//Adafruit_ILI9341 tft(&SPI1, PIN_SCREEN_DC, PIN_SCREEN_CS, PIN_SCREEN_RST);
+#ifdef SCREEN_ILI9341
+    Adafruit_ILI9341 tft(&SPI1, PIN_SCREEN_DC, PIN_SCREEN_CS, PIN_SCREEN_RST);  
+#endif 
+
+#ifdef SCREEN_ST7789
+    Adafruit_ST7789 tft(&SPI1, PIN_SCREEN_CS, PIN_SCREEN_DC, PIN_SCREEN_RST);
+#endif
 
 
 // Initializing the "keyboard"
@@ -439,12 +428,17 @@ void setup() {
   analogWrite(PIN_SCREEN_BL, 1); 
 
   // initialize screen
+
+#ifdef SCREEN_ILI9341
+  tft.begin();
+  tft.setRotation(1);  
+#endif 
+
+#ifdef SCREEN_ST7789
   tft.init(240, 320, SPI_MODE0);
-  
-  // ILI9341:
-  //tft.begin();
-  
   tft.setRotation(3);
+#endif
+
   tft.fillScreen(screen.C_STARTUP_BG);
 
   screen.fadeBacklightIn(1);

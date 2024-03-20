@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2024 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -87,9 +87,23 @@ void SampleSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
                     drawSampleSelector();
                 }
             }
-            break;            
+            break;
+        case Sucofunkey::CURSOR_LEFT:
+            if (event.pressed) {
+                _activeItem = 0;
+                _offset = 0;
+                // directory
+                _fsio->readLibrarySamplesFromSD(_fsio->getLibrarySamples(), "/..");
+                // set cursor to first entry in list/viewport after changing a directory
+                _activeItem = 0; 
+                _offset = 0;
+                drawSampleSelector();
+            }
+            break;
+
         case Sucofunkey::SET:
         case Sucofunkey::ENCODER_1_PUSH:
+        case Sucofunkey::CURSOR_RIGHT:
             // something in the list selected
             if (event.pressed) {
                     String s = _fsio->getSampleFileName(_activeItem+_offset);
@@ -101,10 +115,12 @@ void SampleSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
                         _activeItem = 0; 
                         _offset = 0;
                         drawSampleSelector();
-                    } else {
-                        // file
-                        _fsio->setSelectedSamplePathFromSD(_offset + _activeItem);
-                        _keyboard->addApplicationEventToQueue(Sucofunkey::SAMPLE_LIBRARY_SELECTED);                                                
+                    } else {                        
+                        if (event.index != Sucofunkey::CURSOR_RIGHT) {
+                            // select file only with STE or ENCODER_1_PUSH
+                            _fsio->setSelectedSamplePathFromSD(_offset + _activeItem);
+                            _keyboard->addApplicationEventToQueue(Sucofunkey::SAMPLE_LIBRARY_SELECTED);                                                
+                        }
                     }
             }                
             break;

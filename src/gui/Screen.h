@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2024 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -32,13 +32,31 @@
 #define Screen_h
 
 #include <Arduino.h>
-#include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
+#include "../hardware/Configuration.h"
+
+#ifdef SCREEN_ILI9341
+    #include <Adafruit_ILI9341.h>
+#endif 
+
+#ifdef SCREEN_ST7789
+    #include <Adafruit_ST7789.h>
+#endif
+
+#include "Adafruit_GFX.h"
+
+//#include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
 //#include <Adafruit_ILI9341.h> // Hardware specific library for ILI9341
 
 class Screen {
     public:
-        Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness);
-        //Screen(Adafruit_ILI9341 *tft, int BL_PIN, int BL_brightness);          
+
+#ifdef SCREEN_ILI9341
+Screen(Adafruit_ILI9341 *tft, int BL_PIN, int BL_brightness);
+#endif 
+
+#ifdef SCREEN_ST7789
+Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness);  
+#endif
 
         typedef struct area {
                 int x1;
@@ -238,8 +256,14 @@ class Screen {
         Area AREA_SEQUENCER_OPTIONS_SWING_LABEL = {option4HCenterX-34, sampleNameAreaVCenterY - 10, option4HCenterX+34, sampleNameAreaVCenterY + 8, true, C_BLACK};
 
     private:
+
+#ifdef SCREEN_ILI9341
+        Adafruit_ILI9341 *_tft;
+#endif 
+
+#ifdef SCREEN_ST7789
         Adafruit_ST7789 *_tft;
-        //Adafruit_ILI9341 *_tft;
+#endif
 
         int16_t _dx = 0;
         int16_t _dy = 0;

@@ -36,19 +36,21 @@
 #include "fonts/BaiJamjureeRegularMonoDigits8pt7b.h" // https://fonts.google.com/specimen/Bai+Jamjuree
 #include "fonts/BaiJamjuree_Medium5pt7b.h" // https://fonts.google.com/specimen/Bai+Jamjuree
 
+#ifdef SCREEN_ILI9341
+Screen::Screen(Adafruit_ILI9341 *tft, int BL_PIN, int BL_brightness) {
+  _tft = tft;
+  _BL_PIN = BL_PIN;
+  _BL_brightness = BL_brightness;
+}
+#endif 
+
+#ifdef SCREEN_ST7789
 Screen::Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness) {
   _tft = tft;
   _BL_PIN = BL_PIN;
   _BL_brightness = BL_brightness;
-}
-
-
-/*Screen::Screen(Adafruit_ILI9341 *tft, int BL_PIN, int BL_brightness) {
-  _tft = tft;
-  _BL_PIN = BL_PIN;
-  _BL_brightness = BL_brightness;
-}
-*/
+}  
+#endif
 
 void Screen::testBild(const char* text) {
     fillArea(AREA_SCREEN, C_BLACK);    

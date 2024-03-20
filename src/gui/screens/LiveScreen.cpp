@@ -264,20 +264,20 @@ void LiveScreen::showEmptyOverview(boolean createAreas) {
         _sampleCompleteArea.bgColor = _screen->C_BLACK;       
         _sampleCompleteArea.transparent = false;        
         _sampleCompleteArea.x1 = 0;
-        _sampleCompleteArea.x2 = 80;
+        _sampleCompleteArea.x2 = 70;
         _sampleCompleteArea.y1 = _centerLineY - 75;
         _sampleCompleteArea.y2 = _centerLineY - 55;
 
         _sampleDirectionArea.bgColor = _screen->C_BLACK;       
         _sampleDirectionArea.transparent = false;        
-        _sampleDirectionArea.x1 = 81;
-        _sampleDirectionArea.x2 = 160;
+        _sampleDirectionArea.x1 = 71;
+        _sampleDirectionArea.x2 = 150;
         _sampleDirectionArea.y1 = _centerLineY - 75;
         _sampleDirectionArea.y2 = _centerLineY - 55;
 
         _sampleScratchArea.bgColor = _screen->C_BLACK;       
         _sampleScratchArea.transparent = false;        
-        _sampleScratchArea.x1 = 161;
+        _sampleScratchArea.x1 = 151;
         _sampleScratchArea.x2 = 212; // asymmetrically smaller to match the wider MIDI config from snippets
         _sampleScratchArea.y1 = _centerLineY - 75;
         _sampleScratchArea.y2 = _centerLineY - 55;
@@ -439,6 +439,7 @@ void LiveScreen::showSampleConfig(Play::LiveSlotDefinitionStruct slot) {
     updateSampleConfig(slot, 2, false, NONE);
     updateSampleConfig(slot, 2, true, NONE);
     updateSampleConfig(slot, 3, false, NONE);
+    updateSampleConfig(slot, 3, true, NONE);
     updateSampleConfig(slot, 4, false, NONE);
 };
 
@@ -488,7 +489,6 @@ void LiveScreen::updateSampleConfig(Play::LiveSlotDefinitionStruct slot, int enc
         case 3:
             if (push) {
                 _screen->drawTextInArea(_sampleScratchArea, Screen::TEXTPOSITION_HCENTER_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, slot.faderScratching ? "scratch" : "normal");
-
             } else {
                 _keyboard->getMIDINoteName(slot.pitchedNote).toCharArray(_cBuff5, 4);
                 _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3_BAR, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _cBuff5);
