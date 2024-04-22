@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2024 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -40,11 +40,11 @@ void ArrangeScreen::showEmptyOverview() {
     _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);
     
     for (int i=0; i<=rows; i++) {
-        _screen->drawFastHLine(0, _screen->AREA_CONTENT.y1 + (i*(190/rows)), 320, _screen->C_GRID_DARK);
+        _screen->drawFastHLine(0, _screen->AREA_CONTENT.y1 + (i*(190/rows)), 320, _screen->C_GRID_BRIGHT);
     }
     
     for (int i=0; i<=columns; i++) {
-        _screen->drawFastVLine(i*(320/columns) - (i > 0 ? 1 : 0), _screen->AREA_CONTENT.y1, _screen->AREA_CONTENT.y2-_screen->AREA_CONTENT.y1, _screen->C_GRID_DARK);
+        _screen->drawFastVLine(i*(320/columns) - (i > 0 ? 1 : 0), _screen->AREA_CONTENT.y1, _screen->AREA_CONTENT.y2-_screen->AREA_CONTENT.y1, _screen->C_GRID_BRIGHT);
     }
 }
 
@@ -52,14 +52,24 @@ void ArrangeScreen::drawCursor(int position, boolean highlight) {
     int row = position / columns;
     int column = position - (row * columns);
 
-    _screen->drawFastHLine(column*(320/columns) - (column > 0 ? 1 : 0), _screen->AREA_CONTENT.y1 + (row*(190/rows)), (320/columns), highlight ? _screen->C_ORANGE : _screen->C_GRID_DARK);  
-    _screen->drawFastHLine(column*(320/columns) - (column > 0 ? 1 : 0), _screen->AREA_CONTENT.y1 + ((row+1)*(190/rows)), (320/columns), highlight ? _screen->C_ORANGE : _screen->C_GRID_DARK);  
+// Cursor orange füllen?
 
-    _screen->drawFastVLine(column*(320/columns) - (column > 0 ? 1 : 0), _screen->AREA_CONTENT.y1 + (row*(190/rows)), (190/rows), highlight ? _screen->C_ORANGE : _screen->C_GRID_DARK);  
-    _screen->drawFastVLine((column+1)*(320/columns) - 1, _screen->AREA_CONTENT.y1 + (row*(190/rows)), (190/rows), highlight ? _screen->C_ORANGE : _screen->C_GRID_DARK);
+/*    _screen->drawFastHLine(column*(320/columns) - (column > 0 ? 1 : 0), _screen->AREA_CONTENT.y1 + (row*(190/rows)), (320/columns), highlight ? _screen->C_ORANGE : _screen->C_GRID_BRIGHT);  
+    _screen->drawFastHLine(column*(320/columns) - (column > 0 ? 1 : 0), _screen->AREA_CONTENT.y1 + ((row+1)*(190/rows)), (320/columns), highlight ? _screen->C_ORANGE : _screen->C_GRID_BRIGHT);  
+
+    _screen->drawFastVLine(column*(320/columns) - (column > 0 ? 1 : 0), _screen->AREA_CONTENT.y1 + (row*(190/rows)), (190/rows), highlight ? _screen->C_ORANGE : _screen->C_GRID_BRIGHT);  
+    _screen->drawFastVLine((column+1)*(320/columns) - 1, _screen->AREA_CONTENT.y1 + (row*(190/rows)), (190/rows), highlight ? _screen->C_ORANGE : _screen->C_GRID_BRIGHT);
+*/
+    
+    _screen->fillRect(column*(320/columns) + (column == 0 ? 1 : 0), 
+                              _screen->AREA_CONTENT.y1 + (row*(190/rows)) + 1, 
+                              (320/columns)-(column == 0 ? 2 : 1), 
+                              (190/rows)-1, 
+                              highlight ? _screen->C_ORANGE : _screen->C_BLACK);
+
 };
 
-void ArrangeScreen::annotateCell(int position, int sheet, int repeat) {
+void ArrangeScreen::annotateCell(int position, int sheet, int repeat, boolean highlight) {
     int row = position / columns;
     int column = position - (row * columns);
 
@@ -73,7 +83,10 @@ void ArrangeScreen::annotateCell(int position, int sheet, int repeat) {
             sprintf(_cBuff5, "%d", sheet);
         }
         
-        _screen->drawTextInArea(tempArea, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_SMALL, false, _screen->C_WHITE, _cBuff5);
+        //_screen->drawTextInArea(tempArea, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_SMALL, false, _screen->C_WHITE, _cBuff5);
+
+        _screen->drawTextInArea(tempArea, _screen->TEXTPOSITION_HCENTER_VCENTER, (highlight ? false : true), _screen->TEXTSIZE_SMALL, false, highlight ? _screen->C_BLACK : _screen->C_WHITE, _cBuff5);
+
     } else {
         _screen->fillArea(tempArea, _screen->C_BLACK);
     }

@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2024 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -103,14 +103,16 @@ void Arrange::handleEvent(Sucofunkey::keyQueueStruct event) {
 
       case Sucofunkey::FN_CURSOR_UP:
             if (_play->getSong()->arrangementGetSheetForPosition(_cursorPosition) != -1) {
-              _arrangeScreen.annotateCell(_cursorPosition, _play->getSong()->arrangementGetSheetForPosition(_cursorPosition) , _play->getSong()->arrangementChangePositionRepeat(_cursorPosition, true));
+              _arrangeScreen.drawCursor(_cursorPosition, true);
+              _arrangeScreen.annotateCell(_cursorPosition, _play->getSong()->arrangementGetSheetForPosition(_cursorPosition) , _play->getSong()->arrangementChangePositionRepeat(_cursorPosition, true), true);
               saveToSD();
             }            
             break;
 
       case Sucofunkey::FN_CURSOR_DOWN:            
             if (_play->getSong()->arrangementGetSheetForPosition(_cursorPosition) != -1) {
-              _arrangeScreen.annotateCell(_cursorPosition, _play->getSong()->arrangementGetSheetForPosition(_cursorPosition) , _play->getSong()->arrangementChangePositionRepeat(_cursorPosition, false));
+              _arrangeScreen.drawCursor(_cursorPosition, true);
+              _arrangeScreen.annotateCell(_cursorPosition, _play->getSong()->arrangementGetSheetForPosition(_cursorPosition) , _play->getSong()->arrangementChangePositionRepeat(_cursorPosition, false), true);
               saveToSD();
             }
             break;
@@ -128,23 +130,26 @@ void Arrange::handleEvent(Sucofunkey::keyQueueStruct event) {
               _play->stopArrangement();
             } else {
               _arrangeScreen.drawCursor(_cursorPosition, false);
+              _arrangeScreen.annotateCell(_cursorPosition, _play->getSong()->arrangementGetSheetForPosition(_cursorPosition) , _play->getSong()->arrangementGetRepeatForPosition(_cursorPosition), false);            
               _cursorPosition = 0;
               _arrangeScreen.drawCursor(_cursorPosition, true);
-            }
-            
-
+              _arrangeScreen.annotateCell(_cursorPosition, _play->getSong()->arrangementGetSheetForPosition(_cursorPosition) , _play->getSong()->arrangementGetRepeatForPosition(_cursorPosition), true);
+            }            
             break;
       case Sucofunkey::FN_SET:
             if(_play->getSong()->arrangementRemovePosition(_cursorPosition)) {
-              _arrangeScreen.annotateCell(_cursorPosition, _play->getSong()->arrangementGetSheetForPosition(_cursorPosition), _play->getSong()->arrangementGetRepeatForPosition(_cursorPosition));
+              _arrangeScreen.drawCursor(_cursorPosition, true);
+              //_arrangeScreen.annotateCell(_cursorPosition, _play->getSong()->arrangementGetSheetForPosition(_cursorPosition), _play->getSong()->arrangementGetRepeatForPosition(_cursorPosition), true);
               saveToSD();
             }
             break;
 
       case Sucofunkey::ARRANGEMENT_PLAY_INDICATOR_CELL:
             _arrangeScreen.drawCursor(_cursorPosition, false);
-            _cursorPosition = event.data1;            
+            _arrangeScreen.annotateCell(_cursorPosition, _play->getSong()->arrangementGetSheetForPosition(_cursorPosition) , _play->getSong()->arrangementGetRepeatForPosition(_cursorPosition), false);
+            _cursorPosition = event.data1;
             _arrangeScreen.drawCursor(_cursorPosition, true);
+            _arrangeScreen.annotateCell(_cursorPosition, _play->getSong()->arrangementGetSheetForPosition(_cursorPosition) , _play->getSong()->arrangementGetRepeatForPosition(_cursorPosition), true);
             break;
     }
   }
@@ -152,7 +157,7 @@ void Arrange::handleEvent(Sucofunkey::keyQueueStruct event) {
   if (event.type == Sucofunkey::KEY_NOTE && event.pressed && _keyboard->isEventWhiteKey(event.index)) {
     sheet = _keyboard->getWhiteKeyByEventKey(event.index) + ((_keyboard->getBank()-1)*14);
     if (_play->getSong()->arrangementInsertSheetAtPosition(_cursorPosition, sheet)) {
-      _arrangeScreen.annotateCell(_cursorPosition, sheet, _play->getSong()->arrangementGetRepeatForPosition(_cursorPosition));
+      _arrangeScreen.annotateCell(_cursorPosition, sheet, _play->getSong()->arrangementGetRepeatForPosition(_cursorPosition), true);
       saveToSD();
     }    
   }
@@ -161,7 +166,13 @@ void Arrange::handleEvent(Sucofunkey::keyQueueStruct event) {
 
 
 void Arrange::moveCursor(CursorDirection direction) {
+  // delete old cursor
   _arrangeScreen.drawCursor(_cursorPosition, false);
+
+  // redraw text from old cursor
+  if (_play->getSong()->arrangementGetSheetForPosition(_cursorPosition) != -1) {
+    _arrangeScreen.annotateCell(_cursorPosition, _play->getSong()->arrangementGetSheetForPosition(_cursorPosition), _play->getSong()->arrangementGetRepeatForPosition(_cursorPosition), false);
+  }
 
   switch(direction) {    
     case UP:
@@ -185,6 +196,11 @@ void Arrange::moveCursor(CursorDirection direction) {
   }
 
   _arrangeScreen.drawCursor(_cursorPosition, true);
+
+  if (_play->getSong()->arrangementGetSheetForPosition(_cursorPosition) != -1) {
+    _arrangeScreen.annotateCell(_cursorPosition, _play->getSong()->arrangementGetSheetForPosition(_cursorPosition), _play->getSong()->arrangementGetRepeatForPosition(_cursorPosition), true);
+  }
+
 };
 
 
@@ -192,7 +208,7 @@ void Arrange::setActive(boolean active) {
   if (active) {
     _isActive = true;
     _keyboard->setBank(_activeBank);
-    Serial.println("Arrange mode");  
+    //Serial.println("Arrange mode");  
     
     // might have changed in sequencer
     _play->checkIfAllSamplesAreLoaded();
@@ -202,7 +218,9 @@ void Arrange::setActive(boolean active) {
     _arrangeScreen.drawCursor(_cursorPosition, true);
 
     for (int i=0; i<_arrangeScreen.rows*_arrangeScreen.columns; i++) {
-      if (_play->getSong()->arrangementGetSheetForPosition(i) != -1) _arrangeScreen.annotateCell(i, _play->getSong()->arrangementGetSheetForPosition(i), _play->getSong()->arrangementGetRepeatForPosition(i));
+      if (_play->getSong()->arrangementGetSheetForPosition(i) != -1) {
+        _arrangeScreen.annotateCell(i, _play->getSong()->arrangementGetSheetForPosition(i), _play->getSong()->arrangementGetRepeatForPosition(i), i == _cursorPosition ? true : false);
+      }
     }
 
   } else {

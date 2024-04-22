@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2024 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -36,8 +36,6 @@
 // ToDo:
 //  - sort songs alphabetically
 //  - delete song (recursive)
-//  - get rid of flickering while scrolling songs
-//  - get rid of flickering while typing e.g. A -> _ -> c -> g -> E -> Q
 
 SongSelector::SongSelector() {};
 

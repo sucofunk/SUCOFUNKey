@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2024 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -233,79 +233,79 @@ void BlackKeyMenu::_redrawMenu() {
 void BlackKeyMenu::_redrawFrame() {
 
     // vertical lines
-    _screen->drawLine(0, _screen->AREA_BLACK_KEY_MENU.y1, 0, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_LIGHTGREY);    
-    _screen->drawLine(26, _screen->AREA_BLACK_KEY_MENU.y1, 26, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_DARK);
-    _screen->drawLine(52, _screen->AREA_BLACK_KEY_MENU.y1, 52, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_DARK);         
-    _screen->drawLine(78, _screen->AREA_BLACK_KEY_MENU.y1, 78, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_LIGHTGREY);    
+    _screen->drawLine(0, _screen->AREA_BLACK_KEY_MENU.y1, 0, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_BRIGHT);    
+    _screen->drawLine(26, _screen->AREA_BLACK_KEY_MENU.y1, 26, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_MEDIUM);
+    _screen->drawLine(52, _screen->AREA_BLACK_KEY_MENU.y1, 52, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_MEDIUM);         
+    _screen->drawLine(78, _screen->AREA_BLACK_KEY_MENU.y1, 78, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_BRIGHT);    
 
-    _screen->drawLine(98, _screen->AREA_BLACK_KEY_MENU.y1, 98, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_LIGHTGREY);
-    _screen->drawLine(124, _screen->AREA_BLACK_KEY_MENU.y1, 124, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_DARK);
-    _screen->drawLine(150, _screen->AREA_BLACK_KEY_MENU.y1, 150, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_LIGHTGREY);
+    _screen->drawLine(98, _screen->AREA_BLACK_KEY_MENU.y1, 98, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_BRIGHT);
+    _screen->drawLine(124, _screen->AREA_BLACK_KEY_MENU.y1, 124, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_MEDIUM);
+    _screen->drawLine(150, _screen->AREA_BLACK_KEY_MENU.y1, 150, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_BRIGHT);
 
-    _screen->drawLine(170, _screen->AREA_BLACK_KEY_MENU.y1, 170, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_LIGHTGREY);
-    _screen->drawLine(196, _screen->AREA_BLACK_KEY_MENU.y1, 196, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_DARK);
-    _screen->drawLine(222, _screen->AREA_BLACK_KEY_MENU.y1, 222, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_DARK);
-    _screen->drawLine(248, _screen->AREA_BLACK_KEY_MENU.y1, 248, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_LIGHTGREY);
+    _screen->drawLine(170, _screen->AREA_BLACK_KEY_MENU.y1, 170, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_BRIGHT);
+    _screen->drawLine(196, _screen->AREA_BLACK_KEY_MENU.y1, 196, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_MEDIUM);
+    _screen->drawLine(222, _screen->AREA_BLACK_KEY_MENU.y1, 222, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_MEDIUM);
+    _screen->drawLine(248, _screen->AREA_BLACK_KEY_MENU.y1, 248, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_BRIGHT);
 
-    _screen->drawLine(267, _screen->AREA_BLACK_KEY_MENU.y1, 267, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_LIGHTGREY);
-    _screen->drawLine(293, _screen->AREA_BLACK_KEY_MENU.y1, 293, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_DARK);
-    _screen->drawLine(319, _screen->AREA_BLACK_KEY_MENU.y1, 319, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_LIGHTGREY);    
+    _screen->drawLine(267, _screen->AREA_BLACK_KEY_MENU.y1, 267, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_BRIGHT);
+    _screen->drawLine(293, _screen->AREA_BLACK_KEY_MENU.y1, 293, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_MEDIUM);
+    _screen->drawLine(319, _screen->AREA_BLACK_KEY_MENU.y1, 319, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_BRIGHT);    
 
     // horizontal lines
-    _screen->drawLine(0, _screen->AREA_BLACK_KEY_MENU.y1, 78, _screen->AREA_BLACK_KEY_MENU.y1, _screen->C_LIGHTGREY);    
-    _screen->drawLine(1, _screen->AREA_BLACK_KEY_MENU.y2, 78, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_LIGHTGREY);    
+    _screen->drawLine(0, _screen->AREA_BLACK_KEY_MENU.y1, 78, _screen->AREA_BLACK_KEY_MENU.y1, _screen->C_GRID_BRIGHT);    
+    _screen->drawLine(1, _screen->AREA_BLACK_KEY_MENU.y2, 78, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_BRIGHT);    
 
-    _screen->drawLine(98, _screen->AREA_BLACK_KEY_MENU.y1, 150, _screen->AREA_BLACK_KEY_MENU.y1, _screen->C_LIGHTGREY);
-    _screen->drawLine(98, _screen->AREA_BLACK_KEY_MENU.y2, 150, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_LIGHTGREY);
+    _screen->drawLine(98, _screen->AREA_BLACK_KEY_MENU.y1, 150, _screen->AREA_BLACK_KEY_MENU.y1, _screen->C_GRID_BRIGHT);
+    _screen->drawLine(98, _screen->AREA_BLACK_KEY_MENU.y2, 150, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_BRIGHT);
 
-    _screen->drawLine(170, _screen->AREA_BLACK_KEY_MENU.y1, 247, _screen->AREA_BLACK_KEY_MENU.y1, _screen->C_LIGHTGREY);
-    _screen->drawLine(170, _screen->AREA_BLACK_KEY_MENU.y2, 247, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_LIGHTGREY);
+    _screen->drawLine(170, _screen->AREA_BLACK_KEY_MENU.y1, 247, _screen->AREA_BLACK_KEY_MENU.y1, _screen->C_GRID_BRIGHT);
+    _screen->drawLine(170, _screen->AREA_BLACK_KEY_MENU.y2, 247, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_BRIGHT);
 
-    _screen->drawLine(267, _screen->AREA_BLACK_KEY_MENU.y1, 319, _screen->AREA_BLACK_KEY_MENU.y1, _screen->C_LIGHTGREY);
-    _screen->drawLine(267, _screen->AREA_BLACK_KEY_MENU.y2, 319, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_LIGHTGREY);
+    _screen->drawLine(267, _screen->AREA_BLACK_KEY_MENU.y1, 319, _screen->AREA_BLACK_KEY_MENU.y1, _screen->C_GRID_BRIGHT);
+    _screen->drawLine(267, _screen->AREA_BLACK_KEY_MENU.y2, 319, _screen->AREA_BLACK_KEY_MENU.y2, _screen->C_GRID_BRIGHT);
 };
 
 void BlackKeyMenu::_redrawOption(uint8_t option) {
     switch(option) {
         case 1:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM1, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM1, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 1 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[0]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label1);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM1, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 1 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[0]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_GRID_BRIGHT)), _label1);
             break;
         case 2:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM2, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM2, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 2 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[1]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label2);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM2, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 2 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[1]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_GRID_BRIGHT)), _label2);
             break;            
         case 3:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM3, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM3, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 3 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[2]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label3);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM3, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 3 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[2]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_GRID_BRIGHT)), _label3);
             break;
         case 4:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM4, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM4, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 4 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[3]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label4);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM4, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 4 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[3]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_GRID_BRIGHT)), _label4);
             break;                
         case 5:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM5, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM5, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 5 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[4]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label5);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM5, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 5 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[4]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_GRID_BRIGHT)), _label5);
             break;            
         case 6:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM6, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM6, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 6 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[5]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label6);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM6, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 6 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[5]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_GRID_BRIGHT)), _label6);
             break;
         case 7:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM7, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM7, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 7 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[6]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label7);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM7, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 7 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[6]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_GRID_BRIGHT)), _label7);
             break;
         case 8:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM8, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM8, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 8 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[7]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label8);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM8, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 8 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[7]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_GRID_BRIGHT)), _label8);
             break;
         case 9:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM9, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM9, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 9 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[8]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label9);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM9, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 9 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[8]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_GRID_BRIGHT)), _label9);
             break;
         case 10:
             _screen->fillArea(_screen->AREA_BLACK_KEY_MENU_ITEM10, _screen->C_BLACK);
-            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM10, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 10 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[9]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_LIGHTGREY)), _label10);
+            _screen->drawTextInArea(_screen->AREA_BLACK_KEY_MENU_ITEM10, Screen::TEXTPOSITION_HCENTER_BOTTOM , false, Screen::TEXTSIZE_SMALL, false, _exclusivePosition == 10 ? _screen->C_ORANGE : ((_exclusivePosition != 0 && _allowedToExclusive[9]) ? _screen->C_WHITE : (_exclusivePosition == 0 ? _screen->C_WHITE : _screen->C_GRID_BRIGHT)), _label10);
             break;                                                            
     }
 };

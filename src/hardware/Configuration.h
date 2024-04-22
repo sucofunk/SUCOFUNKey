@@ -31,12 +31,15 @@
 #ifndef Configuration_h
 #define Configuration_h
 
-#define VERSIONNUMBER "0.9.6.1 - screenChanger"
+#define VERSIONNUMBER "0.9.6.2 - baselined orrange"
 
 // Display configuration -----------------------------
 
-// 2.4 inch screen waveshare: SCREEN_ILI9341
-#define SCREEN_ILI9341
+// 2.4 inch screen waveshare: SCREEN_ILI9341 with DMA Framebuffer
+#define SCREEN_ILI9341_DMA
+
+// 2.4 inch screen waveshare: SCREEN_ILI9341 with Adafruit driver (no Framebuffer)
+//#define SCREEN_ILI9341
 
 // 2 inch screen waveshare: SCREEN_ST7789
 //#define SCREEN_ST7789

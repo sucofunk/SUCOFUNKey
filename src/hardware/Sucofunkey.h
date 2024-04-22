@@ -287,8 +287,10 @@ class Sucofunkey {
         static const int SAMPLE_LIBRARY_SELECTED = 319; // sample in sampleselector selected -> used to select a sample from sample library at /SAMPLES/ on SD
         static const int SAMPLE_LIBRARY_CANCEL = 320;
         static const int SAMPLE_LIBRARY_PRELISTEN = 321;
-        static const int MENU_BACK = 322;
-        static const int ARRANGEMENT_PLAY_INDICATOR_CELL = 323;
+        static const int SAMPLE_LIBRARY_STOP_PRELISTEN = 322;
+        static const int SAMPLE_LIBRARY_REDRAW = 323;
+        static const int MENU_BACK = 324;
+        static const int ARRANGEMENT_PLAY_INDICATOR_CELL = 325;
 
         static const int BLACKKEY_NAV_ITEM1 = 340;
         static const int BLACKKEY_NAV_ITEM2 = 341;

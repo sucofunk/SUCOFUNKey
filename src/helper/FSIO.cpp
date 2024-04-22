@@ -165,6 +165,12 @@ void FSIO::readLibrarySamplesFromSD(LibrarySample *librarySamples, String path) 
     sampleDir.close();
 
     _librarySamplesCount = sc;        
+
+// DEBUG
+    for (int i=0; i<sc; i++) {
+        Serial.println(_librarySamples[i].sampleFilename);
+    } 
+
 }
 
 

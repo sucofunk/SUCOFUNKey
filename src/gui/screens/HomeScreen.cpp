@@ -84,6 +84,7 @@ long HomeScreen::receiveTimerTick() {
 
 void HomeScreen::showGeneralInformation() {
     _activeComponent = NONE;
+
     Screen::Area projectTitle = {_screen->AREA_SCREEN.x1, _screen->AREA_SCREEN.y1, _screen->AREA_SCREEN.x2, _screen->AREA_SCREEN.x1 + 90, false, _screen->C_BLACK};
 
 
@@ -103,11 +104,11 @@ void HomeScreen::showGeneralInformation() {
 
     int encX[4] = {40, 120, 200, 280};
 
-/*    Screen::Area encoder1Area = {encX[0]-20, encYPos + radius + legendSpacing, encX[0]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
-    Screen::Area encoder2Area = {encX[1]-20, encYPos + radius + legendSpacing, encX[1]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
-    Screen::Area encoder3Area = {encX[2]-20, encYPos + radius + legendSpacing, encX[2]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
-    Screen::Area encoder4Area = {encX[3]-20, encYPos + radius + legendSpacing, encX[3]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
-*/
+//    Screen::Area encoder1Area = {encX[0]-20, encYPos + radius + legendSpacing, encX[0]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
+//    Screen::Area encoder2Area = {encX[1]-20, encYPos + radius + legendSpacing, encX[1]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
+//    Screen::Area encoder3Area = {encX[2]-20, encYPos + radius + legendSpacing, encX[2]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
+//    Screen::Area encoder4Area = {encX[3]-20, encYPos + radius + legendSpacing, encX[3]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
+
 
     Screen::Area text1Area = {encX[0]-20, encYPos - radius - legendSpacing - 12, encX[0]+20, encYPos - radius - legendSpacing, false, _screen->C_BLACK};
     Screen::Area text2Area = {encX[1]-20, encYPos - radius - legendSpacing - 12, encX[1]+20, encYPos - radius - legendSpacing, false, _screen->C_BLACK};
@@ -150,17 +151,18 @@ void HomeScreen::showGeneralInformation() {
     }
     
     // Text ENC 1,2,3,4
-/*    _screen->drawTextInArea(encoder1Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "ENC 1");
-    _screen->drawTextInArea(encoder2Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "ENC 2");
-    _screen->drawTextInArea(encoder3Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "ENC 3");
-    _screen->drawTextInArea(encoder4Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "ENC 4");
-*/
+//    _screen->drawTextInArea(encoder1Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "ENC 1");
+//    _screen->drawTextInArea(encoder2Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "ENC 2");
+//    _screen->drawTextInArea(encoder3Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "ENC 3");
+//    _screen->drawTextInArea(encoder4Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "ENC 4");
+
 
     // Text Sample, SKETCH, ARRANGE, PLAY
     _screen->drawTextInArea(text1Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_ORANGE, "SAMPLE");
     _screen->drawTextInArea(text2Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_ORANGE, "SKETCH");
     _screen->drawTextInArea(text3Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_ORANGE, "ARRANGE");
     _screen->drawTextInArea(text4Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_ORANGE, "PLAY");
+   
 };
 
 

@@ -252,6 +252,7 @@ void SequencerScreen::drawSample(byte channel, uint16_t position, boolean drawBa
 
 
 void SequencerScreen::drawSamples() {
+    
   SongStructure::samplePointerStruct sps;
   int xRectStart, yRectStart;
   int w = _cellWidth - 5;

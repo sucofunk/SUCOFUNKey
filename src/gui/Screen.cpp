@@ -44,6 +44,14 @@ Screen::Screen(Adafruit_ILI9341 *tft, int BL_PIN, int BL_brightness) {
 }
 #endif 
 
+#ifdef SCREEN_ILI9341_DMA
+Screen::Screen(ILI9341_t3n *tft, int BL_PIN, int BL_brightness) {
+  _tft = tft;
+  _BL_PIN = BL_PIN;
+  _BL_brightness = BL_brightness;
+}
+#endif 
+
 #ifdef SCREEN_ST7789
 Screen::Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness) {
   _tft = tft;
@@ -134,57 +142,107 @@ void Screen::drawTextInArea(Area area, TextPosition textPosition, boolean eraseF
 
   setTextSize(textSize, monoSpaced);
 
-  _tft->getTextBounds(text, 1, 100, &_dx, &_dy, &_dw, &_dh);
+  _tft->getTextBounds(text, 0, 0, &_dx, &_dy, &_dw, &_dh);
 
-  float heightManipulator = 0;
-  heightManipulator = _dh-100+_dy;
+
+/* if (textSize == TEXTSIZE_SMALL) {
+  Serial.print("dh::");
+  Serial.print(_dh);
+  Serial.print(":::dy::");
+  Serial.println(_dy);
+}
+*/
 
   int x = 0;
   int y = 0;
+
+  // offsets for different font-constellations: 
+  //   (afg) -> full with "underhanging" part
+  //   (ABC) or abc -> full, without the "underhanging" part
+  //   not in switch below, as handled via _dh (aag -> half with "underhanging" part)
+  //   (aaa -> half, no "underhanging" part)
+
+  int ydBottom = 0;
+  int ydTop = 1;
+  int ydCentered = 0;
+
+  if (textSize == TEXTSIZE_MEDIUM) {
+  // medium font
+    ydCentered = 7;
+    switch (_dh) {
+      case 14:
+        break;
+      case 11:
+        ydBottom = -3;
+        break;
+      case 8:
+        ydBottom = -3;
+        if (_dy > 0) { 
+          ydBottom = ydBottom - _dy; 
+        } 
+        break;
+      default:
+        break;
+    }
+  }
+
+  if (textSize == TEXTSIZE_SMALL) {
+  // small font
+    ydCentered = 4;
+    switch (_dh) {
+      case 9:
+        break;
+      case 7:
+        ydBottom = -2;
+        break;
+      case 5:
+        ydBottom = -2;
+        if (_dy > 0) { 
+          ydBottom = ydBottom - _dy; 
+        } 
+        break;
+      default:
+        break;
+    }
+  }
 
 
   switch (textPosition) {
         case TEXTPOSITION_HCENTER_VCENTER:
           x = static_cast<int>(area.x1+((area.x2-area.x1)/2)-(_dw/2));
-          y = static_cast<int>(area.y1+((area.y2-area.y1)/2)+(_dh/2))-2;
+          y = static_cast<int>(area.y1+((area.y2-area.y1)/2)-ydCentered+ydTop);        
           break;
         case TEXTPOSITION_LEFT_VCENTER:
           x = area.x1+1;
-          y = static_cast<int>(area.y1+((area.y2-area.y1)/2)+(_dh/2))-2;
+          y = static_cast<int>(area.y1+((area.y2-area.y1)/2)-ydCentered+ydTop);
           break;
         case TEXTPOSITION_RIGHT_VCENTER:
-          //x = static_cast<int>(area.x2-_dw-(_dx-100))-2;
           x = static_cast<int>(area.x2-_dw-(_dx-1))-2;
-          y = static_cast<int>(area.y1+((area.y2-area.y1)/2)+(_dh/2))-2;
+          y = static_cast<int>(area.y1+((area.y2-area.y1)/2)-ydCentered+ydTop);
           break;
-
         case TEXTPOSITION_HCENTER_TOP:
           x = static_cast<int>(area.x1+((area.x2-area.x1)/2)-(_dw/2));
-          y = static_cast<int>(area.y1+_dh+(heightManipulator/(heightManipulator > 2 ? -2 : 1)));          
+          y = static_cast<int>(area.y1 + ydTop);
           break;
         case TEXTPOSITION_LEFT_TOP:
           x = area.x1+1;
-          y = abs(area.y1+_dh+(heightManipulator/(heightManipulator > 2 ? -2 : 1)));
+          y = static_cast<int>(area.y1 + ydTop);
           break;
         case TEXTPOSITION_RIGHT_TOP:
-          //x = area.x2-_dw-(_dx-100)-2;
           x = area.x2-_dw-(_dx-1)-2;
-          y = area.y1+_dh+(heightManipulator/(heightManipulator > 2 ? -2 : 1));
+          y = static_cast<int>(area.y1 + ydTop);
           break;
-
         case TEXTPOSITION_HCENTER_BOTTOM:
           x = static_cast<int>(area.x1+((area.x2-area.x1)/2)-(_dw/2));
-          y = static_cast<int>(area.y2-(_dh/2))+(heightManipulator > 2 ? 1 : 0);
-                  
+          y = static_cast<int>(area.y2 -_dh + ydBottom);
           break;
         case TEXTPOSITION_LEFT_BOTTOM:
           x = area.x1+1;
-          y = static_cast<int>(area.y2-(_dh/2))+(heightManipulator > 2 ? 1 : 0);
+          y = static_cast<int>(area.y2 -_dh + ydBottom);
           break;
         case TEXTPOSITION_RIGHT_BOTTOM:
-          //x = static_cast<int>(area.x2-_dw-(_dx-100))-2;
           x = static_cast<int>(area.x2-_dw-(_dx-1))-2;
-          y = static_cast<int>(area.y2-(_dh/2))+(heightManipulator > 2 ? 1 : 0);
+          y = static_cast<int>(area.y2 -_dh + ydBottom);
           break;
         default:
           break;
@@ -253,7 +311,7 @@ void Screen::setTextSize(TextSize textSize, boolean monoSpaced) {
   switch (textSize) {
     case TEXTSIZE_SMALL:
       if (monoSpaced) {
-        // ToDo: create small font
+        // ToDo: create small font with monospacing, if needed one day.. currently it is the medium font
         _tft->setFont(&OxygenMono_Regular8pt7b);
       } else {      
         _tft->setFont(&BaiJamjuree_Medium5pt7b);
@@ -267,7 +325,7 @@ void Screen::setTextSize(TextSize textSize, boolean monoSpaced) {
       }
       break;
     case TEXTSIZE_LARGE:
-      // ToDo: create large font
+      // ToDo: create large font, if needed one day.. currently it is the medium font
       if (monoSpaced) {        
         _tft->setFont(&OxygenMono_Regular8pt7b);
       } else {      

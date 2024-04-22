@@ -53,6 +53,10 @@
     #include <Adafruit_ILI9341.h>
 #endif 
 
+#ifdef SCREEN_ILI9341_DMA
+    #include "hardware/ILI9341/ILI9341_t3n.h"
+#endif 
+
 #ifdef SCREEN_ST7789
     #include <Adafruit_ST7789.h>
 #endif
@@ -101,9 +105,13 @@ void globalTickRec();
 
 AudioResources audioResources;
 
-// Hardware SPI for LCD Screen
+// LCD Screen
 #ifdef SCREEN_ILI9341
     Adafruit_ILI9341 tft(&SPI1, PIN_SCREEN_DC, PIN_SCREEN_CS, PIN_SCREEN_RST);  
+#endif 
+
+#ifdef SCREEN_ILI9341_DMA
+    ILI9341_t3n tft(PIN_SCREEN_CS, PIN_SCREEN_DC, PIN_SCREEN_RST, PIN_SCREEN_MOSI, PIN_SCREEN_SCK, PIN_SCREEN_DC);
 #endif 
 
 #ifdef SCREEN_ST7789
@@ -115,7 +123,7 @@ AudioResources audioResources;
 Sucofunkey keyboard(PIN_SUCOKEY_INT_1, PIN_SUCOKEY_INT_2, PIN_SUCOKEY_INT_3, PIN_SUCOKEY_INT_4, PIN_SUCOKEY_INT_5);
 
 // Initializing GUI System
-Screen screen(&tft, PIN_SCREEN_BL, 110);
+Screen screen(&tft, PIN_SCREEN_BL, 255);
 
 FSIO fsio;
 // store the filenames from /SAMPLES from the SD card in this array for fast access
@@ -434,6 +442,13 @@ void setup() {
   tft.setRotation(1);  
 #endif 
 
+
+#ifdef SCREEN_ILI9341_DMA
+  tft.begin();
+  tft.setRotation(1);  
+#endif 
+
+
 #ifdef SCREEN_ST7789
   tft.init(240, 320, SPI_MODE0);
   tft.setRotation(3);
@@ -506,7 +521,7 @@ void setup() {
 
   fsio.readLibrarySamplesFromSD(librarySamples, "/SAMPLES");
 
-  delay(400); // small delay for better readability on screen
+  delay(300); // small delay for better readability on screen
   
   if (ok) {
     startupContext.transitionToSelection(); // show song collection

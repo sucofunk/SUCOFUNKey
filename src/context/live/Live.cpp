@@ -697,7 +697,6 @@ void Live::_changeState(LiveState state) {
 void Live::_playSlot(int slotIndex, byte velocity, boolean pressed, byte note) {
   Play::LiveSlotDefinitionStruct slot = _slots[slotIndex];
   Play::LiveSlotDefinitionStruct slotHold;
-  boolean success = true;
 
   if (slot.type == Play::EMPTY) return;
 
@@ -727,7 +726,7 @@ void Live::_playSlot(int slotIndex, byte velocity, boolean pressed, byte note) {
         if ((_holdSlotIndex != -1 && _holdSlotIndex != slotIndex) && _play->isSnippetPlaying(slotHold.snippet)) {
 
           if (!_play->isSnippetPlaying(slot.snippet)) {
-            success = _play->chainSnippet(slotHold.snippet, slot.snippet, slot.loopSnippet);                                
+            _play->chainSnippet(slotHold.snippet, slot.snippet, slot.loopSnippet);                                
           }
           _holdSlotAction = true;
         }

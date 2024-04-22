@@ -34,6 +34,8 @@
 #include <Arduino.h>
 #include "../hardware/Configuration.h"
 
+#include "Adafruit_GFX.h"
+
 #ifdef SCREEN_ILI9341
     #include <Adafruit_ILI9341.h>
 #endif 
@@ -42,7 +44,10 @@
     #include <Adafruit_ST7789.h>
 #endif
 
-#include "Adafruit_GFX.h"
+#ifdef SCREEN_ILI9341_DMA
+    #include "../hardware/ILI9341/ILI9341_t3n.h"
+#endif
+
 
 //#include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
 //#include <Adafruit_ILI9341.h> // Hardware specific library for ILI9341
@@ -53,6 +58,11 @@ class Screen {
 #ifdef SCREEN_ILI9341
 Screen(Adafruit_ILI9341 *tft, int BL_PIN, int BL_brightness);
 #endif 
+
+#ifdef SCREEN_ILI9341_DMA
+Screen(ILI9341_t3n *tft, int BL_PIN, int BL_brightness);
+#endif 
+
 
 #ifdef SCREEN_ST7789
 Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness);  
@@ -150,9 +160,10 @@ Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness);
         const uint16_t C_TRIM_END = RGBtoColor(80, 227, 194);       
 
         const uint16_t C_GRID_FULL_NOTE_BG = RGBtoColor(60, 60, 60);
-        const uint16_t C_GRID_DARK = RGBtoColor(60, 60, 60);
-        const uint16_t C_GRID_BRIGHT = RGBtoColor(150, 150, 150);        
-        const uint16_t C_GRID_COUNTER_FONT = RGBtoColor(150, 150, 150);
+        const uint16_t C_GRID_DARK = RGBtoColor(80, 80, 80);
+        const uint16_t C_GRID_MEDIUM = RGBtoColor(120, 120, 120);
+        const uint16_t C_GRID_BRIGHT = RGBtoColor(160, 160, 160);        
+        const uint16_t C_GRID_COUNTER_FONT = RGBtoColor(160, 160, 160);
 
         const uint16_t C_RECORDING = RGBtoColor(255, 0, 0);
 
@@ -259,6 +270,10 @@ Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness);
 
 #ifdef SCREEN_ILI9341
         Adafruit_ILI9341 *_tft;
+#endif 
+
+#ifdef SCREEN_ILI9341_DMA
+        ILI9341_t3n *_tft;
 #endif 
 
 #ifdef SCREEN_ST7789

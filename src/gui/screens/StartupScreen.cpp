@@ -80,7 +80,7 @@ void StartupScreen::transitionToSelection() {
     _screen->clearAreaLTR(_screen->AREA_SCREEN, _screen->C_STARTUP_BG, 3);
     _screen->fadeBacklightOut(1);
     _drawSongSelector();        
-    _screen->fadeBacklightIn(10);    
+    _screen->fadeBacklightIn(1);    
 }
 
 

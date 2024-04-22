@@ -50,11 +50,18 @@ void SamplerScreen::handleEvent(Sucofunkey::keyQueueStruct event) {
                 _audioResources->playSdRaw.stop();
                 _audioResources->playSdRaw.play(_fsio->getSelectedSamplePathFromSD());
             } 
+
+            if (event.index == _keyboard->SAMPLE_LIBRARY_STOP_PRELISTEN) {
+                _audioResources->playSdRaw.stop();
+                // audio needs to be stopped before accessing the SD, otherwise the teensy might reset..
+                _fsio->readLibrarySamplesFromSD(_fsio->getLibrarySamples(), "/..");
+                _keyboard->addApplicationEventToQueue(Sucofunkey::SAMPLE_LIBRARY_REDRAW);
+            } 
             
             // stop prelistening selected sample from sample library
             if ((!event.pressed && event.index == _keyboard->PLAY) || (event.pressed && event.index == _keyboard->PAUSE)) {
                 _audioResources->playSdRaw.stop();
-            } 
+            }             
 
             _sampleSelector.handleEvent(event);
             break;

@@ -90,14 +90,7 @@ void SampleSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
             break;
         case Sucofunkey::CURSOR_LEFT:
             if (event.pressed) {
-                _activeItem = 0;
-                _offset = 0;
-                // directory
-                _fsio->readLibrarySamplesFromSD(_fsio->getLibrarySamples(), "/..");
-                // set cursor to first entry in list/viewport after changing a directory
-                _activeItem = 0; 
-                _offset = 0;
-                drawSampleSelector();
+                _keyboard->addApplicationEventToQueue(Sucofunkey::SAMPLE_LIBRARY_STOP_PRELISTEN);
             }
             break;
 
@@ -117,7 +110,7 @@ void SampleSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
                         drawSampleSelector();
                     } else {                        
                         if (event.index != Sucofunkey::CURSOR_RIGHT) {
-                            // select file only with STE or ENCODER_1_PUSH
+                            // select file only with SET or ENCODER_1_PUSH
                             _fsio->setSelectedSamplePathFromSD(_offset + _activeItem);
                             _keyboard->addApplicationEventToQueue(Sucofunkey::SAMPLE_LIBRARY_SELECTED);                                                
                         }
@@ -131,6 +124,12 @@ void SampleSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
                 _keyboard->addApplicationEventToQueue(Sucofunkey::SAMPLE_LIBRARY_CANCEL);
                 _screen->fadeBacklightOut(1);
             }
+            break;
+
+        case Sucofunkey::SAMPLE_LIBRARY_REDRAW:
+                _activeItem = 0;
+                _offset = 0;
+                drawSampleSelector();            
             break;
 
         default:
