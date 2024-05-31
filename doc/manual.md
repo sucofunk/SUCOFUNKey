@@ -187,8 +187,8 @@ Shortcuts
     FUNK+LEFT       Sample Bank down
     FUNK+RIGHT      Sample Bank up
 
-    FUNK+NOTE       Pre-listen Sample at cursor position
-    FUNK+PLAY       Pre-listen to sample at cursor position
+    FUNK+NOTE       Pre-listen Sample at note key position
+    FUNK+PLAY       Pre-listen the sample at cursor position
 
     MENU+UP         Create a sheet divider before the current cursor position.
     MENU+DOWN       Removes a sheet divider at the current cursor position.
