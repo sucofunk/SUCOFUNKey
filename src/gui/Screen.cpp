@@ -87,7 +87,7 @@ void Screen::fadeBacklightOut(int delayTime) {
 void Screen::fadeBacklightIn(int delayTime) {
   for (int b=0; b<=_BL_brightness; b++) {
     analogWrite(_BL_PIN, b);
-    delay(delayTime);
+    if (b % 4 == 0) { delay(delayTime); }    
   } 
   _BL_on = true;
 }
