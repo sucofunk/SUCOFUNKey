@@ -187,9 +187,11 @@ void AudioPlayMemorySUCO::update(void)
                     if (_playFaderPitched && _keyboard->isScratchMuted()) {
                         *out++ = 0;
                         *out++ = 0;
-                    } else {
+                    } else {                        
                         *out++ = (int16_t)(tmp32 & 65535);
                         *out++ = (int16_t)(tmp32 >> 16);
+
+                        // ToDo: add values to scratch visualization buffer.. might be a bit tricky
                     }
 
                 }

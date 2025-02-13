@@ -67,9 +67,9 @@ class SupporterScreen {
 
         char _textBuffer[50];
         uint8_t _updatesCount = 0;
-        uint8_t _supporterCount = 13;
+        uint8_t _supporterCount = 15;
         uint8_t _supporterPosition = 0;
-        String _supporterText[13] = { "Thanks for your support... ", 
+        String _supporterText[15] = { "Thanks for your support... ", 
                                       "Richie Hawtin ", 
                                       "Halil Kleinmann ", 
                                       "MrKabelbruch ", 
@@ -80,6 +80,8 @@ class SupporterScreen {
                                       "Dan O\'Carrol ", 
                                       "Aare imPuls ",
                                       "Alexander Wootton ", 
+                                      "Jollan ",
+                                      "Jordi ",
                                       "www.sucofunk.com/donate ", "www.sucofunk.com/donate "};
 };
 
