@@ -61,6 +61,8 @@ class Recorder {
         void stopRecording();
         boolean isRecording();
 
+        void activateInput();
+
     private:
         Sucofunkey *_keyboard;
         Screen *_screen;
@@ -75,8 +77,6 @@ class Recorder {
 
         byte _lastInput = Sucofunkey::INPUT_NONE;
         boolean _onScreenPeak = true;
-
-        void activateInput();
 };
 
 #endif

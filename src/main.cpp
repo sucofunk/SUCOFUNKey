@@ -46,6 +46,7 @@
 #include "context/settings/Settings.h"
 #include "context/recorder/Recorder.h"
 #include "context/check/Check.h"
+#include "context/synthcopy/SynthCopy.h"
 #include <Audio.h>
 #include <MIDI.h>
 
@@ -75,7 +76,7 @@ void handleKeyboardEventQueue(void);
 void changeContext(byte context);
 
 enum AppContext {
-  HOME = 0, SAMPLER = 1, SEQUENCER = 2, SYNTH = 3, LIVE = 4, SETTINGS = 5, STARTUP = 6, RECORDER = 7, SYSTEMCHECK = 8, ARRANGE = 9
+  HOME = 0, SAMPLER = 1, SEQUENCER = 2, SYNTH = 3, LIVE = 4, SETTINGS = 5, STARTUP = 6, RECORDER = 7, SYSTEMCHECK = 8, ARRANGE = 9, SYNTHCOPY = 10
 };
 
 AppContext currentAppContext; // stores the current active "module" context (HOME|SAMPLER|...)
@@ -146,6 +147,7 @@ StartupScreen startupContext(&keyboard, &screen, &fsio, activeSongName);
 
 Check systemCheckContext(&keyboard, &screen);
 
+SynthCopy synthCopyContext(&keyboard, &screen, &fsio, &sfsio, &playContext);
 
 // --- START Audio Connections
 // unfortunately this is not initializable in the AudioResources class?!?
@@ -566,6 +568,9 @@ void sendEventToActiveContext(Sucofunkey::keyQueueStruct event) {
     case AppContext::SYSTEMCHECK:
             systemCheckContext.handleEvent(event);
             break;
+    case AppContext::SYNTHCOPY:
+            synthCopyContext.handleEvent(event);
+            break;            
     default:
             break;
   }
@@ -605,6 +610,9 @@ void sendTickToActiveContext() {
     case  AppContext::LIVE:
           globalTickIntervalNew = liveContext.receiveTimerTick();
           break;
+    case  AppContext::SYNTHCOPY:
+          globalTickIntervalNew = synthCopyContext.receiveTimerTick();
+          break;          
     default:
           break;
   }    
@@ -700,6 +708,7 @@ void changeContext(AppContext context) {
     liveContext.setActive(false);
     settingsContext.setActive(false);
     recorderContext.setActive(false);
+    synthCopyContext.setActive(false);
 
     // save to context we are currently in, to switch back to it, if e.g. RECORDER_CANCEL happens
     lastAppContext = currentAppContext;
@@ -741,7 +750,12 @@ void changeContext(AppContext context) {
                   break;                  
       case AppContext::SYSTEMCHECK:
                   systemCheckContext.setActive(true);
-                  currentAppContext = SYSTEMCHECK;                                    
+                  currentAppContext = SYSTEMCHECK;
+                  break;
+      case AppContext::SYNTHCOPY:
+                  synthCopyContext.setActive(true);
+                  currentAppContext = SYNTHCOPY;  
+                  break;
       default: 
                   break;                  
     }    
@@ -816,6 +830,10 @@ void handleKeyboardEventQueue() {
           }
           break;
 
+        case Sucofunkey::CHANGE_CONTEXT_TO_SYNTHCOPY:
+          changeContext(SYNTHCOPY);
+          break;
+
         default:
           break;
       }      
@@ -855,7 +873,7 @@ void handleKeyboardEventQueue() {
       }
     }
 
-    if (!preCheck && currentAppContext != STARTUP && currentAppContext != SYSTEMCHECK && event.type == Sucofunkey::KEY_OPERATION) {    
+    if (!preCheck && currentAppContext != STARTUP && currentAppContext != SYSTEMCHECK && (event.type == Sucofunkey::KEY_OPERATION || event.index == Sucofunkey::ROUTE_LINE_IN_THROUGH)) {    
       
       // Intention to start recording..
       if (event.index == Sucofunkey::RECORD && event.pressed) { 
@@ -867,7 +885,25 @@ void handleKeyboardEventQueue() {
           recorderContext.stopRecording();
           preCheck = true;
         }
-      } 
+      }
+
+      // change input from everywhere..
+      if ((event.index == Sucofunkey::INPUTSELECTOR || event.index == Sucofunkey::ROUTE_LINE_IN_THROUGH) && event.pressed) { 
+        if (currentAppContext == RECORDER && event.index != Sucofunkey::ROUTE_LINE_IN_THROUGH) {
+            // in record mode, all inputs are available
+            keyboard.toggleInput();
+        } 
+        else {
+            // outside of recording, only line in pass-through is allowed (prevent feedback noise from mic)
+            if (keyboard.getInput() != Sucofunkey::INPUT_NONE && event.index != Sucofunkey::ROUTE_LINE_IN_THROUGH) {
+              keyboard.setInput(Sucofunkey::INPUT_NONE);
+            } else {
+              keyboard.setInput(Sucofunkey::INPUT_LINE);
+            }            
+        }
+        recorderContext.activateInput();
+      }
+
     }
 
     if (!preCheck) {

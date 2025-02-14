@@ -28,29 +28,29 @@
 
    ---------------------------------------------------------------------------------------------- */
    
-#ifndef Home_h
-#define Home_h
+#include "SynthCopyScreen.h"
 
-#include "../../hardware/Sucofunkey.h"
-#include "../../gui/Screen.h"
-#include "../../gui/screens/HomeScreen.h"
-#include "../../gui/screens/components/BlackKeyMenu.h"
+SynthCopyScreen::SynthCopyScreen() {};
 
-class Home {
-    public:
-        Home(Sucofunkey *keyboard, Screen *screen, char *activeSongPath, char *activeSongName);
-        void setActive(boolean active);
-        void handleEvent(Sucofunkey::keyQueueStruct event);
-        long receiveTimerTick();
-    private:
-        Sucofunkey *_keyboard;
-        Screen *_screen;
-        char *_activeSongPath;
-        char *_activeSongName;
-        boolean _isActive = false;
+SynthCopyScreen::SynthCopyScreen(Sucofunkey *keyboard, Screen *screen) {
+    _keyboard = keyboard;
+    _screen = screen;    
+}
 
-        BlackKeyMenu _blackKeyMenu;
-        HomeScreen _homeScreen;        
-};
+void SynthCopyScreen::handleEvent(Sucofunkey::keyQueueStruct event) {
+    _isRunning = false;
+    _keyboard->addApplicationEventToQueue(Sucofunkey::MENU_BACK);
+}
 
-#endif
+long SynthCopyScreen::receiveTimerTick() {
+    return 15000;
+}
+
+void SynthCopyScreen::show() {
+//    _screen->fadeBacklightOut(2);
+//    _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);
+//    _screen->fadeBacklightIn(0);  
+
+    _screen->testBild("Synthkopierer");
+}
+

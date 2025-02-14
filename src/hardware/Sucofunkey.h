@@ -313,6 +313,9 @@ class Sucofunkey {
         static const int LIVE_SNIPPET_WAITING_CHAINED = 602;
         static const int LIVE_SNIPPET_CANCEL_CHAINED = 603;
 
+        static const int CHANGE_CONTEXT_TO_SYNTHCOPY = 701;
+        
+        static const int ROUTE_LINE_IN_THROUGH = 801; 
 
         // just for debugging to Serial
         void printQueue();

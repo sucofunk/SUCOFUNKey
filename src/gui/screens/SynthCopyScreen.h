@@ -28,29 +28,24 @@
 
    ---------------------------------------------------------------------------------------------- */
    
-#ifndef Home_h
-#define Home_h
+#ifndef SynthCopyScreen_h
+#define SynthCopyScreen_h
 
+#include <Arduino.h>
 #include "../../hardware/Sucofunkey.h"
-#include "../../gui/Screen.h"
-#include "../../gui/screens/HomeScreen.h"
-#include "../../gui/screens/components/BlackKeyMenu.h"
+#include "../Screen.h"
 
-class Home {
+class SynthCopyScreen {
     public:
-        Home(Sucofunkey *keyboard, Screen *screen, char *activeSongPath, char *activeSongName);
-        void setActive(boolean active);
+        SynthCopyScreen();
+        SynthCopyScreen(Sucofunkey *keyboard, Screen *screen);
         void handleEvent(Sucofunkey::keyQueueStruct event);
         long receiveTimerTick();
+        void show();        
     private:
         Sucofunkey *_keyboard;
         Screen *_screen;
-        char *_activeSongPath;
-        char *_activeSongName;
-        boolean _isActive = false;
-
-        BlackKeyMenu _blackKeyMenu;
-        HomeScreen _homeScreen;        
+        boolean _isRunning = false;
 };
 
 #endif

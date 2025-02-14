@@ -28,29 +28,40 @@
 
    ---------------------------------------------------------------------------------------------- */
    
-#ifndef Home_h
-#define Home_h
+#ifndef SynthCopy_h
+#define SynthCopy_h
 
+#include <Arduino.h>
 #include "../../hardware/Sucofunkey.h"
 #include "../../gui/Screen.h"
-#include "../../gui/screens/HomeScreen.h"
-#include "../../gui/screens/components/BlackKeyMenu.h"
+#include "../../helper/AudioResources.h"
+#include "../../helper/SampleFSIO.h"
+#include "../../helper/FSIO.h"
+#include "../../gui/screens/SynthCopyScreen.h"
+#include "../sequencer/Play.h"
 
-class Home {
+#include <MIDI.h>
+
+class SynthCopy {
     public:
-        Home(Sucofunkey *keyboard, Screen *screen, char *activeSongPath, char *activeSongName);
+        
+        SynthCopy(Sucofunkey* keyboard, Screen* screen, FSIO* fsio, SampleFSIO* sfsio, Play* play);
+
         void setActive(boolean active);
-        void handleEvent(Sucofunkey::keyQueueStruct event);
         long receiveTimerTick();
+        void handleEvent(Sucofunkey::keyQueueStruct event);
+
     private:
-        Sucofunkey *_keyboard;
-        Screen *_screen;
-        char *_activeSongPath;
-        char *_activeSongName;
+        Sucofunkey* _keyboard;
+        Screen* _screen;
+        FSIO* _fsio;
+        SampleFSIO* _sfsio;
+        Play* _play;
         boolean _isActive = false;
 
-        BlackKeyMenu _blackKeyMenu;
-        HomeScreen _homeScreen;        
+        SynthCopyScreen _synthCopyScreen;
+
+        byte _channel = 10;
 };
 
 #endif

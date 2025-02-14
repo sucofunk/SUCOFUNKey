@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -42,7 +42,7 @@ Home::Home(Sucofunkey *keyboard, Screen *screen, char *activeSongPath, char *act
     
     _blackKeyMenu = BlackKeyMenu(_keyboard, _screen);
     _blackKeyMenu.setOption(1, "SNG");  // song selector
-    _blackKeyMenu.setOption(4, "LIN");  // route line in trough
+    _blackKeyMenu.setOption(3, "SCP");  // synth copy
     _blackKeyMenu.setOption(5, "CFG");  // settings/config
     _blackKeyMenu.setOption(10, "SUP"); // supporter screen
 }
@@ -69,6 +69,11 @@ void Home::handleEvent(Sucofunkey::keyQueueStruct event) {
           case Sucofunkey::BLACKKEY_NAV_ITEM1:
             _blackKeyMenu.hideMenu();
             _homeScreen.showSongSelector();
+            break;
+
+          case Sucofunkey::BLACKKEY_NAV_ITEM3:
+            _blackKeyMenu.hideMenu();
+            _keyboard->addApplicationEventToQueue(Sucofunkey::CHANGE_CONTEXT_TO_SYNTHCOPY);            
             break;
 
           case Sucofunkey::BLACKKEY_NAV_ITEM10:

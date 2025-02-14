@@ -71,12 +71,12 @@ void Recorder::handleEvent(Sucofunkey::keyQueueStruct event) {
             }
 
             break;
-        case Sucofunkey::INPUTSELECTOR:
+/*        case Sucofunkey::INPUTSELECTOR:
             _lastInput = _keyboard->getInput();
             _keyboard->toggleInput();
             activateInput();
             break;
-
+*/
          case Sucofunkey::ZOOM:
             _onScreenPeak = !_onScreenPeak;
             if (currentState == RECORDER_RECORDING) {
