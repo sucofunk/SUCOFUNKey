@@ -398,3 +398,45 @@ char* FSIO::getSelectedSampleNameFromSD() {
 FSIO::LibrarySample * FSIO::getLibrarySamples() {
     return _librarySamples;
 };
+
+
+
+boolean FSIO::loadConfiguration(Configuration::ConfigurationValues *configurationValues) {
+    File readFile;
+    byte *bufferBlock;
+
+    if (SD.exists("/CONFIG.DAT")) {    
+        readFile = SD.open("/CONFIG.DAT", FILE_READ);
+
+        bufferBlock = (byte *) configurationValues;
+
+        for (uint16_t j=0; j<sizeof(Configuration::ConfigurationValues); j++) {
+            if (readFile.available()) {
+                *(bufferBlock + j) = readFile.read();
+            }
+        }                    
+
+        readFile.close();
+    } else {
+      return false;
+    }
+
+    return true;
+};
+
+
+boolean FSIO::saveConfiguration(Configuration::ConfigurationValues *configurationValues) {
+    File writeFile;
+    byte *bufferBlock;
+
+    if (SD.exists("/CONFIG.DAT")) { SD.remove("/CONFIG.DAT"); }
+
+    writeFile = SD.open("/CONFIG.DAT", FILE_WRITE);
+
+    bufferBlock = (byte *) configurationValues;
+    writeFile.write(bufferBlock, sizeof(Configuration::ConfigurationValues));
+
+    writeFile.close();
+
+    return true;
+};

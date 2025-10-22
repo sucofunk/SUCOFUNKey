@@ -34,6 +34,7 @@
 #include <Arduino.h>
 #include "Adafruit_MCP23017.h"
 #include <cppQueue.h> // https://github.com/SMFSW/Queue
+#include "Configuration.h"
 
 // Version 3 for SUCOFUNKey V3 (PCB Revision)
 
@@ -70,15 +71,15 @@ class Sucofunkey {
             byte  data3;
         } Key;
 
-        // ToDo: move interrupt pins to static const?
-        Sucofunkey(int intPinMCP1, int intPinMCP2, int intPinMCP3, int intPinMCP4, int intPinMCP5);
-        Sucofunkey(int intKeyPin1, int intEncPin, int intKeyPin2, int intKeyPin3);
+        Sucofunkey(Configuration *config);
         boolean hasKeyPressed();
 
         boolean hasEvents();
         keyQueueStruct getNextEvent();
         void addApplicationEventToQueue(int eventId);
         void addApplicationEventWithDataToQueue(int eventId, byte data1, byte data2, byte data3);
+        void addApplicationEventWithValueDataToQueue(int eventId, int value, byte data1, byte data2, byte data3);
+
         void setIgnoreKeys(bool state);
         void setLEDState(int led, bool state);
 
@@ -114,7 +115,7 @@ class Sucofunkey {
         static const int CURSOR_RIGHT = 64;
 
         // FN + Key -> Offset 100 + key
-        static const int FN_FUNCTION = 118;// 3 Seconds FN to go to settings
+        static const int FN_FUNCTION = 118; // hold FN for 3 Seconds 
         static const int FN_MENU = 117;
         static const int FN_SET = 116;
         static const int FN_ZOOM = 134;
@@ -307,6 +308,9 @@ class Sucofunkey {
         static const int MIDI_SEND_NOTE_OFF = 501;
         static const int MIDI_SEND_ALL_NOTE_OFF = 502;
         static const int MIDI_SEND_ALL_NOTE_OFF_ALL_CHANNELS = 503;
+        static const int MIDI_SEND_START = 504; // value = clock speed in microseconds
+        static const int MIDI_SEND_STOP = 505;
+        static const int MIDI_CHANGE_CLOCK_SPEED = 506; // value = clock speed in microseconds
 
         static const int LIVE_SNIPPET_START = 600;
         static const int LIVE_SNIPPET_STOP = 601;
@@ -314,8 +318,19 @@ class Sucofunkey {
         static const int LIVE_SNIPPET_CANCEL_CHAINED = 603;
 
         static const int CHANGE_CONTEXT_TO_SYNTHCOPY = 701;
+        static const int CHANGE_CONTEXT_TO_SETTINGS = 702;
         
-        static const int ROUTE_LINE_IN_THROUGH = 801; 
+        static const int SYNTHCOPY_START_NOTE = 720;
+        static const int SYNTHCOPY_STOP_NOTE = 721;
+        static const int SYNTHCOPY_START_RECORDING = 722;
+        static const int SYNTHCOPY_NEXT_NOTE_REQUEST = 723;
+        static const int SYNTHCOPY_STOP_RECORDING = 724;
+        static const int SYNTHCOPY_NOTE_MARKER = 725;
+
+        static const int ROUTE_LINE_IN_THROUGH = 801;
+
+        static const int TIMER_GENERAL_START = 900;
+        static const int TIMER_GENERAL_STOP = 901;        
 
         // just for debugging to Serial
         void printQueue();
@@ -338,15 +353,10 @@ class Sucofunkey {
         void setScratchMute(boolean muted);
         boolean isScratchMuted();
 
-    private:
-        // Interrupt Pins on Teensy from Sucokey
-        int _intKeyPin1;
-        int _intKeyPin2;
-        int _intKeyPin3;
-        int _intKeyPin4;
-        int _intKeyPin5;
+        Configuration* getConfig();
 
-        int _intEncPin; // todo: remove
+    private:
+        Configuration *_config;
        
         int _lastFaderReading = 0;
         int _lastFaderReadings[5] = {0, 0, 0, 0, 0};

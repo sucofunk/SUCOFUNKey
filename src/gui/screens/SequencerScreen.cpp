@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -32,7 +32,7 @@
 
 SequencerScreen::SequencerScreen(){};
 
-SequencerScreen::SequencerScreen(Sucofunkey* keyboard, Screen* screen, SampleFSIO* sfsio, AudioResources* audioResources, Zoom* zoom, Play* play, Selection* selection) {
+SequencerScreen::SequencerScreen(Sucofunkey* keyboard, Screen* screen, SampleFSIO* sfsio, AudioResources* audioResources, Zoom* zoom, Play* play, Selection* selection, Selection* selectionCopy) {
     _keyboard = keyboard;
     _screen = screen;    
     _sfsio = sfsio;
@@ -42,6 +42,7 @@ SequencerScreen::SequencerScreen(Sucofunkey* keyboard, Screen* screen, SampleFSI
     _song = _play->getSong();
     _swing = _song->getSwing();
     _selection = selection;
+    _selectionCopy = selectionCopy;
 }
 
 
@@ -149,6 +150,8 @@ void SequencerScreen::drawGrid(LastAction action) {
     if (_selection->isActive()) {
       _drawSelection();
     }
+
+    // ToDo: draw selectionCopy???
   } 
 
   drawSnippets();
@@ -162,12 +165,20 @@ void SequencerScreen::drawGridAtPosition(uint16_t position) {
 };
 
 
+boolean SequencerScreen::isPositionInViewport(uint16_t position) {
+  if (position >= _xPositionOffset && position < _xPositionOffset+(_xPositionCapacity*_zoom->getZoomlevelOffset()) && position < _song->getSongLength()) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
 
 void SequencerScreen::drawCursorAt(byte channel, uint16_t position, boolean draw) {
   // draw cursor if it is within the viewport and displayed range
   uint16_t offset;
 
-  if (position >= _xPositionOffset && position < _xPositionOffset+(_xPositionCapacity*_zoom->getZoomlevelOffset()) && position < _song->getSongLength()) {
+  if (isPositionInViewport(position)) {
     offset = static_cast<uint16_t>((position - _xPositionOffset)/_zoom->getZoomlevelOffset());
     _screen->fillRect(offset*_cellWidth+1, channel*_cellHeight+_screen->AREA_CONTENT.y1+2, _cellWidth-1, _cellHeight-1, draw ? _screen->C_CURSOR : _screen->C_BLACK);
     
@@ -657,43 +668,68 @@ void SequencerScreen::_drawSelection() {
   int height = (_selection->getNormalizedSelection().endY-_selection->getNormalizedSelection().startY+1)*_cellHeight;
   int width = ((_selection->getNormalizedSelection().endX - _selection->getNormalizedSelection().startX + _zoom->getZoomlevelOffset())/_zoom->getZoomlevelOffset())*_cellWidth;
 
+/*  Serial.println("");
+  Serial.print("_selection->getNormalizedSelection().endX = ");
+  Serial.println(_selection->getNormalizedSelection().endX);
+  Serial.print("_selection->getNormalizedSelection().startX = ");
+  Serial.println(_selection->getNormalizedSelection().startX);
+
+  Serial.println("calculation: ");
+  Serial.print(_selection->getNormalizedSelection().endX - _selection->getNormalizedSelection().startX + _zoom->getZoomlevelOffset());
+  Serial.print(" / ");
+  Serial.print(_zoom->getZoomlevelOffset());
+  Serial.print(" * ");
+  Serial.println(_cellWidth);
+  Serial.print("=");
+  Serial.println(width);
+*/
+
+  uint16_t borderColor = _screen->C_SELECTION;
+
+  if (_selection->isCopy()) {
+    borderColor = _selection->isWarning() ? _screen->C_SELECTION_COPY_WARNING : _screen->C_SELECTION_COPY;
+  } else {
+    borderColor = _selection->isWarning() ? _screen->C_SELECTION_COPY_WARNING : _screen->C_SELECTION;
+  }
+
+
   if (startIsInVP && endIsInVP) {
     // draw rect top border
-    _screen->drawFastHLine(upperLeftX, upperLeftY,  width, _screen->C_SELECTION);
+    _screen->drawFastHLine(upperLeftX, upperLeftY,  width, borderColor);
 
     // draw rect bottom border
-    _screen->drawFastHLine(upperLeftX, upperLeftY+height,  width, _screen->C_SELECTION);
+    _screen->drawFastHLine(upperLeftX, upperLeftY+height,  width, borderColor);
 
     // draw rect left border
-    _screen->drawFastVLine(upperLeftX, upperLeftY, height, _screen->C_SELECTION);
+    _screen->drawFastVLine(upperLeftX, upperLeftY, height, borderColor);
 
     // draw rect right border
-    _screen->drawFastVLine(upperLeftX+width, upperLeftY, height, _screen->C_SELECTION);
+    _screen->drawFastVLine(upperLeftX+width, upperLeftY, height, borderColor);
   }
 
   if (startIsInVP && endIsRightOfVP) {    
     // top and bottom border start to end of grid
-    _screen->drawFastHLine(upperLeftX, upperLeftY, (_xPositionCapacity*_cellWidth)-upperLeftX+1, _screen->C_SELECTION);
-    _screen->drawFastHLine(upperLeftX, upperLeftY+height, (_xPositionCapacity*_cellWidth)-upperLeftX+1, _screen->C_SELECTION);
+    _screen->drawFastHLine(upperLeftX, upperLeftY, (_xPositionCapacity*_cellWidth)-upperLeftX+1, borderColor);
+    _screen->drawFastHLine(upperLeftX, upperLeftY+height, (_xPositionCapacity*_cellWidth)-upperLeftX+1, borderColor);
 
     // draw rect left border
-    _screen->drawFastVLine(upperLeftX, upperLeftY, height, _screen->C_SELECTION);
+    _screen->drawFastVLine(upperLeftX, upperLeftY, height, borderColor);
   }
 
   if (startIsLeftOfVP && endIsInVP) {
     // top and votom from 0 to end of selection
     width = ((_selection->getNormalizedSelection().endX-_xPositionOffset)/_zoom->getZoomlevelOffset()+1)*_cellWidth;
-    _screen->drawFastHLine(0, upperLeftY,  width, _screen->C_SELECTION);
-    _screen->drawFastHLine(0, upperLeftY+height,  width, _screen->C_SELECTION);
+    _screen->drawFastHLine(0, upperLeftY,  width, borderColor);
+    _screen->drawFastHLine(0, upperLeftY+height,  width, borderColor);
 
     // right border
-    _screen->drawFastVLine(width, upperLeftY, height, _screen->C_SELECTION);    
+    _screen->drawFastVLine(width, upperLeftY, height, borderColor);    
   }
 
   if (startIsLeftOfVP && endIsRightOfVP) {
     // top and bottom from 0 to end of grid
-    _screen->drawFastHLine(0, upperLeftY, _xPositionCapacity*_cellWidth+1, _screen->C_SELECTION);
-    _screen->drawFastHLine(0, upperLeftY+height, _xPositionCapacity*_cellWidth+1, _screen->C_SELECTION);   
+    _screen->drawFastHLine(0, upperLeftY, _xPositionCapacity*_cellWidth+1, borderColor);
+    _screen->drawFastHLine(0, upperLeftY+height, _xPositionCapacity*_cellWidth+1, borderColor);   
   }
 
 }

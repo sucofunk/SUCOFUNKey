@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -694,6 +694,59 @@ boolean SongStructure::movePosition(uint8_t fromChannel, uint16_t fromPosition, 
     return copyPosition(fromChannel, fromPosition, toChannel, toPosition, true);
 };
 
+// start needs to be left of end (normalized selection)
+boolean SongStructure::copySelection(uint8_t startChannel, uint16_t startPosition, uint8_t endChannel, uint16_t endPosition,  uint8_t toStartChannel, uint16_t toStartPosition, boolean deleteAfterOperation) {
+
+    int offsetChannel = toStartChannel - startChannel;
+    int offsetPosition = toStartPosition - startPosition;
+    boolean success = true;
+
+    for (int c=startChannel; c<=endChannel; c++) {
+        for (int p=startPosition; p<=endPosition; p++) {
+            // remove element at target position, if there is something -> we are overwriting positions
+            if (isSomethingAt(c+offsetChannel, p+offsetPosition)) {
+                removePosition(c+offsetChannel, p+offsetPosition);
+            }
+
+            // copy/move element
+            if (isSomethingAt(c, p)) { 
+
+/*                    Serial.print("copy from ");
+                    Serial.print(c);
+                    Serial.print("::");
+                    Serial.print(p);
+                    Serial.print(" to ");
+                    Serial.print(c+offsetChannel);
+                    Serial.print("::");
+                    Serial.println(p+offsetPosition);
+*/
+
+                success = copyPosition(c, p, c+offsetChannel, p+offsetPosition, deleteAfterOperation);
+                
+                if (!success) {
+/*                    Serial.print("FAILED to copy from ");
+                    Serial.print(c);
+                    Serial.print("::");
+                    Serial.print(p);
+                    Serial.print(" to ");
+                    Serial.print(c+offsetChannel);
+                    Serial.print("::");
+                    Serial.println(p+offsetPosition);
+*/                    
+                    return false;
+                }                
+            };
+        }
+    }
+    
+    return true;
+};
+
+boolean SongStructure::moveSelection(uint8_t startChannel, uint16_t startPosition, uint8_t endChannel, uint16_t endPosition,  uint8_t toStartChannel, uint16_t toStartPosition) {
+    return copySelection(startChannel, startPosition, endChannel, endPosition, toStartChannel, toStartPosition, true);
+};
+
+
 
 void SongStructure::setCurrentPosition(uint8_t channel, uint16_t position, boolean initial) {
     // only retrieve new position data (which means traversing the lists), if the position changed
@@ -857,12 +910,12 @@ void SongStructure::increasePitchByOne(uint8_t channel, uint16_t position) {
     if (_currentPosition.channel == channel && _currentPosition.position == position) {
         switch(_samplePointers[_currentPosition.samplePointerIndex].type) {
             case SAMPLE:
-                if (_sampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].pitchedNote < 126) {
+                if (_sampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].pitchedNote < 100) {
                     _sampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].pitchedNote += 1;
                 }
                 break;
             case MIDINOTE:
-                if (_midiNoteBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].note < 126) {
+                if (_midiNoteBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].note < 100) {
                     _midiNoteBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].note += 1;
                 }
                 break;
@@ -881,12 +934,12 @@ void SongStructure::decreasePitchByOne(uint8_t channel, uint16_t position) {
     if (_currentPosition.channel == channel && _currentPosition.position == position) {
         switch(_samplePointers[_currentPosition.samplePointerIndex].type) {
             case SAMPLE:
-                if (_sampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].pitchedNote > 1) {
+                if (_sampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].pitchedNote > 29) {
                     _sampleBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].pitchedNote -= 1;
                 }
                 break;
             case MIDINOTE:
-                if (_midiNoteBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].note > 1) {
+                if (_midiNoteBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].note > 29) {
                     _midiNoteBucket[_samplePointers[_currentPosition.samplePointerIndex].typeIndex].note -= 1;
                 }
                 break;

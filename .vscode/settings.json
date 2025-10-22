@@ -3,6 +3,8 @@
     "cmake.configureOnOpen": false,
     "files.associations": {
         "string": "cpp",
-        "initializer_list": "cpp"
+        "initializer_list": "cpp",
+        "*.tpp": "cpp",
+        "limits": "cpp"
     }
 }

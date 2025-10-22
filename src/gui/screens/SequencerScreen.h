@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -46,7 +46,7 @@
 class SequencerScreen {
     public:
         SequencerScreen();
-        SequencerScreen(Sucofunkey* keyboard, Screen* screen, SampleFSIO* sfsio, AudioResources* audioResources, Zoom* zoom, Play* play, Selection* selection);
+        SequencerScreen(Sucofunkey* keyboard, Screen* screen, SampleFSIO* sfsio, AudioResources* audioResources, Zoom* zoom, Play* play, Selection* selection, Selection* selectionCopy);
 
         enum LastAction {
                 INIT = 0,
@@ -63,12 +63,14 @@ class SequencerScreen {
                 SELECTION = 11,
                 SNIPPET_DELETE = 12,
                 SHEET_ADDED = 13,
-                SHEET_REMOVED = 14
+                SHEET_REMOVED = 14,
+                SELECTION_COPY = 15
         };
 
         void initializeGrid(SongStructure *pattern, uint16_t cursorPosition);         
         void drawGrid(LastAction action);
         void drawGridAtPosition(uint16_t position);
+        boolean isPositionInViewport(uint16_t position);
         void drawCursorAt(byte channel, uint16_t position, boolean draw);
         void drawSample(byte channel, uint16_t position, boolean drawBackground);
         void drawSamples();
@@ -102,6 +104,8 @@ class SequencerScreen {
 
         Zoom* _zoom;
         Selection* _selection;
+        Selection* _selectionCopy;
+        Selection* _drawableSelection;
 
         Play* _play;
 

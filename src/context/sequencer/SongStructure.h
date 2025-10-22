@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -107,6 +107,9 @@ class SongStructure {
 
         boolean copyPosition(uint8_t fromChannel, uint16_t fromPosition, uint8_t toChannel, uint16_t toPosition, boolean deleteAfterOperation);
         boolean movePosition(uint8_t fromChannel, uint16_t fromPosition, uint8_t toChannel, uint16_t toPosition);
+
+        boolean copySelection(uint8_t startChannel, uint16_t startPosition, uint8_t endChannel, uint16_t endPosition,  uint8_t toStartChannel, uint16_t toStartPosition, boolean deleteAfterOperation);
+        boolean moveSelection(uint8_t startChannel, uint16_t startPosition, uint8_t endChannel, uint16_t endPosition,  uint8_t toStartChannel, uint16_t toStartPosition);
 
         void setCurrentPosition(uint8_t channel, uint16_t position, boolean initial);
 

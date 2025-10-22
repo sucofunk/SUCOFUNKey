@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -68,7 +68,9 @@ class Sequencer {
             CONFIRM_CLS = 3,
             SELECTION = 4,
             SELECT_SNIPPET_SLOT = 5,
-            SNIPPET_WAIT_DELETE = 6
+            SNIPPET_WAIT_DELETE = 6,
+            MOVE_SELECTION = 7,
+            DOUBLE_SELECTION = 8
         };
 
         enum Direction {
@@ -125,6 +127,7 @@ class Sequencer {
         PianoKeyboard _pianoKeyboard;
 
         Selection _selection;
+        Selection _selectionCopy;
 
         boolean _isActive = false;
         byte _activeBank = 1;
@@ -165,6 +168,8 @@ class Sequencer {
         void _jumpToPreviousSheet();
         void _jumpToNextSheet();
         void _jumpToPosition(uint16_t position);
+        void _initializeSelectionAction(SequencerState actionState);
+        boolean _isSelectionEmpty(Selection* testSelection);
 };
 
 #endif

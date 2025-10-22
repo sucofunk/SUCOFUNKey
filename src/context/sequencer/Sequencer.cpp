@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -53,6 +53,8 @@ Sequencer::Sequencer(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSI
     zoom = Zoom();
     
     _selection = Selection();
+    _selectionCopy = Selection();
+    _selectionCopy.setSelectionAsCopy(true);
 
     _blackKeyMenu = BlackKeyMenu(_keyboard, _screen);
     _blackKeyMenu.setOption(1, "SEL");
@@ -74,7 +76,7 @@ Sequencer::Sequencer(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSI
     _song = _play->getSong();
     _snippets = _play->getSnippets();
 
-    _sequencerScreen = SequencerScreen(_keyboard, _screen, _sfsio, _audioResources, &zoom, _play, &_selection);
+    _sequencerScreen = SequencerScreen(_keyboard, _screen, _sfsio, _audioResources, &zoom, _play, &_selection, &_selectionCopy);
     
     _playbackTickSpeed = _play->calculatePlaybackTickSpeed(); // microseconds interval to receive Ticks
 }
@@ -129,8 +131,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
       switch(event.index) {
         // move cursor
         case Sucofunkey::CURSOR_LEFT: 
-                moveCursor(LEFT);
-                
+                moveCursor(LEFT);                
               break;
         case Sucofunkey::MENU_CURSOR_LEFT: 
                 _jumpToPreviousSheet();
@@ -220,10 +221,10 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               if (_selection.isActive()) {
                 playSelection();
               } else {
-                if (_currentSequencerState == SNIPPET_WAIT_DELETE) {                  
+                if (_currentSequencerState == SNIPPET_WAIT_DELETE) { 
                   playSnippet(_snippets->cursorInSnippet(_cursorPosition, _cursorChannel));
                 } else {
-                  playSong();
+                  playSong();                      
                 }                
               }
                             
@@ -267,7 +268,8 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
         // set pitch from fader          
         case Sucofunkey::ENCODER_3_PUSH:
             if (_song->getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE) {
-                _song->setPitchByMidiNote(_cursorChannel, _cursorPosition, static_cast<byte>(_keyboard->getFaderValue(35, 85)));                
+                _song->setPitchByMidiNote(_cursorChannel, _cursorPosition, static_cast<byte>(_keyboard->getFaderValue(29, 100)));  // F .. E playable on 3 * 2 octave banks
+                // was: getFaderValue(35, 85)
                 _sequencerScreen.updateSampleInfoPitch(_cursorChannel, _cursorPosition);
 
                 if (!_isPlaying) { _play->playMixedSample(_cursorChannel, _cursorPosition, -1); }
@@ -410,6 +412,9 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               _song->setPlayBackSpeed(_song->getPlayBackSpeed() + (event.pressed ? 0.5 : -0.5));
               _playbackTickSpeed = _play->calculatePlaybackTickSpeed();
               _sequencerScreen.drawBPM(_song->getPlayBackSpeed());
+
+              // change MIDI clock speed, too
+              _keyboard->addApplicationEventWithValueDataToQueue(Sucofunkey::MIDI_CHANGE_CLOCK_SPEED, _play->bpmToMicroseconds(_song->getPlayBackSpeed(), 24), 0, 0, 0);
             } else {
               // was: move cursor on channels -> useless?
               // moveCursor(event.pressed ? DOWN : UP);
@@ -448,7 +453,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
                 _sequencerScreen.initializeGrid(_song, _cursorPosition);                
                 _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
               } else {
-                // ToD: max or min song length is reached.. inform user or leave it as it is???
+                // ToDo: max or min song length is reached.. inform user or leave it as it is???
               }   
             }         
           break;
@@ -468,6 +473,9 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
               _song->setPlayBackSpeed(_song->getPlayBackSpeed() + (event.pressed ? 0.5 : -0.5));
               _playbackTickSpeed = _play->calculatePlaybackTickSpeed();
               _sequencerScreen.drawBPM(_song->getPlayBackSpeed());
+
+              // change MIDI clock speed, too
+              _keyboard->addApplicationEventWithValueDataToQueue(Sucofunkey::MIDI_CHANGE_CLOCK_SPEED, _play->bpmToMicroseconds(_song->getPlayBackSpeed(), 24), 0, 0, 0);
             }
             break;
           case Sucofunkey::ENCODER_2:
@@ -531,11 +539,19 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
           break;
         // Move a cell MOV
         case Sucofunkey::BLACKKEY_NAV_ITEM2:
-              setSequencerState(MOVE_CELL);
+              if (_selection.isActive()) {
+                setSequencerState(MOVE_SELECTION);
+              } else {
+                setSequencerState(MOVE_CELL);
+              }
           break;      
         // Duplicate (Copy & Paste) a cell  DBL
         case Sucofunkey::BLACKKEY_NAV_ITEM3:
-              setSequencerState(DOUBLE_CELL);
+              if (_selection.isActive()) {
+                setSequencerState(DOUBLE_SELECTION);
+              } else {
+                setSequencerState(DOUBLE_CELL);
+              }
           break;
         // Snippets  SNI
         case Sucofunkey::BLACKKEY_NAV_ITEM4:
@@ -603,7 +619,7 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
             setSequencerState(SELECTION); // to deselect the selection..
           } else {
             // CLS -> deletes all notes from song
-            // ToDo: Maybe display a confirmation/warning/notification message
+            // ToDo: display a confirmation/warning/notification message
             setSequencerState(CONFIRM_CLS); 
           }          
           break;                    
@@ -616,45 +632,156 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
 
 
 void Sequencer::moveCursor(Direction direction) {
-  _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, false);
-  _keyboardMode = false;
-
   byte zoomlevelOffset = zoom.getZoomlevelOffset();
+  int mf = 0; // move "factor" for selection movements
 
-  switch(direction) {
-    case UP:  _cursorChannel = _cursorChannel > 0 ? _cursorChannel-1 : 0;
-              break;
-    case DOWN:
-              _cursorChannel = _cursorChannel < 7 ? _cursorChannel+1 : 7;
-              break;
-    case LEFT:
-              _cursorPosition = _cursorPosition >= zoomlevelOffset ? _cursorPosition-zoomlevelOffset : 0;
-              if (_sequencerScreen.viewportCheckUpdate(_cursorChannel, _cursorPosition, _sequencerScreen.LEFT)) _sequencerScreen.drawGrid(_sequencerScreen.LEFT);
-              break;
-    case RIGHT:
-              _cursorPosition = _cursorPosition < _song->getSongLength()-zoomlevelOffset ? _cursorPosition+zoomlevelOffset : _song->getSongLength()-zoomlevelOffset;
-              if (_sequencerScreen.viewportCheckUpdate(_cursorChannel, _cursorPosition, _sequencerScreen.RIGHT)) _sequencerScreen.drawGrid(_sequencerScreen.RIGHT);
-              break;          
-    default:
-              break;
-  }
+  // move selection around ...
 
-  _song->setCurrentPosition(_cursorChannel, _cursorPosition, false);
-  _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+  if (_currentSequencerState == DOUBLE_SELECTION || _currentSequencerState == MOVE_SELECTION) {
+    _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, false);
 
-  // are we creating a selection? change end position
-  if (_selection.isActive()) {
-    _selection.setEnd(_cursorPosition + zoom.getZoomlevelOffset()-1, _cursorChannel);
+    switch(direction) {
+      case UP:          
+          if (_selectionCopy.getNormalizedSelection().startY > 0) {
+            _selectionCopy.shiftUP(1);
+          }; 
+        break;
+      case DOWN:
+          if (_selectionCopy.getNormalizedSelection().endY < 7) {
+            _selectionCopy.shiftDOWN(1);
+          }; 
+        break;
+      case LEFT:
+            mf = _selectionCopy.getNormalizedSelection().startX >= zoomlevelOffset ? zoomlevelOffset : 0;
+            _selectionCopy.shiftLEFT(mf);
+        break;
+      case RIGHT:                                                                         
+            mf = _selectionCopy.getNormalizedSelection().endX < _song->getSongLength()-zoomlevelOffset ? zoomlevelOffset : 0;            
+            _selectionCopy.shiftRIGHT(mf);
+        break;
+      default:
+        break;
+    }
+
+    // Update cursor position
+    _cursorChannel = _selectionCopy.getNormalizedSelection().startY;
+    _cursorPosition = _selectionCopy.getNormalizedSelection().startX;
+
+    // check if grid needs to be redrawn when moving outside of the grid
+    if (direction == LEFT) {
+      if (_sequencerScreen.viewportCheckUpdate(_cursorChannel, _cursorPosition, _sequencerScreen.LEFT)) _sequencerScreen.drawGrid(_sequencerScreen.LEFT);
+    } else {
+      if (direction == RIGHT) {  
+        if (_sequencerScreen.viewportCheckUpdate(_cursorChannel, _cursorPosition, _sequencerScreen.RIGHT)) _sequencerScreen.drawGrid(_sequencerScreen.RIGHT);
+      }
+    }
+
+    // show frame of selection as warning, if there is an elemnt below that might be overwritten
+    _selectionCopy.setWarning(!_isSelectionEmpty(&_selectionCopy));
 
     // draw frame of selection
-    _sequencerScreen.drawSelection(&_selection);
-  }
+    _selectionCopy.setSelectionActive(true);
+    _sequencerScreen.drawSelection(&_selectionCopy);
 
-  // cancel SNI (Snippet delete) mode
-  if (_currentSequencerState == SNIPPET_WAIT_DELETE) {
-    setSequencerState(NORMAL);
+    _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+
+  } else { // ... move cursor around
+    _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, false);
+    _keyboardMode = false;
+
+
+    switch(direction) {
+      case UP:  _cursorChannel = _cursorChannel > 0 ? _cursorChannel-1 : 0;
+                break;
+      case DOWN:
+                _cursorChannel = _cursorChannel < 7 ? _cursorChannel+1 : 7;
+                break;
+      case LEFT:
+                _cursorPosition = _cursorPosition >= zoomlevelOffset ? _cursorPosition-zoomlevelOffset : 0;
+                if (_sequencerScreen.viewportCheckUpdate(_cursorChannel, _cursorPosition, _sequencerScreen.LEFT)) _sequencerScreen.drawGrid(_sequencerScreen.LEFT);
+                break;
+      case RIGHT:
+                _cursorPosition = _cursorPosition < _song->getSongLength()-zoomlevelOffset ? _cursorPosition+zoomlevelOffset : _song->getSongLength()-zoomlevelOffset;
+                if (_sequencerScreen.viewportCheckUpdate(_cursorChannel, _cursorPosition, _sequencerScreen.RIGHT)) _sequencerScreen.drawGrid(_sequencerScreen.RIGHT);
+                break;          
+      default:
+                break;
+    }
+
+
+    _song->setCurrentPosition(_cursorChannel, _cursorPosition, false);
+    _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+
+    // are we creating a selection? change end position
+    if (_selection.isActive()) {
+
+      // re-create selection with new cursor position, changing the end, when selection moves from right to left over starting point
+      //                      START(8) & END(11)
+      // | 0 1 2 3 | 4 5 6 7 | 8 9 10 11 | 12 13 14 15 |
+      //                       ^      ^
+      // left        ^                ^
+      //              END(4)   START(11) !!!
+      
+
+      // if cursor < start -> start = start + offset-1
+      // if cursor > start -> end = cursor
+
+      //_selection.printSelection();
+
+      if (zoom.getZoomlevelOffset() > 1) {
+
+        if (direction == LEFT) {
+          if (_cursorPosition < _selection.getSelection().startX && _selection.getSelection().startX < _selection.getSelection().endX ) { // normal selection and cursor move left from current start
+            _selection.setEnd(_cursorPosition, _cursorChannel);
+            _selection.setStart(_selection.getSelection().startX + zoom.getZoomlevelOffset()-1, _selection.getSelection().startY); // start is at end of cell
+          } else {
+            // ==
+            // >
+            if (_cursorPosition < _selection.getSelection().startX) {            
+              _selection.setEnd(_cursorPosition, _cursorChannel);
+            } else {
+              _selection.setEnd(_cursorPosition + zoom.getZoomlevelOffset()-1, _cursorChannel);
+            }
+          }
+        } 
+        
+        if (direction == RIGHT) {
+          if (_cursorPosition > _selection.getSelection().startX && _selection.getSelection().endX < _selection.getSelection().startX ) { // normal selection and cursor move left from current start
+            _selection.setEnd(_cursorPosition + zoom.getZoomlevelOffset()-1, _cursorChannel);
+            _selection.setStart(_selection.getSelection().startX - (zoom.getZoomlevelOffset()-1), _selection.getSelection().startY); // back to start of cell
+          } else {
+            // ==
+            // >
+            if (_cursorPosition < _selection.getSelection().startX) {
+              _selection.setEnd(_cursorPosition, _cursorChannel);
+            } else {
+              _selection.setEnd(_cursorPosition + zoom.getZoomlevelOffset()-1, _cursorChannel);
+            }            
+          }
+        }
+
+        if (direction == UP || direction == DOWN) {
+          _selection.setEnd(_selection.getSelection().endX, _cursorChannel);
+        }
+
+      } else {
+        // lowest level, no shifting needed
+        _selection.setEnd(_cursorPosition, _cursorChannel);
+      }
+
+      //_selection.printSelection();
+
+      // draw frame of selection
+      _sequencerScreen.drawSelection(&_selection);
+    }
+
+    // cancel SNI (Snippet delete) mode
+    if (_currentSequencerState == SNIPPET_WAIT_DELETE) {
+      setSequencerState(NORMAL);
+    }
   }
 };
+
 
 
 boolean Sequencer::setMenuState(MenuState state) {
@@ -728,6 +855,43 @@ void Sequencer::setSequencerState(SequencerState state) {
           _blackKeyMenu.setExclusiveAction(2, false);
           _currentSequencerState = NORMAL;
           break;
+      
+      case MOVE_SELECTION:                  
+        // checking, if selection will be moved to an empty area
+        if (!_selectionCopy.isWarning()) {
+          _song->moveSelection(_selection.getNormalizedSelection().startY, _selection.getNormalizedSelection().startX, _selection.getNormalizedSelection().endY, _selection.getNormalizedSelection().endX, _selectionCopy.getNormalizedSelection().startY, _selectionCopy.getNormalizedSelection().startX);
+
+          _blackKeyMenu.setExclusiveAction(1, false);
+          _blackKeyMenu.setExclusiveAction(2, false);
+          _selection.setSelectionActive(false);
+          _selectionCopy.setSelectionActive(false);
+          _currentSequencerState = NORMAL;
+
+          // hide selectionCopy frame
+          _sequencerScreen.drawGrid(SequencerScreen::LastAction::INIT);
+          //_sequencerScreen.drawSelection(&_selectionCopy);
+          _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+        }
+        break;
+
+      case DOUBLE_SELECTION:
+        // checking, if selection will be moved to an empty area
+        if (!_selectionCopy.isWarning()) {
+          _song->copySelection(_selection.getNormalizedSelection().startY, _selection.getNormalizedSelection().startX, _selection.getNormalizedSelection().endY, _selection.getNormalizedSelection().endX, _selectionCopy.getNormalizedSelection().startY, _selectionCopy.getNormalizedSelection().startX, false);        
+
+          _blackKeyMenu.setExclusiveAction(1, false);        
+          _blackKeyMenu.setExclusiveAction(3, false);
+          _selection.setSelectionActive(false);
+          _selectionCopy.setSelectionActive(false);
+          _currentSequencerState = NORMAL;
+
+          // hide selectionCopy frame
+          _sequencerScreen.drawGrid(SequencerScreen::LastAction::INIT);
+          //_sequencerScreen.drawSelection(&_selectionCopy);
+          _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+        }
+        break;    
+
       case DOUBLE_CELL:
           // drop it...
           if (_savedCursorEqualsCurrent()) {
@@ -828,14 +992,25 @@ void Sequencer::setSequencerState(SequencerState state) {
 
       case SELECTION:
         _blackKeyMenu.setExclusiveAction(1, true);  
-        _blackKeyMenu.allowAdditionalToExclusive(4); // allow saving selection as snippet
-        _blackKeyMenu.allowAdditionalToExclusive(10); // allow clearing the selection
+        _blackKeyMenu.allowAdditionalToExclusive(2); // allow moving selection around (MOV)
+        _blackKeyMenu.allowAdditionalToExclusive(3); // allow copy&pasting selection (DBL)
+        _blackKeyMenu.allowAdditionalToExclusive(4); // allow saving selection as snippet (SNI)
+        _blackKeyMenu.allowAdditionalToExclusive(10); // allow clearing the selection (CLS)
         _selection.setStart(_cursorPosition, _cursorChannel);
         _selection.setEnd(_cursorPosition + zoom.getZoomlevelOffset()-1, _cursorChannel);
         _selection.setSelectionActive(true);
         _currentSequencerState = SELECTION;        
         _sequencerScreen.drawSelection(&_selection);
         break;
+
+      case MOVE_SELECTION:
+          _initializeSelectionAction(MOVE_SELECTION);
+        break;  
+
+      case DOUBLE_SELECTION:
+          _initializeSelectionAction(DOUBLE_SELECTION);
+        break;  
+
 
       case SELECT_SNIPPET_SLOT:
         _blackKeyMenu.setExclusiveAction(4, true);
@@ -925,6 +1100,10 @@ void Sequencer::playSong() {
 
     _sequencerScreen.drawPlayStepIndicator(_playerPosition, false); 
     _keyboard->setLEDState(Sucofunkey::LED_PLAY, false);
+
+    // send MIDI stop
+    _keyboard->addApplicationEventToQueue(Sucofunkey::MIDI_SEND_STOP);
+
     // autosave
     saveToSD();
   } else {
@@ -938,6 +1117,9 @@ void Sequencer::playSong() {
       _playerPosition = 0;
       _blinkPosition = 0;
     }
+   
+    // send midi start with clock speed
+    _keyboard->addApplicationEventWithValueDataToQueue(Sucofunkey::MIDI_SEND_START, _play->bpmToMicroseconds(_song->getPlayBackSpeed(), 24), 0, 0, 0);
   }
 }
 
@@ -955,6 +1137,9 @@ void Sequencer::stopSong() {
   _nextPlayStartAtSheet = false;
   _playerPosition = 0;
   _isSnippetPlaying = false;
+
+  // send MIDI stop
+  _keyboard->addApplicationEventToQueue(Sucofunkey::MIDI_SEND_STOP);
 }
 
 
@@ -1124,4 +1309,61 @@ void Sequencer::_jumpToPosition(uint16_t position) {
   _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
 }
 
+
+
+
+void Sequencer::_initializeSelectionAction(SequencerState actionState) {
+  // hide cursor
+  _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, false);
+
+  _selectionCopy.setStart(_selection.getNormalizedSelection().startX, _selection.getNormalizedSelection().startY);
+  _selectionCopy.setEnd(_selection.getNormalizedSelection().endX, _selection.getNormalizedSelection().endY);
+  _selectionCopy.setSelectionAsCopy(true);
+  _selectionCopy.setSelectionActive(true);
+  _selectionCopy.setWarning(true);
+
+  _cursorChannel = _selection.getNormalizedSelection().startY;
+  _cursorPosition = _selection.getNormalizedSelection().startX;
+
+  _saveCurrentCursorPosition();
+
+  // draw selectionCopy to indicate that the movement started
+  if (!(_sequencerScreen.isPositionInViewport(_selectionCopy.getNormalizedSelection().startX) && (_sequencerScreen.isPositionInViewport(_selectionCopy.getNormalizedSelection().startX)))) {
+    _sequencerScreen.drawGridAtPosition(_cursorPosition);
+  }                  
+
+  _sequencerScreen.drawSelection(&_selectionCopy);
+  _sequencerScreen.drawCursorAt(_cursorChannel, _cursorPosition, true);
+
+  // set focus to cursor to have correct grid movement when reaching grid boundaries
+  if (actionState == MOVE_SELECTION) {
+    _blackKeyMenu.setExclusiveAction(2, true);
+  }
+  
+  if (actionState == DOUBLE_SELECTION) {
+    _blackKeyMenu.setExclusiveAction(3, true);
+  }
+
+  _blackKeyMenu.disableExceptions();
+
+  _currentSequencerState = actionState;
+};
+
+// Test if the area of the grid below the selection is empty (for copy/move)
+boolean Sequencer::_isSelectionEmpty(Selection* testSelection) {
+  for (int c=testSelection->getNormalizedSelection().startY; c<=testSelection->getNormalizedSelection().endY; c++) {
+    for (int p=testSelection->getNormalizedSelection().startX; p<=testSelection->getNormalizedSelection().endX; p++) {
+      if (_song->isSomethingAt(c, p)) { 
+/*        Serial.print("Testing Position ");
+        Serial.print(c);
+        Serial.print("::");
+        Serial.print(p);
+        Serial.print(" --> element available");
+*/        
+        return false; 
+      };
+    }              
+  }
+  return true;
+};
 

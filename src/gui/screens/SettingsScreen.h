@@ -28,35 +28,27 @@
 
    ---------------------------------------------------------------------------------------------- */
    
-#ifndef Settings_h
-#define Settings_h
+   #ifndef SettingsScreen_h
+   #define SetingsScreen_h
+   
+   #include <Arduino.h>
+   #include "../../hardware/Sucofunkey.h"
+   #include "../Screen.h"
 
-#include "../../hardware/Sucofunkey.h"
-#include "../../gui/Screen.h"
-#include "../../helper/FSIO.h"
-#include "../../gui/screens/SettingsScreen.h"
+   
+   class SettingsScreen {
+       public:
+            SettingsScreen(){};
+            SettingsScreen(Sucofunkey* keyboard, Screen* screen);
+  
+            void initSettingsScreen();
+            void drawOption(int position1, char *label, int value, Configuration::ValueType valueType, boolean active);
 
-class Settings {
-    public:
-        Settings(Sucofunkey *keyboard, Screen *screen, FSIO* fsio);
-        void setActive(boolean active);
-        void handleEvent(Sucofunkey::keyQueueStruct event);
-
-    private:
-        Sucofunkey *_keyboard;
-        Screen *_screen;
-        FSIO* _fsio;
-        SettingsScreen _settingsScreen;
-        boolean _isActive = false;
-        byte _activeBank = 1;
-        int _activeOption = 1; // 1..n
-        int _optionsCount = 4;        
-
-        void _drawAllOptions();
-        void _updateOption(int position1, boolean active); // trigger drawing an option
-        void _changeOptionValue(boolean increase); // increase = true (cursor right), decrease = false (cursor left) for _activeOption
-        void _changeMidiChannel(int *value, boolean increase); // increase = true (cursor right), decrease = false (cursor left)
-        void _toggleTrueFalse(bool *value); // for _activeOption
-};
-
-#endif
+       private:
+           Sucofunkey *_keyboard;
+           Screen *_screen;
+           char _vC[4];
+   };
+   
+   #endif
+   

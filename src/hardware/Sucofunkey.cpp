@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2024 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -45,13 +45,8 @@ static volatile bool _encoderInterrupt = false;
 
 cppQueue keyQueue(sizeof(Sucofunkey::Key), 42, FIFO);
 
-
-Sucofunkey::Sucofunkey(int intPinMCP1, int intPinMCP2, int intPinMCP3, int intPinMCP4, int intPinMCP5) {
-  _intKeyPin1 = intPinMCP1;
-  _intKeyPin2 = intPinMCP2;
-  _intKeyPin3 = intPinMCP3;
-  _intKeyPin4 = intPinMCP4;
-  _intKeyPin5 = intPinMCP5;
+Sucofunkey::Sucofunkey(Configuration *config) {
+  _config = config;
 
   // set Fader LED PIN
   pinMode(faderLEDPin, OUTPUT);
@@ -66,11 +61,11 @@ Sucofunkey::Sucofunkey(int intPinMCP1, int intPinMCP2, int intPinMCP3, int intPi
   // needs to be true to e.g. not change menu context while recording
   _ignoreKeys = false;
 
-  pinMode(_intKeyPin1, INPUT_PULLUP);
-  pinMode(_intKeyPin2, INPUT_PULLUP);
-  pinMode(_intKeyPin3, INPUT_PULLUP);
-  pinMode(_intKeyPin4, INPUT_PULLUP);
-  pinMode(_intKeyPin5, INPUT_PULLUP);
+  pinMode(PIN_SUCOKEY_INT_1, INPUT_PULLUP);
+  pinMode(PIN_SUCOKEY_INT_2, INPUT_PULLUP);
+  pinMode(PIN_SUCOKEY_INT_3, INPUT_PULLUP);
+  pinMode(PIN_SUCOKEY_INT_4, INPUT_PULLUP);
+  pinMode(PIN_SUCOKEY_INT_5, INPUT_PULLUP);
 
   _setupInterrupts();    
 
@@ -178,11 +173,11 @@ Sucofunkey::Sucofunkey(int intPinMCP1, int intPinMCP2, int intPinMCP3, int intPi
 
 
 void Sucofunkey::_setupInterrupts() {
-   attachInterrupt(digitalPinToInterrupt(_intKeyPin1), _intCallBack1, FALLING);
-   attachInterrupt(digitalPinToInterrupt(_intKeyPin2), _intCallBack2, FALLING);
-   attachInterrupt(digitalPinToInterrupt(_intKeyPin3), _intCallBack3, FALLING);
-   attachInterrupt(digitalPinToInterrupt(_intKeyPin4), _intCallBack4, FALLING);
-   attachInterrupt(digitalPinToInterrupt(_intKeyPin5), _intCallBack5, FALLING);
+   attachInterrupt(digitalPinToInterrupt(PIN_SUCOKEY_INT_1), _intCallBack1, FALLING);
+   attachInterrupt(digitalPinToInterrupt(PIN_SUCOKEY_INT_2), _intCallBack2, FALLING);
+   attachInterrupt(digitalPinToInterrupt(PIN_SUCOKEY_INT_3), _intCallBack3, FALLING);
+   attachInterrupt(digitalPinToInterrupt(PIN_SUCOKEY_INT_4), _intCallBack4, FALLING);
+   attachInterrupt(digitalPinToInterrupt(PIN_SUCOKEY_INT_5), _intCallBack5, FALLING);
 }
 
 void Sucofunkey::_intCallBack1() {
@@ -305,7 +300,7 @@ void Sucofunkey::_mcpKeysPressedToQueueEvents(uint16_t mcpValuesCurrent, uint16_
             _fnKeyInterrupted = false;
             sendKey = false;
           } else {
-            // Fuction key pressed for at least 3 seconds? send event FN_FUNCTION -> FUNCTION + 100
+            // Function key pressed for at least 3 seconds? send event FN_FUNCTION -> FUNCTION + 100
             if (_fnKeyHold && !_fnKeyInterrupted && (millis() - _fnKeyMillis >= 3000)) {
               offset = 100;
               keyStatus = true;
@@ -333,12 +328,12 @@ void Sucofunkey::_mcpKeysPressedToQueueEvents(uint16_t mcpValuesCurrent, uint16_
             _menuKeyInterrupted = false;
             sendKey = false;
           } else {
-            // Fuction key pressed for at least 3 seconds? send event FN_FUNCTION -> FUNCTION + 100
+            // Menu key pressed for at least 3 seconds? send event FN_FUNCTION -> FUNCTION + 100
             if (_menuKeyHold && !_menuKeyInterrupted && (millis() - _menuKeyMillis >= 3000)) {
               offset = 200;
               keyStatus = true;
             } else {
-              // function key pressed and released within 1 second, send function key to queue
+              // menu key pressed and released within 1 second, send menu key to queue
               if (_menuKeyHold && !_menuKeyInterrupted && (millis() - _menuKeyMillis < 1500)) {
                 keyStatus = true;
               } else {
@@ -492,6 +487,10 @@ void Sucofunkey::addApplicationEventWithDataToQueue(int eventId, byte data1, byt
   keyQueue.push(&k);
 }
 
+void Sucofunkey::addApplicationEventWithValueDataToQueue(int eventId, int value, byte data1, byte data2, byte data3) {
+  keyQueueStruct k = { eventId, true, false, EVENT_APPLICATION, value, data1, data2, data3};
+  keyQueue.push(&k);  
+};
 
 // -------------------------------------------------------------------------------------------------
 // Keys may be ignored, if a Function is needing full attention e.g. recording
@@ -820,4 +819,8 @@ void Sucofunkey::setScratchMute(boolean muted) {
 
 boolean Sucofunkey::isScratchMuted() {
   return _scratchMute;
+}
+
+Configuration* Sucofunkey::getConfig() {
+  return _config;
 }

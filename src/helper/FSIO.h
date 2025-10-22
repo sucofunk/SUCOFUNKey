@@ -34,6 +34,7 @@
 #include <Arduino.h>
 #include <SD.h>
 #include <string.h>
+#include "../hardware/Configuration.h"
 
 class FSIO {
 
@@ -64,6 +65,10 @@ class FSIO {
         char * getSelectedSampleNameFromSD();
 
         LibrarySample * getLibrarySamples();
+
+        // loading and saving configuration from/to SD card (per Song)
+        boolean loadConfiguration(Configuration::ConfigurationValues *configurationValues);
+        boolean saveConfiguration(Configuration::ConfigurationValues *configurationValues);
 
     private:
         char _selectedSamplePathFromSD[1024];

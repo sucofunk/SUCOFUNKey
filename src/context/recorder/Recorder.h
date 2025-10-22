@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -50,7 +50,11 @@ class Recorder {
         {
             RECORDER_NOTHING = 0,
             RECORDER_RECORDING = 1,
-            RECORDER_WAITPEAK = 2
+            RECORDER_WAIT_PEAK = 2,
+            RECORDER_MULTISAMPLE_RECORDING = 3,
+            RECORDER_MULTISAMPLE_WAIT_PEAK = 4,
+            RECORDER_MULTISAMPLE_WAIT_END = 5,
+            ADJUSTING_SILENCE_TRESHOLD = 6
         };        
 
         RecorderState currentState = RECORDER_NOTHING;
@@ -61,7 +65,16 @@ class Recorder {
         void stopRecording();
         boolean isRecording();
 
+        //void pauseRecording();
+        //boolean isPaused();
+
         void activateInput();
+
+        void setMultiSampleTresholdMode(boolean multisample);
+        void setMultiSampleTreshold(int lengthBelowTreshold, float treshold);
+        boolean isMultiSampleTresholdMode();
+        
+        void adjustSilenceTreshold();
 
     private:
         Sucofunkey *_keyboard;
@@ -71,12 +84,25 @@ class Recorder {
         AudioResources *_audioResources;
         boolean _isActive = false;
         boolean _isRecording = false;
+        boolean _isPaused = false;
         File _frec;
         unsigned long recByteSaved = 0L;
         RecorderScreen _recorderScreen;
 
+        float _peak = 0.0;
+
         byte _lastInput = Sucofunkey::INPUT_NONE;
         boolean _onScreenPeak = true;
+
+        boolean _isMultiSampleTresholdRecording = false;
+        float _multiSampleTreshold = 0.00025;
+        float _multisampleSilenceTresholdFactor = 1.7;
+        int _multiSampleTresholdDuration = 5;
+        int _durationBelowTreshold = 0;
+
+        long _bytesRecorded = 0;
+        void _sendMarker();
+
 };
 
 #endif

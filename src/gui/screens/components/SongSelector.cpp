@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2024 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -102,8 +102,9 @@ void SongSelector::handleEvent(Sucofunkey::keyQueueStruct event) {
                 }
             }
             break;            
+        
         case Sucofunkey::SET:
-        case Sucofunkey::ENCODER_1_PUSH:
+        case Sucofunkey::ENCODER_1_PUSH:      
             if (event.pressed) {
                 if (_activeItem == 0 && _offset == -1) {
                     _activeComponent = 1; // activate input field

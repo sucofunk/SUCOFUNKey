@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -44,7 +44,7 @@ uint16_t Zoom::zoomIn(uint16_t cursorPosition) {
 };
 
 uint16_t Zoom::zoomOut(uint16_t cursorPosition) {
-  if (_currentZoomLevel < ZOOM_OUT_2) {
+  if (_currentZoomLevel < ZOOM_NORMAL) {
     setZoomLevel(_currentZoomLevel+1);  
   }
 

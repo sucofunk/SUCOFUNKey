@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -568,6 +568,8 @@ boolean Play::queueArrangement(int startPosition, boolean loop) {
     _arrangementIsPlaying = false;
     stopAllChannels();
     retVal = false;
+    // send MIDI stop
+    _keyboard->addApplicationEventToQueue(Sucofunkey::MIDI_SEND_STOP);
   } else {
     if (_arrangementIsPaused) {
       _arrangementIsPaused = false;
@@ -614,7 +616,10 @@ void Play::arrangementPlayNext() {
         _arrangementSheetPosition = 0;
 
         if (!_loopArrangement) {
+          // End of arrangement reached
           _arrangementIsPlaying = false;
+          // send MIDI stop
+          _keyboard->addApplicationEventToQueue(Sucofunkey::MIDI_SEND_STOP);
         }
       }
         
@@ -635,7 +640,9 @@ boolean Play::isArrangementPlaying() {
 
 void Play::stopArrangement() {
   _arrangementIsPlaying = false;
-  stopAllChannels();  
+  stopAllChannels();
+  // send MIDI stop
+  _keyboard->addApplicationEventToQueue(Sucofunkey::MIDI_SEND_STOP);  
 };
 
 // -----------------------------------------------------------------------------------------------------------------

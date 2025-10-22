@@ -119,15 +119,22 @@ void Arrange::handleEvent(Sucofunkey::keyQueueStruct event) {
 
       case Sucofunkey::FN_PLAY:      
             _playbackTickSpeed = _play->calculatePlaybackTickSpeed();            
-            if (_play->queueArrangement(0, true)) _blinkPosition = 0;
+            if (_play->queueArrangement(0, true)) _blinkPosition = 0;          
+
+            // send MIDI play
+            _keyboard->addApplicationEventWithValueDataToQueue(Sucofunkey::MIDI_SEND_START, _play->bpmToMicroseconds(_play->getSong()->getPlayBackSpeed(), 24), 0, 0, 0);  
             break;
       case Sucofunkey::PLAY:
             _playbackTickSpeed = _play->calculatePlaybackTickSpeed();
             if (_play->queueArrangement(_cursorPosition, false)) _blinkPosition = 0;
+
+            // send MIDI play
+            _keyboard->addApplicationEventWithValueDataToQueue(Sucofunkey::MIDI_SEND_START, _play->bpmToMicroseconds(_play->getSong()->getPlayBackSpeed(), 24), 0, 0, 0);  
             break;
       case Sucofunkey::PAUSE:
             if (_play->isArrangementPlaying()) {
               _play->stopArrangement();
+              _keyboard->addApplicationEventToQueue(Sucofunkey::MIDI_SEND_STOP);
             } else {
               _arrangeScreen.drawCursor(_cursorPosition, false);
               _arrangeScreen.annotateCell(_cursorPosition, _play->getSong()->arrangementGetSheetForPosition(_cursorPosition) , _play->getSong()->arrangementGetRepeatForPosition(_cursorPosition), false);            
@@ -135,6 +142,7 @@ void Arrange::handleEvent(Sucofunkey::keyQueueStruct event) {
               _arrangeScreen.drawCursor(_cursorPosition, true);
               _arrangeScreen.annotateCell(_cursorPosition, _play->getSong()->arrangementGetSheetForPosition(_cursorPosition) , _play->getSong()->arrangementGetRepeatForPosition(_cursorPosition), true);
             }            
+
             break;
       case Sucofunkey::FN_SET:
             if(_play->getSong()->arrangementRemovePosition(_cursorPosition)) {
@@ -227,6 +235,11 @@ void Arrange::setActive(boolean active) {
     _isActive = false;
     _keyboard->setBank(0);
     _isInitialized = false;
+
+    if (_play->isArrangementPlaying()) {
+      _play->stopArrangement();
+      _keyboard->addApplicationEventToQueue(Sucofunkey::MIDI_SEND_STOP);
+    }    
   }
 }
 

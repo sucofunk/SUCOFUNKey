@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2024 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -65,9 +65,9 @@
 float volumeValue = 0;
 float volumeTempValue = 0;
 
-// ToDo: make configurable
-byte MIDI_channel_Piano = 2;   // Channel 2 for triggering chromatically pitched samples in live mode (piano)
-byte MIDI_channel_Live = 1;    // Channel 1 for triggering Samples
+// ToDo: remove, if new configuration works
+//byte MIDI_channel_Piano = 2;   // Channel 2 for triggering chromatically pitched samples in live mode (piano)
+//byte MIDI_channel_Live = 1;    // Channel 1 for triggering Samples
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
@@ -104,7 +104,17 @@ long globalTickIntervalRec = 1000000; // intervall in microseconds -> starts at 
 long globalTickIntervalRecNew;
 void globalTickRec();
 
+// Interval Timer for general purposes like note release interval
+IntervalTimer globalTickTimerGeneral;
+volatile boolean tickedGeneral = false;
+long globalTickIntervalGeneral = 1000000; // intervall in microseconds -> starts at 1s
+long globalTickIntervalGeneralNew;
+void globalTickGeneral();
+void globalTickGeneralStart();
+void globalTickGeneralStop();
+
 AudioResources audioResources;
+Configuration config;
 
 // LCD Screen
 #ifdef SCREEN_ILI9341
@@ -121,7 +131,8 @@ AudioResources audioResources;
 
 
 // Initializing the "keyboard"
-Sucofunkey keyboard(PIN_SUCOKEY_INT_1, PIN_SUCOKEY_INT_2, PIN_SUCOKEY_INT_3, PIN_SUCOKEY_INT_4, PIN_SUCOKEY_INT_5);
+Sucofunkey keyboard(&config);
+//Sucofunkey keyboard(PIN_SUCOKEY_INT_1, PIN_SUCOKEY_INT_2, PIN_SUCOKEY_INT_3, PIN_SUCOKEY_INT_4, PIN_SUCOKEY_INT_5);
 
 // Initializing GUI System
 Screen screen(&tft, PIN_SCREEN_BL, 255);
@@ -142,7 +153,7 @@ Sequencer sequencerContext(&keyboard, &screen, &fsio, &sfsio, &playContext);
 Arrange arrangeContext(&keyboard, &screen, &fsio, &sfsio, extmemArray, &audioResources, &playContext);
 Live liveContext(&keyboard, &screen, &fsio, &sfsio, &playContext);
 
-Settings settingsContext(&keyboard, &screen);
+Settings settingsContext(&keyboard, &screen, &fsio);
 StartupScreen startupContext(&keyboard, &screen, &fsio, activeSongName);
 
 Check systemCheckContext(&keyboard, &screen);
@@ -520,7 +531,7 @@ void setup() {
   // start globalTickInterval Timer
   globalTickTimer.begin(globalTick, globalTickInterval);
   globalTickTimerRec.begin(globalTickRec, globalTickIntervalRec);
-
+  
   fsio.readLibrarySamplesFromSD(librarySamples, "/SAMPLES");
 
   delay(300); // small delay for better readability on screen
@@ -586,6 +597,26 @@ void globalTickRec() {
   tickedRec = true;
 }
 
+void globalTickGeneral() {
+  tickedGeneral = true;
+}
+
+
+void globalTickGeneralStart() {
+  tickedGeneral = false;  
+  globalTickTimerGeneral.begin(globalTickGeneral, globalTickIntervalGeneral);
+}
+
+void globalTickGeneralStop() {
+  globalTickTimerGeneral.end();
+  tickedGeneral = false;
+}
+
+void globalTickGeneralUpdateInterval(int interval) {
+  globalTickIntervalGeneral = interval;
+  globalTickTimerGeneral.update(globalTickIntervalGeneral);
+}
+
 
 void sendTickToActiveContext() {
   switch(currentAppContext) {
@@ -633,7 +664,7 @@ int zz = 0;
 
 void loop() {  
   // recording? -> has highest priority -> store record buffer to sd..
-  if (recorderContext.currentState == recorderContext.RECORDER_RECORDING) recorderContext.continueRecording();
+  if (recorderContext.currentState == recorderContext.RECORDER_RECORDING || recorderContext.currentState == recorderContext.RECORDER_MULTISAMPLE_RECORDING || recorderContext.currentState == recorderContext.RECORDER_MULTISAMPLE_WAIT_END) recorderContext.continueRecording();
   z++;
   zz++;
 
@@ -674,16 +705,30 @@ void loop() {
     sendTickToActiveContext();
   }
 
+  // handle general purpose timer, used for:
+  // SYNTHCOPY -> send MIDI stop note for release timing
+  // LIVE & SEQUENCER -> send MIDI clock tick
+  if (tickedGeneral) {
+    tickedGeneral = false;
+    if (currentAppContext == SYNTHCOPY) {
+      keyboard.addApplicationEventToQueue(Sucofunkey::TIMER_GENERAL_STOP);
+      keyboard.addApplicationEventToQueue(Sucofunkey::SYNTHCOPY_STOP_NOTE);
+    }
+
+    // send midi ticks as clock, if "wished" in play, arrange and sequencer
+    if (currentAppContext == LIVE || currentAppContext == SEQUENCER || currentAppContext == ARRANGE) {
+      MIDI.sendClock();
+    }
+    
+  }
+
+
   // update fader reading queue
   keyboard.updateContinuousFaderValue();
 
   if (MIDI.read()) { 
-    // route midi messages for MIDI_channel_Synth and system messages to the synth
-
-//    Serial.println(currentAppContext);
-//    Serial.println(MIDI.getChannel());
-
-    if (MIDI.getChannel() == MIDI_channel_Live || MIDI.getChannel() == MIDI_channel_Piano) {
+    // route midi messages for incoming MIDI Messages to Play or Piano context
+    if (MIDI.getChannel() == keyboard.getConfig()->configurationValues.midiChannelPlay || MIDI.getChannel() == keyboard.getConfig()->configurationValues.midiChannelPiano) {
       liveContext.receiveMidiData(MIDI.getChannel(), MIDI.getType(), MIDI.getData1(), MIDI.getData2());
     }
   }
@@ -783,6 +828,10 @@ void handleKeyboardEventQueue() {
           sfsio.setSongPath(activeSongPath);                    
           sfsio.clearSampleMemory();
           screen.loadingScreen(0.0);
+          
+          // load configuration from SD
+          fsio.loadConfiguration(&config.configurationValues);
+
           sfsio.writeAllSamplesToWaveformBuffer();
 
           // load sample infos
@@ -812,6 +861,7 @@ void handleKeyboardEventQueue() {
         case Sucofunkey::MIDI_SEND_NOTE_ON:
           // data1 = NOTE, data2 = VELOCITY, data3 = CHANNEL
           MIDI.sendNoteOn(event.data1, event.data2, event.data3);
+          Serial.println(event.data1);
           break;
 
         case Sucofunkey::MIDI_SEND_NOTE_OFF:
@@ -832,6 +882,68 @@ void handleKeyboardEventQueue() {
 
         case Sucofunkey::CHANGE_CONTEXT_TO_SYNTHCOPY:
           changeContext(SYNTHCOPY);
+          break;
+
+        case Sucofunkey::CHANGE_CONTEXT_TO_SETTINGS:
+          changeContext(SETTINGS);
+          break;          
+
+        case Sucofunkey::SYNTHCOPY_START_NOTE:
+          // value = ms to release note, data1 = NOTE, data2 = VELOCITY, data3 = CHANNEL
+          MIDI.sendNoteOn(event.data1, event.data2, event.data3);
+          tickedGeneral = false;
+          globalTickTimerGeneral.begin(globalTickGeneral, event.value*1000);
+          break;
+
+        case Sucofunkey::SYNTHCOPY_START_RECORDING:
+          if (!recorderContext.isRecording()) {
+            recorderContext.setMultiSampleTresholdMode(true);
+            recorderContext.adjustSilenceTreshold();
+            recorderContext.startRecording();
+          }                  
+          break;
+        
+        case Sucofunkey::SYNTHCOPY_STOP_RECORDING:
+            recorderContext.handleEvent(event);
+          break;
+
+        case Sucofunkey::TIMER_GENERAL_START:
+          globalTickGeneralStart();
+          break;
+        case Sucofunkey::TIMER_GENERAL_STOP:
+          globalTickGeneralStop();
+          break;          
+
+        case Sucofunkey::MIDI_SEND_START:
+          // check if clock signal should be sent (in settings)
+          if (config.configurationValues.sendMidiMasterClock) {
+            globalTickIntervalGeneral = event.value;
+            globalTickGeneralStart();
+          }
+          
+          // check if midi start/stop event should be sent (in settings)
+          if (config.configurationValues.sendMidiStartStop) {
+            MIDI.sendStart();
+          }
+          break;
+
+        case Sucofunkey::MIDI_SEND_STOP:
+          // check if midi start/stop event should be sent (in settings)
+          if (config.configurationValues.sendMidiStartStop) {
+            MIDI.sendStop();
+          }
+
+          // check if clock signal should be sent (in settings)
+          if (config.configurationValues.sendMidiMasterClock) {
+            globalTickGeneralStop();
+          }
+          break;
+
+        case Sucofunkey::MIDI_CHANGE_CLOCK_SPEED:
+          // check if clock signal should be sent (in settings)
+          if (config.configurationValues.sendMidiMasterClock) {
+            globalTickGeneralUpdateInterval(event.value);
+          }
           break;
 
         default:
@@ -862,10 +974,6 @@ void handleKeyboardEventQueue() {
               changeContext(LIVE);
               preCheck = true;
               break;
-        case Sucofunkey::FN_FUNCTION:  
-              changeContext(SETTINGS);
-              preCheck = true;
-              break;
         case Sucofunkey::MENU_MENU:  
               changeContext(HOME);
               preCheck = true;
@@ -877,13 +985,18 @@ void handleKeyboardEventQueue() {
       
       // Intention to start recording..
       if (event.index == Sucofunkey::RECORD && event.pressed) { 
-        if (currentAppContext != RECORDER && !recorderContext.isRecording()) {                    
-          changeContext(RECORDER);
-          preCheck = true;
-        }
-        if (currentAppContext != RECORDER && recorderContext.isRecording()) {          
-          recorderContext.stopRecording();
-          preCheck = true;
+        if (currentAppContext == SYNTHCOPY) {
+          preCheck = false; // pass event to SYNTHCOPY context
+        } else {
+          if (currentAppContext != RECORDER && !recorderContext.isRecording()) {                    
+            changeContext(RECORDER);
+            preCheck = true;
+          }
+          
+          if (currentAppContext != RECORDER && recorderContext.isRecording()) {          
+            recorderContext.stopRecording();
+            preCheck = true;
+          }
         }
       }
 

@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -70,6 +70,7 @@ void Selection::setEnd(int endX, int endY) {
     _selection.endY = endY;
 };
 
+
 boolean Selection::isActive() {
     return _isActive;
 };
@@ -79,4 +80,56 @@ void Selection::_normalize() {
     _normalizedSelection.endX = max(_selection.startX, _selection.endX);
     _normalizedSelection.startY = min(_selection.startY, _selection.endY);
     _normalizedSelection.endY = max(_selection.startY, _selection.endY);    
+};
+
+void Selection::setSelectionAsCopy(boolean copy) {
+    _isCopy = copy;
+};
+
+boolean Selection::isCopy() {
+    return _isCopy;
+};
+
+void Selection::setWarning(boolean warning) {
+    _warning = warning;
+};
+
+boolean Selection::isWarning() {
+    return _warning;
+};
+
+void Selection::printSelection() {
+    _normalize();
+    Serial.print("--- Selection --->> ");
+    Serial.print(_normalizedSelection.startX);
+    Serial.print(" / ");
+    Serial.print(_normalizedSelection.startY);
+    Serial.print(" --> ");
+    Serial.print(_normalizedSelection.endX);
+    Serial.print(" / ");
+    Serial.println(_normalizedSelection.endY);    
 }
+
+void Selection::shiftUP(int cellCount) {
+    _selection.startY = _selection.startY-cellCount;
+    _selection.endY = _selection.endY-cellCount;
+    _normalize();
+};
+
+void Selection::shiftDOWN(int cellCount) {
+    _selection.startY = _selection.startY+cellCount;
+    _selection.endY = _selection.endY+cellCount;
+    _normalize();    
+};
+
+void Selection::shiftLEFT(int cellCount) {
+    _selection.startX = _selection.startX-cellCount;
+    _selection.endX = _selection.endX-cellCount;
+    _normalize();    
+};
+
+void Selection::shiftRIGHT(int cellCount) {
+    _selection.startX = _selection.startX+cellCount;
+    _selection.endX = _selection.endX+cellCount;
+    _normalize();    
+};

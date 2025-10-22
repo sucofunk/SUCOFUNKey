@@ -243,7 +243,7 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
             }
           } else {
             if (_currentState == PIANO || _currentState == WAIT_PIANO_SAMPLE_SELECT) {
-              _cancel(false);
+              _cancel(false); 
             }
           }
           break;
@@ -255,12 +255,16 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
             if (_currentState == CONFIG_SAMPLE) {
               _playSlot(_editingSlotId, 128, true, 128);
             } else {
+              // send midi start with clock speed
+              _keyboard->addApplicationEventWithValueDataToQueue(Sucofunkey::MIDI_SEND_START, _play->bpmToMicroseconds(_bpm, 24), 0, 0, 0);              
               // arrangement playback
               if (_play->queueArrangement(0, false)) _blinkPosition = 0;
             }
           break;        
 
         case Sucofunkey::FN_PLAY:
+            // send midi start with clock speed
+            _keyboard->addApplicationEventWithValueDataToQueue(Sucofunkey::MIDI_SEND_START, _play->bpmToMicroseconds(_bpm, 24), 0, 0, 0);         
             // loop arrangement playback
             if (_play->queueArrangement(0, true)) _blinkPosition = 0;
           break;        
@@ -507,7 +511,7 @@ void Live::setActive(boolean active) {
 void Live::receiveMidiData(byte channel, midi::MidiType type, int d1, int d2) {
   switch (type) {
     case midi::MidiType::NoteOn:
-      if (channel == 1) {
+      if (channel == _keyboard->getConfig()->configurationValues.midiChannelPlay) {
         if (_currentState != WAIT_MIDI_TRAINING_INPUT_SNIPPET && _currentState != WAIT_MIDI_TRAINING_INPUT_SAMPLE) {
           if (_midiNoteToSlot[d1] != -1) {
             // d2 = velocity
@@ -523,20 +527,20 @@ void Live::receiveMidiData(byte channel, midi::MidiType type, int d1, int d2) {
         } 
       }
 
-      if (channel == 2) {
+      if (channel == _keyboard->getConfig()->configurationValues.midiChannelPiano) {
         _playPiano(d1, d2, true);
       }
 
       break;
     case midi::MidiType::NoteOff:
 
-     if (channel == 1) {
+     if (channel == _keyboard->getConfig()->configurationValues.midiChannelPlay) {
       if (_midiNoteToSlot[d1] != -1 && _currentState != WAIT_MIDI_TRAINING_INPUT_SNIPPET && _currentState != WAIT_MIDI_TRAINING_INPUT_SAMPLE) {
         _playSlot(_midiNoteToSlot[d1], d2, false, 128);
       }
      } 
 
-     if (channel == 2) {
+     if (channel == _keyboard->getConfig()->configurationValues.midiChannelPiano) {
         _playPiano(d1, d2, false);
      }
     
@@ -544,11 +548,11 @@ void Live::receiveMidiData(byte channel, midi::MidiType type, int d1, int d2) {
 
     case midi::MidiType::AfterTouchPoly:      
 
-      if (channel == 1 && _slots[_midiNoteToSlot[d1]].type == Play::SAMPLE) {
+      if (channel == _keyboard->getConfig()->configurationValues.midiChannelPlay && _slots[_midiNoteToSlot[d1]].type == Play::SAMPLE) {
         _play->handlePolyphonicAftertouch(_slots[_midiNoteToSlot[d1]].sampleNumber, d2, _slots[_midiNoteToSlot[d1]].stereoPosition);
       }
 
-      if (channel == 2) {
+      if (channel == _keyboard->getConfig()->configurationValues.midiChannelPiano) {
         _play->handlePolyphonicAftertouch(_slots[_pianoSampleSlotIndex].sampleNumber, d2, _slots[_pianoSampleSlotIndex].stereoPosition);
       }
 
@@ -843,6 +847,9 @@ void Live::_cancel(boolean showOverview) {
 void Live::_changeBPM(float bpm) {
   _bpm = bpm;
   _playbackTickSpeed = _play->calculatePlaybackTickSpeed(_bpm);
+
+  // change MIDI clock speed, too
+  _keyboard->addApplicationEventWithValueDataToQueue(Sucofunkey::MIDI_CHANGE_CLOCK_SPEED, _play->bpmToMicroseconds(_bpm, 24), 0, 0, 0);
 
   if (_currentState == OVERVIEW) {
     _liveScreen.drawBPM(_bpm);

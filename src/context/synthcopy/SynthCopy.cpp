@@ -46,6 +46,7 @@ SynthCopy::SynthCopy(Sucofunkey* keyboard, Screen* screen, FSIO* fsio, SampleFSI
 
 // returns the current tick speed.. as tempo changes are not handled global
 long SynthCopy::receiveTimerTick() {
+  //return _releaseMS;  
   return _synthCopyScreen.receiveTimerTick();
 }
 
@@ -66,6 +67,12 @@ void SynthCopy::handleEvent(Sucofunkey::keyQueueStruct event) {
             case Sucofunkey::CURSOR_DOWN:
                 _channel--;
                 break;
+            case Sucofunkey::RECORD:
+                _startRecording();
+                break;
+            case Sucofunkey::PAUSE:
+                _keyboard->addApplicationEventToQueue(Sucofunkey::SYNTHCOPY_STOP_RECORDING);
+                break;
             default: 
                 break;
         };
@@ -83,6 +90,26 @@ void SynthCopy::handleEvent(Sucofunkey::keyQueueStruct event) {
           }              
     }
 
+    if (event.type == Sucofunkey::EVENT_APPLICATION) {
+        switch(event.index) {
+            case Sucofunkey::SYNTHCOPY_STOP_NOTE:
+                _stopNote();
+                break;
+            case Sucofunkey::SYNTHCOPY_NEXT_NOTE_REQUEST:
+                _nextNote();
+                break;
+            case Sucofunkey::SYNTHCOPY_NOTE_MARKER:
+                Serial.print("Marker received: ");
+                Serial.print(_currentNote);
+                Serial.print(" :: ");
+                Serial.println(event.value);
+
+                break;
+            default:
+                break;
+        }
+    }    
+
 }
 
 void SynthCopy::setActive(boolean active) {
@@ -91,9 +118,35 @@ void SynthCopy::setActive(boolean active) {
     _keyboard->setBank(2);
     
     _synthCopyScreen.show();
+    _keyboard->addApplicationEventToQueue(Sucofunkey::ROUTE_LINE_IN_THROUGH);
 
   } else {
     _isActive = false;
     _keyboard->setBank(0);
   }
+}
+
+void SynthCopy::_startRecording() {
+    _currentNote = _startNote-1;
+    _keyboard->addApplicationEventToQueue(Sucofunkey::SYNTHCOPY_START_RECORDING);
+}
+
+
+void SynthCopy::_nextNote() { 
+    _currentNote++;
+
+    Serial.print("increasing to:: ");
+    Serial.println(_currentNote);
+    
+    if (_currentNote < _endNote) {        
+        _keyboard->addApplicationEventWithValueDataToQueue(Sucofunkey::SYNTHCOPY_START_NOTE, _releaseMS, _currentNote, 100, _channel);        
+    } else {
+        _keyboard->addApplicationEventWithValueDataToQueue(Sucofunkey::SYNTHCOPY_START_NOTE, _releaseMS, _currentNote, 100, _channel);
+        _keyboard->addApplicationEventToQueue(Sucofunkey::SYNTHCOPY_STOP_RECORDING);
+    }
+}
+
+void SynthCopy::_stopNote() {
+    _keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_NOTE_OFF, _currentNote, 0, _channel);
+    Serial.println("_stopNote");
 }

@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -61,22 +61,15 @@ void Recorder::handleEvent(Sucofunkey::keyQueueStruct event) {
             }
             break;
         case Sucofunkey::PAUSE:
+            // stop normal recording properly or cancel multisample recording
             if (currentState == RECORDER_RECORDING) {
               _recorderScreen.showRecorderScreen(_onScreenPeak);
               stopRecording();
             } else {
-              if (currentState == RECORDER_NOTHING) {
                 cancelRecording();
-              }
             }
+            break;
 
-            break;
-/*        case Sucofunkey::INPUTSELECTOR:
-            _lastInput = _keyboard->getInput();
-            _keyboard->toggleInput();
-            activateInput();
-            break;
-*/
          case Sucofunkey::ZOOM:
             _onScreenPeak = !_onScreenPeak;
             if (currentState == RECORDER_RECORDING) {
@@ -101,14 +94,15 @@ void Recorder::handleEvent(Sucofunkey::keyQueueStruct event) {
                 }
                 break;
           case Sucofunkey::ENCODER_2:
-                // changing the line in input level/sensitivity is not a good idea?!?          
-/*                if (_audioResources->activeInput == AUDIO_INPUT_LINEIN) {              
+                // changing the line in input level/sensitivity is not a good idea?!?    
+                // maybe move to settings      
+                if (_audioResources->activeInput == AUDIO_INPUT_LINEIN) {              
                   if (event.pressed) {
                     _audioResources->increaseLineInVolume();
                   } else {
                     _audioResources->decreaseLineInVolume();
                   }                 
-                } */
+                }
                 break;
           case Sucofunkey::ENCODER_3:
                 break;
@@ -117,15 +111,65 @@ void Recorder::handleEvent(Sucofunkey::keyQueueStruct event) {
         }
     }
 
+    if (event.type == Sucofunkey::EVENT_APPLICATION) {
+      switch (event.index) {
+        case Sucofunkey::SYNTHCOPY_STOP_RECORDING:
+          currentState = RECORDER_MULTISAMPLE_WAIT_END;
+          break;
+        default:
+          break;
+      } 
+    }
+
 }
 
 long Recorder::receiveTimerTick() {
-    if (_isActive) {
-         _recorderScreen.drawInputPeakMeter(_audioResources->peak1.read(), _onScreenPeak);
-    }
+  _peak = _audioResources->peak1.read();
+
+  if (_isActive) {         
+         _recorderScreen.drawInputPeakMeter(_peak, _onScreenPeak);
+  }
+
+      if (currentState == RECORDER_MULTISAMPLE_WAIT_PEAK && _peak > _multiSampleTreshold) {
+        continueRecording();
+        currentState = RECORDER_MULTISAMPLE_RECORDING;
+        Serial.println("--- RECORDER_MULTISAMPLE_RECORDING --- ");
+        _durationBelowTreshold = 0;
+      }
+
+     // pause multisample recording, when treshold condition is reached 
+     if ((currentState == RECORDER_MULTISAMPLE_RECORDING || currentState == RECORDER_MULTISAMPLE_WAIT_END) &&  (_peak <= _multiSampleTreshold)) {
+
+/*      Serial.print("DurationBelowTreshold::");
+      Serial.print(_durationBelowTreshold);
+      Serial.print("::");
+      Serial.print(_peak, 5);
+      Serial.print("::");
+      Serial.println(currentState);
+*/
+      _durationBelowTreshold++;
+      
+      if (_durationBelowTreshold >= _multiSampleTresholdDuration) {
+        continueRecording(); // write out last bits from queue
+
+        if (currentState == RECORDER_MULTISAMPLE_WAIT_END) {
+          stopRecording();
+          _isMultiSampleTresholdRecording = false;
+        } else {          
+          currentState = RECORDER_MULTISAMPLE_WAIT_PEAK;
+          _keyboard->addApplicationEventToQueue(Sucofunkey::SYNTHCOPY_NEXT_NOTE_REQUEST);        
+          _durationBelowTreshold = 0;  
+          
+          _sendMarker();
+        }              
+      }
+     } else {
+        _durationBelowTreshold = 0;
+     }
 
     return 70000;
 }
+
 
 void Recorder::setActive(boolean active) {
   if (active) {
@@ -158,7 +202,7 @@ void Recorder::cancelRecording() {
   _keyboard->setInput(Sucofunkey::INPUT_NONE);
   _audioResources->muteInput();
   _audioResources->muteResampling();
-  _keyboard->addApplicationEventToQueue(_keyboard->RECORDER_CANCEL);  
+  _keyboard->addApplicationEventToQueue(_keyboard->RECORDER_CANCEL); 
 }
 
 void Recorder::startRecording() {
@@ -170,18 +214,23 @@ void Recorder::startRecording() {
     _frec = SD.open(_sfsio->recorderFilename, FILE_WRITE);
 
     if (_frec) {
-        _keyboard->setLEDState(Sucofunkey::LED_RECORD, true);
-        currentState = RECORDER_RECORDING;
+        if (_isMultiSampleTresholdRecording) {
+          currentState = RECORDER_MULTISAMPLE_WAIT_PEAK;
+          _keyboard->addApplicationEventToQueue(Sucofunkey::SYNTHCOPY_NEXT_NOTE_REQUEST);
+        } else {
+          _keyboard->setLEDState(Sucofunkey::LED_RECORD, true);
+          currentState = RECORDER_RECORDING;
+        }
 
-        _audioResources->queue1.begin();
-    }
-}
+        _bytesRecorded = 0;
+        _audioResources->queue1.begin();        
+    }    
+  }
 
-void Recorder::continueRecording() {  
-  if (_audioResources->queue1.available() >= 2) {
-    
-//    if (_audioResources->queue1.available() > 40) Serial.println(_audioResources->queue1.available());  
 
+void Recorder::continueRecording() {
+
+  if (_audioResources->queue1.available() >= 2) {    
     byte buffer[512];
     memcpy(buffer, _audioResources->queue1.readBuffer(), 256);
     _audioResources->queue1.freeBuffer();
@@ -189,11 +238,12 @@ void Recorder::continueRecording() {
     _audioResources->queue1.freeBuffer();
     // write all 512 bytes to the SD card
     _frec.write(buffer, 512);
+    _bytesRecorded = _bytesRecorded + 256;
   }
 }
 
 void Recorder::stopRecording() {
-  _audioResources->queue1.end();
+   _audioResources->queue1.end();
 
   // write last bit of buffer to file..
   while (_audioResources->queue1.available() > 0) {
@@ -202,6 +252,8 @@ void Recorder::stopRecording() {
   }
 
   _frec.close();
+
+  _sendMarker();
 
   _keyboard->setLEDState(Sucofunkey::LED_RECORD, false);
   currentState = RECORDER_NOTHING;
@@ -218,8 +270,9 @@ void Recorder::stopRecording() {
   _keyboard->addApplicationEventToQueue(_keyboard->RECORDED);
 }
 
+
 boolean Recorder::isRecording() {
-    return currentState == RECORDER_RECORDING ? true : false;
+    return (currentState == RECORDER_RECORDING || currentState == RECORDER_MULTISAMPLE_RECORDING || currentState == RECORDER_MULTISAMPLE_WAIT_END) ? true : false;
 };
 
 
@@ -254,4 +307,46 @@ void Recorder::activateInput() {
         _audioResources->muteResampling();
         break;    
   }
+}
+
+
+// --------- MULTISAMPLE -----------
+
+void Recorder::setMultiSampleTresholdMode(boolean multisample) {
+  _isMultiSampleTresholdRecording = multisample;
+};
+
+void Recorder::setMultiSampleTreshold(int lengthBelowTreshold, float treshold) {
+  _multiSampleTreshold = treshold;
+  _multiSampleTresholdDuration = lengthBelowTreshold;
+};
+
+boolean Recorder::isMultiSampleTresholdMode() {
+  return _isMultiSampleTresholdRecording;
+};
+
+// takes 100 peak measurements with a delay to get the average volume of silence (no signal on line in)
+void Recorder::adjustSilenceTreshold() {
+  currentState = ADJUSTING_SILENCE_TRESHOLD;
+
+  float treshold = 0;
+  int pna = 0;
+
+  for (int i=0; i<100; i++) {
+    if (_audioResources->peak1.available()) {
+        treshold =  treshold + _audioResources->peak1.read();
+    } else{ 
+      pna++;
+    }
+    
+    delay(15);
+  }
+
+  _multiSampleTreshold = (treshold/100.0) * _multisampleSilenceTresholdFactor;
+}
+
+void Recorder::_sendMarker() {
+  Serial.print("Sending Marker: ");
+  Serial.println(_bytesRecorded);
+  _keyboard->addApplicationEventWithValueDataToQueue(Sucofunkey::SYNTHCOPY_NOTE_MARKER, _bytesRecorded, 0, 0, 0);  
 }

@@ -358,6 +358,9 @@ boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart,
 // returns offset for next sample
 // -------------------------------------------------------------------------------
 long SampleFSIO::copyRawFromSdToMemory(const char *filename, long startOffset) {
+  unsigned long startTime = 0;
+  unsigned long endTime = 0;
+  
   File f;
 
   if (SD.exists(filename)) {
@@ -366,6 +369,9 @@ long SampleFSIO::copyRawFromSdToMemory(const char *filename, long startOffset) {
     Serial.println("File does not exist!");
     return -1;
   }
+
+  //startTime = millis();
+
 
   // from playMem for uncompressed 44100 hz mono uint
   uint32_t fileType = 0x8100 << 16;
@@ -393,6 +399,22 @@ long SampleFSIO::copyRawFromSdToMemory(const char *filename, long startOffset) {
     _extmemArray[startOffset+i] = (buff[0] << 16) + (buff[1]);
   }
 
+/*endTime = millis();
+  
+  Serial.println(filename);
+  Serial.print("start: ");
+  Serial.println(startTime);
+  Serial.print("end: ");
+  Serial.println(endTime);
+  Serial.print("time passed in ms: ");
+  Serial.println(endTime-startTime);
+  Serial.print("samples read: ");
+  Serial.println(c);
+  Serial.print("samples per ms: ");
+  Serial.println(c/(endTime-startTime));
+  
+  Serial.println("-----");
+*/
   f.close();
 
   return startOffset+c+2;
@@ -551,7 +573,7 @@ void SampleFSIO::readSampleBankStatusFromSD() {
 
 void SampleFSIO::deleteFile(const char *filename) {
 
-    // ToDo: check if it is still playing -> stop playing    
+    // ToDo: check if it is still playing -> stop playing        
 
     if (SD.exists(filename)) {
         SD.remove(filename);

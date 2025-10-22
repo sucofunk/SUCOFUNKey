@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2024 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -31,7 +31,7 @@
 #ifndef Configuration_h
 #define Configuration_h
 
-#define VERSIONNUMBER "0.9.6.2 - baselined orrange"
+#define VERSIONNUMBER "0.9.7 - Aufholjagd"
 
 // Display configuration -----------------------------
 
@@ -65,5 +65,38 @@
 
 // Analog PIN where volume potentiometer is connected to
 #define PIN_VOLUME (22)
+
+
+class Configuration {
+    public:
+        enum ValueType {
+            TBD = 0,
+            MIDICHANNEL = 1,
+            TRUEFALSE = 2
+        };
+
+
+        typedef struct {
+            int version = 1; // configuration type.. to check, if there should be problems in the future, when more options are available
+
+            int midiChannelPlay = 1; // MIDI channel to receive notes for play/live mode
+            ValueType midiChannelPlayValueType = MIDICHANNEL;
+
+            int midiChannelPiano = 2; // MIDI channel to receive notes for piano mode
+            ValueType midiChannelPianoValueType = MIDICHANNEL;
+
+            bool sendMidiMasterClock = 1; // send MIDI master clock when playing in sequencer, arranger or live? // 1 == true 0 == false
+            ValueType sendMidiMasterClockValueType = TRUEFALSE;
+
+            bool sendMidiStartStop = 1; // send MIDI start/stop?
+            ValueType sendMidiStartStopValueType = TRUEFALSE;
+
+        } ConfigurationValues;
+        
+
+        Configuration() {};
+
+        ConfigurationValues configurationValues;
+};
 
 #endif

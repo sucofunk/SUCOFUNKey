@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -50,12 +50,22 @@ class Selection {
         void setStart(int startX, int startY);
         void setEnd(int endX, int endY);
         boolean isActive();
+        boolean isCopy();
+        void setSelectionAsCopy(boolean copy);
+        void setWarning(boolean warning);
+        boolean isWarning();
+        void printSelection();
+        void shiftUP(int cellCount);
+        void shiftDOWN(int cellCount);
+        void shiftLEFT(int cellCount);
+        void shiftRIGHT(int cellCount);
 
     private:
         boolean _isActive = false;
+        boolean _isCopy = false; // will be set, when moving a copy of the active selection around -> different color!
+        boolean _warning = false;
         SelectionStruct _selection;
         SelectionStruct _normalizedSelection;
-
         void _normalize();
 };
 
