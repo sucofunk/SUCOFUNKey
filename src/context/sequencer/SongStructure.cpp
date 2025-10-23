@@ -1806,6 +1806,8 @@ int SongStructure::getPreviousSheetDividerPosition(int position) {
 
 int SongStructure::getSheetStartForPosition(int position) {
     for (int i=1; i<17; i++) {
+
+        if (position == 0) return 0; 
         if (position == _meta.sheetDividerPositions[i]) return _meta.sheetDividerPositions[i]; // position is sheet start
 
         if (position > _meta.sheetDividerPositions[i-1] && position < _meta.sheetDividerPositions[i]) {
@@ -1821,11 +1823,14 @@ int SongStructure::getSheetEndForPosition(int position) {
     for (int i=1; i<17; i++) {
         if (position == _meta.sheetDividerPositions[i]) retVal = _meta.sheetDividerPositions[i+1]; // position is sheet start
 
-        if (position > _meta.sheetDividerPositions[i-1] && position < _meta.sheetDividerPositions[i]) {            
+        if (position > _meta.sheetDividerPositions[i-1] && position < _meta.sheetDividerPositions[i]) {
             retVal = _meta.sheetDividerPositions[i];
-        }
+        }        
     }
     
+    // is the cursor at the first gridcell? There is no sheet divider, so take this exception
+    if (position == 0) retVal = _meta.sheetDividerPositions[1];
+
     if (retVal == 65535) {
         retVal = _meta.songLength-1;
     } else {

@@ -31,6 +31,7 @@
 #include <SD.h>
 #include "FSIO.h"
 #include <string.h>
+#include <cstring>
 
 FSIO::FSIO() {
 }
@@ -81,6 +82,7 @@ void FSIO::readLibrarySamplesFromSD(LibrarySample *librarySamples, String path) 
     if (isRoot && path.equals("/..")) return;
 
     _librarySamples = librarySamples;
+
 
     // 1024 files max per directory.. as defined in main.cpp when initializing the array    
     for (int i=0; i<1024; i++) {
@@ -167,10 +169,19 @@ void FSIO::readLibrarySamplesFromSD(LibrarySample *librarySamples, String path) 
     _librarySamplesCount = sc;        
 
 // DEBUG
-//    for (int i=0; i<sc; i++) {
-//        Serial.println(_librarySamples[i].sampleFilename);
-//    } 
+/*    for (int i=0; i<sc; i++) {
+        Serial.println(_librarySamples[i].sampleFilename);
+    } 
 
+    Serial.println("----------------------------------");
+    Serial.println("----------------------------------");
+*/
+    heapSortLibrarySamples(_librarySamples, sc);
+/*
+    for (int i=0; i<sc; i++) {
+        Serial.println(_librarySamples[i].sampleFilename);
+    } 
+*/
 }
 
 
@@ -440,3 +451,51 @@ boolean FSIO::saveConfiguration(Configuration::ConfigurationValues *configuratio
 
     return true;
 };
+
+
+// ---- HeapSort Helper ----
+
+
+// Hilfsfunktion: Tauscht zwei Elemente
+void FSIO::swapSamples(LibrarySample &a, LibrarySample &b) {
+    LibrarySample temp = a;
+    a = b;
+    b = temp;
+}
+
+// "Heapify"-Funktion für max-heap basierend auf sampleFilename
+void FSIO::heapify(LibrarySample* arr, size_t n, size_t i) {
+    size_t largest = i;        // Wurzel anfangs als größte
+    size_t left = 2 * i + 1;   // linker Teilbaum
+    size_t right = 2 * i + 2;  // rechter Teilbaum
+
+    // Falls linker Knoten größer (alphabetisch später)
+    if (left < n && std::strcmp(arr[left].sampleFilename, arr[largest].sampleFilename) > 0)
+        largest = left;
+
+    // Falls rechter Knoten größer
+    if (right < n && std::strcmp(arr[right].sampleFilename, arr[largest].sampleFilename) > 0)
+        largest = right;
+
+    // Wenn die größte Position nicht die Wurzel ist
+    if (largest != i) {
+        swapSamples(arr[i], arr[largest]);
+        heapify(arr, n, largest);
+    }
+}
+
+// Hauptsortierfunktion
+void FSIO::heapSortLibrarySamples(LibrarySample* arr, size_t n) {
+    // 1. Max-Heap bauen
+    for (int i = n / 2 - 1; i >= 0; --i)
+        heapify(arr, n, i);
+
+    // 2. Elemente extrahieren
+    for (int i = n - 1; i > 0; --i) {
+        // Wurzel (größtes Element) ans Ende
+        swapSamples(arr[0], arr[i]);
+        // Heap verkleinern und wiederherstellen
+        heapify(arr, i, 0);
+    }
+}
+

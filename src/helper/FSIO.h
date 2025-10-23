@@ -77,7 +77,13 @@ class FSIO {
         LibrarySample *_librarySamples;
         uint16_t _librarySamplesCount = 0;
 
-        String _libraryPath = "/";        
+        String _libraryPath = "/";       
+        
+        void swapSamples(LibrarySample &a, LibrarySample &b);
+        void heapify(LibrarySample* arr, size_t n, size_t i);
+        void heapSortLibrarySamples(LibrarySample* arr, size_t n);
+
+
 };
 
 #endif

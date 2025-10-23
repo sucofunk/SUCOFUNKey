@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2024 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -128,61 +128,14 @@ boolean BlackKeyMenu::_isAllowed(byte position) {
 
 
 void BlackKeyMenu::handleEvent(Sucofunkey::keyQueueStruct event) {
-    if (event.pressed && event.type == Sucofunkey::KEY_NOTE) {
-        switch(event.index) {
-            case Sucofunkey::FS_1:
-                if (_exclusivePosition == 0 || _exclusivePosition == 1 || _isAllowed(1)) { 
-                    _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM1);
-                }
-                break;
-            case Sucofunkey::GS_1:
-                if (_exclusivePosition == 0 || _exclusivePosition == 2 || _isAllowed(2)) { 
-                    _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM2);
-                }
-                break;
-            case Sucofunkey::AS_1:
-                if (_exclusivePosition == 0 || _exclusivePosition == 3 || _isAllowed(3)) { 
-                    _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM3);
-                }
-                break;
-            case Sucofunkey::CS_1:
-                if (_exclusivePosition == 0 || _exclusivePosition == 4 || _isAllowed(4)) { 
-                    _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM4);
-                }
-                break;
-            case Sucofunkey::DS_1:
-                if (_exclusivePosition == 0 || _exclusivePosition == 5 || _isAllowed(5)) { 
-                    _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM5);
-                }
-                break;
-            case Sucofunkey::FS_2:
-                if (_exclusivePosition == 0 || _exclusivePosition == 6 || _isAllowed(6)) { 
-                    _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM6);
-                }
-                break;
-            case Sucofunkey::GS_2:
-                if (_exclusivePosition == 0 || _exclusivePosition == 7 || _isAllowed(7)) { 
-                    _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM7);
-                }
-                break;
-            case Sucofunkey::AS_2:
-                if (_exclusivePosition == 0 || _exclusivePosition == 8 || _isAllowed(8)) { 
-                    _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM8);
-                }
-                break;
-            case Sucofunkey::CS_2:
-                if (_exclusivePosition == 0 || _exclusivePosition == 9 || _isAllowed(9)) { 
-                    _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM9);
-                }
-                break;
-            case Sucofunkey::DS_2:
-                if (_exclusivePosition == 0 || _exclusivePosition == 10 || _isAllowed(10)) { 
-                    _keyboard->addApplicationEventToQueue(_keyboard->BLACKKEY_NAV_ITEM10);
-                }
-                break;
-            default:
-                break;
-        }
+    if (!_keyboard->isEventBlackKey(event.index)) return;
+
+    byte k = _keyboard->getBlackKey1To10FromEventKey(event.index);
+
+    int items[10] = {_keyboard->BLACKKEY_NAV_ITEM1, _keyboard->BLACKKEY_NAV_ITEM2, _keyboard->BLACKKEY_NAV_ITEM3, _keyboard->BLACKKEY_NAV_ITEM4, _keyboard->BLACKKEY_NAV_ITEM5, _keyboard->BLACKKEY_NAV_ITEM6, _keyboard->BLACKKEY_NAV_ITEM7, _keyboard->BLACKKEY_NAV_ITEM8, _keyboard->BLACKKEY_NAV_ITEM9, _keyboard->BLACKKEY_NAV_ITEM10};
+
+    if (_exclusivePosition == 0 || _exclusivePosition == k || _isAllowed(k)) { 
+        _keyboard->addApplicationEventToQueue(items[k-1]);
     }
 };
 

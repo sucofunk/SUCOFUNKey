@@ -137,6 +137,11 @@ class Play {
         void handlePolyphonicAftertouch(byte sample1, byte velocity, byte stereoPosition);
         void polyChangeVelocity(byte polymem, byte velocity, byte stereoPosition);
 
+        // muting channels
+        void muteChannel(byte channel);
+        void unMuteChannel(byte channel);
+        void unMuteAllChannels();
+        boolean isChannelMuted(byte channel);
 
     private:
         Sucofunkey* _keyboard;
@@ -197,6 +202,8 @@ class Play {
         int _lastPositionUntilNextArrangementSheet = 0;
         int _currentSheetPlays = 0;
         int _waitingInChainQueue = 0;
+
+        boolean _mutedChannels[8] = {false, false, false, false, false, false, false, false};
 };
 
 #endif

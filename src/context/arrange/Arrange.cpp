@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2024 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -170,6 +170,27 @@ void Arrange::handleEvent(Sucofunkey::keyQueueStruct event) {
     }    
   }
 
+  if (event.type == Sucofunkey::KEY_NOTE && event.pressed && _keyboard->isEventBlackKey(event.index)) {
+    
+    byte solo = _keyboard->getBlackKey1To10FromEventKey(event.index);
+    if (solo > 8) return; // there are just 8 channels..
+
+    if (_soloChannel1 == solo) {
+      _play->unMuteAllChannels();
+      _soloChannel1 = 0;
+      _arrangeScreen.showSoloChannelMessage(0);
+    } else {
+      for (int c=0; c<8; c++) {
+        if (solo-1 != c) {
+          _play->muteChannel(c);
+        } else {
+          _play->unMuteChannel(c);
+          _arrangeScreen.showSoloChannelMessage(solo);
+        }        
+      }
+      _soloChannel1 = solo;
+    }
+  }
 }
 
 
@@ -215,8 +236,7 @@ void Arrange::moveCursor(CursorDirection direction) {
 void Arrange::setActive(boolean active) {
   if (active) {
     _isActive = true;
-    _keyboard->setBank(_activeBank);
-    //Serial.println("Arrange mode");  
+    _keyboard->setBank(_activeBank);   
     
     // might have changed in sequencer
     _play->checkIfAllSamplesAreLoaded();
@@ -240,6 +260,7 @@ void Arrange::setActive(boolean active) {
       _play->stopArrangement();
       _keyboard->addApplicationEventToQueue(Sucofunkey::MIDI_SEND_STOP);
     }    
+    _play->unMuteAllChannels();
   }
 }
 

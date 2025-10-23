@@ -82,7 +82,7 @@ void SequencerScreen::initializeGrid(SongStructure *song, uint16_t cursorPositio
 
   // draw initial sequencer grid
   drawBPM(_song->getPlayBackSpeed());
-  drawGrid(INIT);
+  drawGrid(INIT);  
 }
 
 
@@ -155,6 +155,8 @@ void SequencerScreen::drawGrid(LastAction action) {
   } 
 
   drawSnippets();
+
+  drawMutedChannelIndicators();
 }
 
 
@@ -832,4 +834,10 @@ void SequencerScreen::_drawSnippet(Selection::SelectionStruct snippet) {
     _screen->drawFastHLine(0, upperLeftY, _xPositionCapacity*_cellWidth+1, _screen->C_SNIPPET);
     _screen->drawFastHLine(0, upperLeftY+height, _xPositionCapacity*_cellWidth+1, _screen->C_SNIPPET);   
   }  
+};
+
+void SequencerScreen::drawMutedChannelIndicators() {
+  for (int c=0; c<8; c++) {
+    _screen->drawFastVLine(319, c*_cellHeight+_screen->AREA_CONTENT.y1+1, _cellHeight, _play->isChannelMuted(c) ? _screen->C_WARNING : _screen->C_LIGHTGREY);
+  }
 };

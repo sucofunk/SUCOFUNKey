@@ -758,6 +758,43 @@ boolean Sucofunkey::isEventWhiteKey(byte eventKey) {
   return false;
 };
 
+byte Sucofunkey::getBlackKey1To10FromEventKey(byte eventKey) {
+  switch (eventKey) {
+    case FS_1:
+      return 1;
+      break;
+    case GS_1:
+      return 2;
+      break;
+    case AS_1:
+      return 3;
+      break;
+    case CS_1:
+      return 4;
+      break;
+    case DS_1:
+      return 5;
+      break;
+    case FS_2:
+      return 6;
+      break;
+    case GS_2:
+      return 7;
+      break;
+    case AS_2:
+      return 8;
+      break;
+    case CS_2:
+      return 9;
+      break;
+    case DS_2:
+      return 10;
+      break;
+  }
+  
+  return 0;
+};
+
 
 // reads one bit from an 16 Bit unsigned integer and returns its boolean value
 bool Sucofunkey::getBooleanValueFrom16BitInt(uint16_t values, int pos) {

@@ -68,7 +68,7 @@ Sequencer::Sequencer(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSI
     _blackKeyMenu.setOption(7, "INS");
     _blackKeyMenu.setOption(8, "REV");
 
-    //_blackKeyMenu.setOption(9, "LOD");    
+    _blackKeyMenu.setOption(9, "MUT");
     _blackKeyMenu.setOption(10, "CLS");    
 
     _pianoKeyboard = PianoKeyboard(_keyboard, _screen);
@@ -122,6 +122,7 @@ void Sequencer::setActive(boolean active) {
       _isActive = false;      
       _keyboard->switchLEDsOff();
       _keyboard->setBank(0);
+      _play->unMuteAllChannels();
     }
 }
 
@@ -606,7 +607,14 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
           _sequencerScreen.drawSample(_cursorChannel, _cursorPosition, false);
           break;          
         
+        // Mute current channel
         case Sucofunkey::BLACKKEY_NAV_ITEM9:
+            if (_play->isChannelMuted(_cursorChannel)) {
+              _play->unMuteChannel(_cursorChannel);
+            } else {
+              _play->muteChannel(_cursorChannel);
+            }
+            _sequencerScreen.drawMutedChannelIndicators();            
           break;          
 
         // Clear selection/sketch

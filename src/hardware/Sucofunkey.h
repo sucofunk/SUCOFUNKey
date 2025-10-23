@@ -346,6 +346,7 @@ class Sucofunkey {
         char getFilenameCharByEventKey(byte eventKey, byte index);    
         boolean isEventBlackKey(byte eventKey); // a black key from the piano keyboard.. false does not mean that it is a white key.. might be anything else
         boolean isEventWhiteKey(byte eventKey); // a white key from the piano keyboard.. false does not mean that it is a black key.. might be anything else
+        byte getBlackKey1To10FromEventKey(byte eventKey); // returns which black key 1..10 is pressed
 
         String getMIDINoteName(byte note);
         void scanI2C(); // for debugging reasons

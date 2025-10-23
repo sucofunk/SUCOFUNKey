@@ -190,6 +190,9 @@ Play::MixerSamplePlayMemory Play::prepareMixerRouting(byte channel) {;
 // snippet == -1 -> take original channels from sequencer
 
 void Play::playMixedSample(byte channel, uint16_t position, int snippetSlot) {
+  // do not play anything here, if this channel is muted!
+  if (isChannelMuted(channel)) return;  
+
   Play::MixerSamplePlayMemory mixSPM;
 
   if (snippetSlot == -1) {
@@ -815,3 +818,25 @@ AudioPlayMemorySUCO* Play::_getPlayMemSlot(byte slot) {
       return &_audioResources->playMemLive1;      
   }  
 }
+
+// -----------------------------------------------------------------------------------------------------------------
+// --- MUTING Channels in Sequencer --------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------------------
+
+void Play::muteChannel(byte channel) {
+  _mutedChannels[channel] = true;
+};
+
+void Play::unMuteChannel(byte channel) {
+  _mutedChannels[channel] = false;
+};
+
+boolean Play::isChannelMuted(byte channel) {
+  return _mutedChannels[channel];
+};
+
+void Play::unMuteAllChannels() {
+  for (int c=0; c<8; c++) {
+    _mutedChannels[c] = false;
+  }  
+};

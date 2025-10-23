@@ -95,6 +95,8 @@ class SequencerScreen {
         void drawSelection(Selection *selection);
         void drawSnippets();
 
+        void drawMutedChannelIndicators();
+
     private:
         Sucofunkey* _keyboard;
         Screen* _screen;

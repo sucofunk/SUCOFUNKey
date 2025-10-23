@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2024 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -50,6 +50,8 @@ class ArrangeScreen {
         void drawCursor(int position, boolean highlight);
         void annotateCell(int position, int sheet, int repeat, boolean highlight);
 
+        void showSoloChannelMessage(byte channel);
+
     private:
         Sucofunkey *_keyboard;
         Screen *_screen;
@@ -58,6 +60,7 @@ class ArrangeScreen {
         char _cBuff3[3];
         char _cBuff5[5];
         char _cBuff10[10];
+        char _cBuff16[16];
 };
 
 #endif

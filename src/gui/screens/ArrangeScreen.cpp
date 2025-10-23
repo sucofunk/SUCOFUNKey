@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2024 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -46,21 +46,14 @@ void ArrangeScreen::showEmptyOverview() {
     for (int i=0; i<=columns; i++) {
         _screen->drawFastVLine(i*(320/columns) - (i > 0 ? 1 : 0), _screen->AREA_CONTENT.y1, _screen->AREA_CONTENT.y2-_screen->AREA_CONTENT.y1, _screen->C_GRID_BRIGHT);
     }
+
+    showSoloChannelMessage(0);
 }
 
 void ArrangeScreen::drawCursor(int position, boolean highlight) {
     int row = position / columns;
     int column = position - (row * columns);
 
-// Cursor orange füllen?
-
-/*    _screen->drawFastHLine(column*(320/columns) - (column > 0 ? 1 : 0), _screen->AREA_CONTENT.y1 + (row*(190/rows)), (320/columns), highlight ? _screen->C_ORANGE : _screen->C_GRID_BRIGHT);  
-    _screen->drawFastHLine(column*(320/columns) - (column > 0 ? 1 : 0), _screen->AREA_CONTENT.y1 + ((row+1)*(190/rows)), (320/columns), highlight ? _screen->C_ORANGE : _screen->C_GRID_BRIGHT);  
-
-    _screen->drawFastVLine(column*(320/columns) - (column > 0 ? 1 : 0), _screen->AREA_CONTENT.y1 + (row*(190/rows)), (190/rows), highlight ? _screen->C_ORANGE : _screen->C_GRID_BRIGHT);  
-    _screen->drawFastVLine((column+1)*(320/columns) - 1, _screen->AREA_CONTENT.y1 + (row*(190/rows)), (190/rows), highlight ? _screen->C_ORANGE : _screen->C_GRID_BRIGHT);
-*/
-    
     _screen->fillRect(column*(320/columns) + (column == 0 ? 1 : 0), 
                               _screen->AREA_CONTENT.y1 + (row*(190/rows)) + 1, 
                               (320/columns)-(column == 0 ? 2 : 1), 
@@ -82,14 +75,27 @@ void ArrangeScreen::annotateCell(int position, int sheet, int repeat, boolean hi
         } else {
             sprintf(_cBuff5, "%d", sheet);
         }
+
         
-        //_screen->drawTextInArea(tempArea, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_SMALL, false, _screen->C_WHITE, _cBuff5);
-
-        _screen->drawTextInArea(tempArea, _screen->TEXTPOSITION_HCENTER_VCENTER, (highlight ? false : true), _screen->TEXTSIZE_SMALL, false, highlight ? _screen->C_BLACK : _screen->C_WHITE, _cBuff5);
-
+        if (highlight) {
+            drawCursor(position, highlight);
+            _screen->drawTextInArea(tempArea, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_SMALL, false, _screen->C_BLACK, _cBuff5);
+        } else {
+            _screen->drawTextInArea(tempArea, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_SMALL, false, _screen->C_WHITE, _cBuff5);
+        }
+        
     } else {
         _screen->fillArea(tempArea, _screen->C_BLACK);
     }
 
 
+};
+
+void ArrangeScreen::showSoloChannelMessage(byte channel) {
+    if (channel == 0) {
+        _screen->drawTextInArea(_screen->AREA_BOTTOM_MENU, Screen::TEXTPOSITION_HCENTER_VCENTER, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "Use black keys to solo a channel");
+    } else {
+        sprintf(_cBuff16, "Channel %d solo", channel);
+        _screen->drawTextInArea(_screen->AREA_BOTTOM_MENU, Screen::TEXTPOSITION_HCENTER_VCENTER, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, _cBuff16);
+    }
 };
