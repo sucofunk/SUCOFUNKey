@@ -50,7 +50,7 @@ class Settings {
         boolean _isActive = false;
         byte _activeBank = 1;
         int _activeOption = 1; // 1..n
-        int _optionsCount = 4;        
+        int _optionsCount = 5;        
 
         void _drawAllOptions();
         void _updateOption(int position1, boolean active); // trigger drawing an option

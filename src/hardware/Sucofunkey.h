@@ -328,6 +328,7 @@ class Sucofunkey {
         static const int SYNTHCOPY_NOTE_MARKER = 725;
 
         static const int ROUTE_LINE_IN_THROUGH = 801;
+        static const int SETUP_LINE_INPUT_FROM_CONFIG = 802;
 
         static const int TIMER_GENERAL_START = 900;
         static const int TIMER_GENERAL_STOP = 901;        

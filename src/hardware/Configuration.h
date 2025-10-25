@@ -31,7 +31,7 @@
 #ifndef Configuration_h
 #define Configuration_h
 
-#define VERSIONNUMBER "0.9.7.1 - Aufholjagd"
+#define VERSIONNUMBER "0.9.7.2 - Aufholjagd"
 
 // Display configuration -----------------------------
 
@@ -77,7 +77,7 @@ class Configuration {
 
 
         typedef struct {
-            int version = 1; // configuration type.. to check, if there should be problems in the future, when more options are available
+            int version = 2; // configuration type.. to check, if there should be problems in the future, when more options are available
 
             int midiChannelPlay = 1; // MIDI channel to receive notes for play/live mode
             ValueType midiChannelPlayValueType = MIDICHANNEL;
@@ -90,6 +90,9 @@ class Configuration {
 
             bool sendMidiStartStop = 1; // send MIDI start/stop?
             ValueType sendMidiStartStopValueType = TRUEFALSE;
+
+            bool receiveUSBAudio = 0; // will replace the line-in with usb oudio in
+            ValueType receiveUSBAudioValueType = TRUEFALSE;
 
         } ConfigurationValues;
         

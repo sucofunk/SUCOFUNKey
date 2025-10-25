@@ -33,6 +33,7 @@
 
 #include <Arduino.h>
 #include <Audio.h>
+#include <Wire.h>
 #include "audio-extensions/play_sd_raw_suco.h"
 #include "audio-extensions/play_memory_suco.h"
 
@@ -79,10 +80,14 @@ class AudioResources {
         void decreaseLineInVolume();
         void muteInput();
         void unmuteInput();
+        void muteInputUSB();
+        void unmuteInputUSB();
         void muteResampling();
         void unmuteResampling();
         void setInputMic();
         void setInputLine();
+        
+        boolean inputLineTypeUSB = false; // false = input from line-in via SGTL5000
 
         AudioPlayMemorySUCO          playMem;
 
@@ -148,8 +153,11 @@ class AudioResources {
         AudioMixer4              mixerMem5L;
         AudioMixer4              mixerMem5R;
         AudioMixer4              mixerMem6L;
-        AudioMixer4              mixerMem6R;
-
+        AudioMixer4              mixerMem6R;        
+        
+        AudioOutputUSB          audioOutputUSB;
+        AudioInputUSB           audioInputUSB;
+        AudioMixer4             recordInputMixer;
 /*
         // from Open Audio for phaseshifter
         AudioConvert_I16toF32    cnvrt1;    // Convert to float

@@ -99,6 +99,9 @@ void Settings::_updateOption(int position1, boolean active) {
     case 4:
       _settingsScreen.drawOption(4, "Send MIDI start/stop", _keyboard->getConfig()->configurationValues.sendMidiStartStop, _keyboard->getConfig()->configurationValues.sendMidiStartStopValueType, active);
       break;
+    case 5:
+      _settingsScreen.drawOption(5, "Receive line-in via USB audio", _keyboard->getConfig()->configurationValues.receiveUSBAudio, _keyboard->getConfig()->configurationValues.receiveUSBAudioValueType, active);
+      break;
   }
 }
 
@@ -106,22 +109,23 @@ void Settings::_changeOptionValue(boolean increase) {
   switch (_activeOption) {
     case 1:            
       _changeMidiChannel(&_keyboard->getConfig()->configurationValues.midiChannelPlay, increase);
-      _updateOption(_activeOption, true);
       break;
     case 2:
       _changeMidiChannel(&_keyboard->getConfig()->configurationValues.midiChannelPiano, increase);
-      _updateOption(_activeOption, true);      
       break;
     case 3:
       _toggleTrueFalse(&_keyboard->getConfig()->configurationValues.sendMidiMasterClock);
-      _updateOption(_activeOption, true);      
       break;
     case 4:
       _toggleTrueFalse(&_keyboard->getConfig()->configurationValues.sendMidiStartStop);
-      _updateOption(_activeOption, true);      
       break;
+    case 5:
+      _toggleTrueFalse(&_keyboard->getConfig()->configurationValues.receiveUSBAudio);      
+      break;            
   }
+  _updateOption(_activeOption, true);
   _fsio->saveConfiguration(&_keyboard->getConfig()->configurationValues);
+  _keyboard->addApplicationEventToQueue(Sucofunkey::SETUP_LINE_INPUT_FROM_CONFIG);
 }
 
 void Settings::_changeMidiChannel(int *value, boolean increase) {

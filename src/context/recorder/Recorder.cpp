@@ -188,6 +188,7 @@ void Recorder::setActive(boolean active) {
 
     if (currentState == RECORDER_NOTHING) {
       _audioResources->muteInput();
+      _audioResources->muteInputUSB();
       _audioResources->muteResampling();
       _lastInput = _keyboard->getInput();
       _keyboard->setInput(Sucofunkey::INPUT_NONE);
@@ -201,6 +202,7 @@ void Recorder::cancelRecording() {
   currentState = RECORDER_NOTHING;
   _keyboard->setInput(Sucofunkey::INPUT_NONE);
   _audioResources->muteInput();
+  _audioResources->muteInputUSB();
   _audioResources->muteResampling();
   _keyboard->addApplicationEventToQueue(_keyboard->RECORDER_CANCEL); 
 }
@@ -263,6 +265,7 @@ void Recorder::stopRecording() {
     _lastInput = _keyboard->getInput();
     _keyboard->setInput(Sucofunkey::INPUT_NONE);
     _audioResources->muteInput();
+    _audioResources->muteInputUSB();
     _audioResources->muteResampling();
   }
 
@@ -280,12 +283,12 @@ void Recorder::activateInput() {
   switch(_keyboard->getInput()) {
     case Sucofunkey::INPUT_LINE:
         _audioResources->setInputLine();
-        _audioResources->unmuteInput();
+//        _audioResources->unmuteInput();
         _audioResources->muteResampling();
         break;
     case Sucofunkey::INPUT_LINE_RESAMPLE:
         _audioResources->setInputLine();
-        _audioResources->unmuteInput();
+//        _audioResources->unmuteInput();
         _audioResources->unmuteResampling();
         break;
     case Sucofunkey::INPUT_MIC:
@@ -300,10 +303,12 @@ void Recorder::activateInput() {
         break;
     case Sucofunkey::INPUT_RESAMPLE:
         _audioResources->muteInput();
+        _audioResources->muteInputUSB();
         _audioResources->unmuteResampling();
         break;
     case Sucofunkey::INPUT_NONE:
         _audioResources->muteInput();
+        _audioResources->muteInputUSB();
         _audioResources->muteResampling();
         break;    
   }

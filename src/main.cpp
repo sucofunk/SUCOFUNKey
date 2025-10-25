@@ -209,11 +209,21 @@ AudioConnection          patchCord038(audioResources.mixerSDR, 0, audioResources
 AudioConnection          patchCord039(audioResources.recordMixer, audioResources.queue1);
 AudioConnection          patchCord040(audioResources.recordMixer, audioResources.peak1);
 
-AudioConnection          patchCord041(audioResources.audioInput, 0, audioResources.recordMixer, 0);
+// Input Section
+AudioConnection          patchCord041(audioResources.audioInput, 0, audioResources.recordInputMixer, 0);
+AudioConnection          patchCord043(audioResources.audioInput, 1, audioResources.recordInputMixer, 1);
+
+AudioConnection          patchCord086(audioResources.audioInputUSB, 0, audioResources.recordInputMixer, 3);
+AudioConnection          patchCord088(audioResources.audioInputUSB, 1, audioResources.recordInputMixer, 4);
+
+AudioConnection          patchCord083(audioResources.recordInputMixer, 0, audioResources.recordMixer, 0);
+
 AudioConnection          patchCord042(audioResources.audioInput, 0, audioResources.mixerOutL, 0);
-AudioConnection          patchCord043(audioResources.audioInput, 1, audioResources.recordMixer, 1);
 AudioConnection          patchCord044(audioResources.audioInput, 1, audioResources.mixerOutR, 0);
 
+AudioConnection          patchCord087(audioResources.audioInputUSB, 0, audioResources.mixerOutL, 2);
+AudioConnection          patchCord089(audioResources.audioInputUSB, 1, audioResources.mixerOutR, 2);
+// End Input Section
 
 AudioConnection          patchCord045(audioResources.mixerMem1L, 0, audioResources.mixerMemL, 0);
 AudioConnection          patchCord046(audioResources.mixerMem1R, 0, audioResources.mixerMemR, 0);
@@ -260,7 +270,11 @@ AudioConnection          patchCord080(audioResources.playMemLive7, 0, audioResou
 AudioConnection          patchCord081(audioResources.playMemLive8, 0, audioResources.mixerMem6L, 3);
 AudioConnection          patchCord082(audioResources.playMemLive8, 0, audioResources.mixerMem6R, 3);
 
-// next patchcord nr: 084
+AudioConnection          patchCord084(audioResources.mixerOutL, 0, audioResources.audioOutputUSB, 0);
+AudioConnection          patchCord085(audioResources.mixerOutR, 0, audioResources.audioOutputUSB, 1);
+
+
+// next patchcord nr: 090
 
 // --- END of AudioConnections
 
@@ -541,6 +555,12 @@ void setup() {
   }
 
   MIDI.begin(MIDI_CHANNEL_OMNI);
+  
+  // load configuration from SD
+  fsio.loadConfiguration(&config.configurationValues);
+  keyboard.addApplicationEventToQueue(Sucofunkey::SETUP_LINE_INPUT_FROM_CONFIG);
+  
+  
   Serial.println("setup done");
   // remove before flight... just for testing, if soldering worked and did not fry the MCPs
   //keyboard.scanI2C();
@@ -828,10 +848,7 @@ void handleKeyboardEventQueue() {
           sfsio.setSongPath(activeSongPath);                    
           sfsio.clearSampleMemory();
           screen.loadingScreen(0.0);
-          
-          // load configuration from SD
-          fsio.loadConfiguration(&config.configurationValues);
-
+                    
           sfsio.writeAllSamplesToWaveformBuffer();
 
           // load sample infos
@@ -944,6 +961,10 @@ void handleKeyboardEventQueue() {
           if (config.configurationValues.sendMidiMasterClock) {
             globalTickGeneralUpdateInterval(event.value);
           }
+          break;
+
+        case Sucofunkey::SETUP_LINE_INPUT_FROM_CONFIG:
+          audioResources.inputLineTypeUSB = config.configurationValues.receiveUSBAudio ? true : false;
           break;
 
         default:

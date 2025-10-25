@@ -66,17 +66,31 @@ void AudioResources::decreaseLineInVolume() {
 
 
 void AudioResources::muteInput() {
-    recordMixer.gain(0, 0.0);
-    recordMixer.gain(1, 0.0);
+    recordInputMixer.gain(0, 0.0);
+    recordInputMixer.gain(1, 0.0);
     mixerOutL.gain(0, 0.0);
     mixerOutR.gain(0, 0.0);
 };
 
 void AudioResources::unmuteInput() {
-    recordMixer.gain(0, 0.6);
-    recordMixer.gain(1, 0.6);
+    recordInputMixer.gain(0, 0.6);
+    recordInputMixer.gain(1, 0.6);
     mixerOutL.gain(0, 0.6);
     mixerOutR.gain(0, 0.6);
+};
+
+void AudioResources::muteInputUSB() {
+    recordInputMixer.gain(2, 0.0);
+    recordInputMixer.gain(3, 0.0);
+    mixerOutL.gain(2, 0.0);
+    mixerOutR.gain(2, 0.0);
+};
+
+void AudioResources::unmuteInputUSB() {
+    recordInputMixer.gain(2, 0.6);
+    recordInputMixer.gain(3, 0.6);
+    mixerOutL.gain(2, 0.6);
+    mixerOutR.gain(2, 0.6);
 };
 
 void AudioResources::muteResampling() {
@@ -90,13 +104,22 @@ void AudioResources::unmuteResampling() {
 };
 
 void AudioResources::setInputMic() {
-    activeInput = AUDIO_INPUT_MIC;            
+    activeInput = AUDIO_INPUT_MIC;
     audioShield.inputSelect(activeInput);
     audioShield.micGain(currentMicGain);
+    muteInputUSB();
 }
 
 void AudioResources::setInputLine() {
     activeInput = AUDIO_INPUT_LINEIN;
     audioShield.inputSelect(activeInput);
     audioShield.lineInLevel(currentLineInLevel);
+    
+    if (inputLineTypeUSB) {
+        unmuteInputUSB();
+        muteInput();
+    } else {
+        unmuteInput();
+        muteInputUSB();
+    }
 }
