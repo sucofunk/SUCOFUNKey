@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -62,10 +62,14 @@ Sampler::Sampler(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *s
 
 void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
 
-    // handles sample librarc cancel/select events and stop playing, before doing anything else
+    // handles sample library cancel/select events and stop playing, before doing anything else
     if (event.index == _keyboard->SAMPLE_LIBRARY_CANCEL || event.index == _keyboard->SAMPLE_LIBRARY_SELECTED) {
         _audioResources->playSdRaw.stop();
     } 
+
+    byte sample72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
+    int maxWidth = 319; // sample width on screen in pixels.. short smaples might not fill the screen. value is used as temporary value for con the fly calculations
+    maxWidth = _sfsio->waveFormBufferLength[sample72];
 
     if (currentState == SAMPLER_LIBRARY_OPEN && event.index != Sucofunkey::SAMPLE_LIBRARY_SELECTED && event.index != Sucofunkey::SAMPLE_LIBRARY_CANCEL) {
         
@@ -106,6 +110,25 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
                 } else {                 
                   indicateFreeSamples(false, 250);   
                 }  
+              } else {
+                if (currentState == SAMPLE_EDIT_TRIM) {
+                  // ToDo: move start to end and end to current distance from start to end
+                  //  moves start to end and end to current distance from start to end.. for cutting same length samples from loops e.g.
+                  int spanLength = _trimMarkerEndPosition - _trimMarkerStartPosition;
+
+                  if (_trimMarkerStartPosition - spanLength >= 0) {
+                    // hide startmarker
+                    _samplerScreen.removeTrimMarker(_trimMarkerEndPosition, sample72, _volumeScaleFactor);
+                    
+                    // move end position to start position
+                    _trimMarkerEndPosition = _trimMarkerStartPosition;
+                    // and start marker the same amount of pixels to the right, as the start marker moved right..
+                    _trimMarkerStartPosition =  _trimMarkerStartPosition - spanLength;                  
+
+                    _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, sample72, _volumeScaleFactor);
+                    _samplerScreen.drawTrimMarkerOffsets(_trimMarkerStartSampleCountOffset, _trimMarkerEndSampleCountOffset);                  
+                  }
+                }
               }
               break;
         case Sucofunkey::CURSOR_RIGHT:
@@ -124,6 +147,25 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
                 } else {
                   indicateFreeSamples(false, 250);
                 }
+              } else {
+                if (currentState == SAMPLE_EDIT_TRIM) {
+                  //  moves start to end and end to current distance from start to end.. for cutting same length samples from loops e.g.
+                  int spanLength = _trimMarkerEndPosition - _trimMarkerStartPosition;
+
+                  if (_trimMarkerEndPosition + spanLength < maxWidth-1) {
+                    // hide startmarker
+                    _samplerScreen.removeTrimMarker(_trimMarkerStartPosition, sample72, _volumeScaleFactor);
+                    
+                    // move start position to end position
+                    _trimMarkerStartPosition = _trimMarkerEndPosition;
+                    // and end marker the same amount of pixels to the right, as the start marker moved right..
+                    _trimMarkerEndPosition =  _trimMarkerEndPosition + spanLength;                  
+
+                    _samplerScreen.drawTrimMarker(_trimMarkerStartPosition, _trimMarkerEndPosition, sample72, _volumeScaleFactor);
+                    _samplerScreen.drawTrimMarkerOffsets(_trimMarkerStartSampleCountOffset, _trimMarkerEndSampleCountOffset);                  
+                }
+                break;
+                }
               }
               break;
         case Sucofunkey::MENU:
@@ -140,9 +182,7 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
                     if (currentState == SAMPLE_SELECTED) {
                         _blinkSampleSlot(_activeSampleSlot, false);                        
                         _blackKeyMenu.showMenu();
-                    }
-
-                    
+                    }                  
                   }
                 }
               break;
@@ -189,7 +229,7 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
                 _keyboard->switchFaderLED(false);
               }              
               _resetTrimMarkerOffsets(false, true);
-              break;              
+              break;                           
       }
     }
 
@@ -361,10 +401,8 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
       }
     }
 
-    int maxWidth = 319;
 
     if (event.type == Sucofunkey::ENCODER && Sampler::currentState == SAMPLE_EDIT_TRIM) {
-        byte sample72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
         switch (event.index) {
           case Sucofunkey::ENCODER_1:
                  maxWidth = _sfsio->waveFormBufferLength[sample72];
@@ -626,6 +664,11 @@ void Sampler::deleteActiveSample() {
 void Sampler::saveActiveSample() {
   _samplerScreen.showSavingMessage();
 
+  if (_audioResources->playSdRaw.isPlaying()) {
+    _audioResources->playSdRaw.stop();
+    delay(10);
+  }
+
   int sampleId72 = _activeSampleSlot == 0 ? 72 : (_tempBank-1)*24+_activeSampleSlot-1;
   uint32_t start = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerStartPosition + _trimMarkerStartSampleCountOffset;
   uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * (_trimMarkerEndPosition + 1) + _trimMarkerEndSampleCountOffset;
@@ -682,6 +725,12 @@ void Sampler::saveActiveSample() {
 void Sampler::saveActiveSampleAs() {
   currentState = SAMPLE_WAIT_SAVE_SLOT;
   _blackKeyMenu.hideMenu();
+
+  if (_audioResources->playSdRaw.isPlaying()) {
+    _audioResources->playSdRaw.stop();
+    delay(10);
+  }
+
   _samplerScreen.showSlotSelectionHint();
   indicateFreeSamples(true, 0);
 }

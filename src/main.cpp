@@ -738,6 +738,7 @@ void loop() {
     // send midi ticks as clock, if "wished" in play, arrange and sequencer
     if (currentAppContext == LIVE || currentAppContext == SEQUENCER || currentAppContext == ARRANGE) {
       MIDI.sendClock();
+      usbMIDI.sendRealTime(usbMIDI.Clock);
     }
     
   }
@@ -878,22 +879,25 @@ void handleKeyboardEventQueue() {
         case Sucofunkey::MIDI_SEND_NOTE_ON:
           // data1 = NOTE, data2 = VELOCITY, data3 = CHANNEL
           MIDI.sendNoteOn(event.data1, event.data2, event.data3);
-          Serial.println(event.data1);
+          usbMIDI.sendNoteOn(event.data1, event.data2, event.data3);
           break;
 
         case Sucofunkey::MIDI_SEND_NOTE_OFF:
           // data1 = NOTE, data2 = VELOCITY, data3 = CHANNEL
           MIDI.sendNoteOff(event.data1, 0, event.data3);
+          usbMIDI.sendNoteOff(event.data1, 0, event.data3);
           break;
 
         case Sucofunkey::MIDI_SEND_ALL_NOTE_OFF:
           // data3 = CHANNEL
           MIDI.sendControlChange(123, 123, event.data3);
+          usbMIDI.sendControlChange(123, 123, event.data3);
           break;
 
         case Sucofunkey::MIDI_SEND_ALL_NOTE_OFF_ALL_CHANNELS:
           for (byte i=1; i<=16; i++) {
             MIDI.sendControlChange(123, 123, i);
+            usbMIDI.sendControlChange(123, 123, i);
           }
           break;
 
@@ -908,6 +912,7 @@ void handleKeyboardEventQueue() {
         case Sucofunkey::SYNTHCOPY_START_NOTE:
           // value = ms to release note, data1 = NOTE, data2 = VELOCITY, data3 = CHANNEL
           MIDI.sendNoteOn(event.data1, event.data2, event.data3);
+          usbMIDI.sendNoteOn(event.data1, event.data2, event.data3);
           tickedGeneral = false;
           globalTickTimerGeneral.begin(globalTickGeneral, event.value*1000);
           break;
@@ -941,6 +946,7 @@ void handleKeyboardEventQueue() {
           // check if midi start/stop event should be sent (in settings)
           if (config.configurationValues.sendMidiStartStop) {
             MIDI.sendStart();
+            usbMIDI.sendRealTime(usbMIDI.Start);
           }
           break;
 
@@ -948,6 +954,7 @@ void handleKeyboardEventQueue() {
           // check if midi start/stop event should be sent (in settings)
           if (config.configurationValues.sendMidiStartStop) {
             MIDI.sendStop();
+            usbMIDI.sendRealTime(usbMIDI.Stop);
           }
 
           // check if clock signal should be sent (in settings)
