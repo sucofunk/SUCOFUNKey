@@ -163,7 +163,6 @@ void SamplerScreen::drawTrimMarkerOffsets(int startOffset, int endOffset) {
         sprintf(_cBuff20, "%d", endOffset);
         _screen->drawTextInArea(_screen->AREA_HEADLINE_ENDOFFSET, _screen->TEXTPOSITION_RIGHT_TOP, true, _screen->TEXTSIZE_MEDIUM, true, _screen->C_TRIM_END, _cBuff20);
 
-
 };
 
 

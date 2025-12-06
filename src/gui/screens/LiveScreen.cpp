@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -268,6 +268,14 @@ void LiveScreen::showEmptyOverview(boolean createAreas) {
         _sampleCompleteArea.y1 = _centerLineY - 75;
         _sampleCompleteArea.y2 = _centerLineY - 55;
 
+        _sampleCompleteAreaLooped.bgColor = _screen->C_BLACK;       
+        _sampleCompleteAreaLooped.transparent = false;        
+        _sampleCompleteAreaLooped.x1 = 0;
+        _sampleCompleteAreaLooped.x2 = 70;
+        _sampleCompleteAreaLooped.y1 = _centerLineY - 55;
+        _sampleCompleteAreaLooped.y2 = _centerLineY - 35;
+
+
         _sampleDirectionArea.bgColor = _screen->C_BLACK;       
         _sampleDirectionArea.transparent = false;        
         _sampleDirectionArea.x1 = 71;
@@ -378,7 +386,7 @@ void LiveScreen::updateSnippetConfig(Play::LiveSlotDefinitionStruct slot, int en
         break;
 
         case 2:
-        _screen->drawTextInArea(_snippetsLoopArea, Screen::TEXTPOSITION_HCENTER_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, slot.loopSnippet ? "LOOP" : "ONCE");
+        _screen->drawTextInArea(_snippetsLoopArea, Screen::TEXTPOSITION_HCENTER_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, slot.loop ? "LOOP" : "ONCE");
         break;
         
         case 4:
@@ -419,10 +427,10 @@ void LiveScreen::showSampleConfig(Play::LiveSlotDefinitionStruct slot) {
 
     _drawSampleWaveform(slot.sampleNumber, slot.reverse);
 
-    _screen->vr(_screen->AREA_SEQUENCER_OPTION1, 1, _screen->C_GRID_DARK);  
+/*    _screen->vr(_screen->AREA_SEQUENCER_OPTION1, 1, _screen->C_GRID_DARK);  
     _screen->vr(_screen->AREA_SEQUENCER_OPTION2, 1, _screen->C_GRID_DARK);  
     _screen->vr(_screen->AREA_SEQUENCER_OPTION3, 1, _screen->C_GRID_DARK);  
-
+*/
     _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION1, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "vol");
     _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION2, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "pan");
     _screen->drawTextInArea(_screen->AREA_SEQUENCER_OPTION3, _screen->TEXTPOSITION_HCENTER_BOTTOM, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "pitch");
@@ -434,10 +442,11 @@ void LiveScreen::showSampleConfig(Play::LiveSlotDefinitionStruct slot) {
     _screen->hr(_screen->AREA_SEQUENCER_OPTION1_VOLUME, 0.0, _screen->C_WHITE);
     _screen->hr(_screen->AREA_SEQUENCER_OPTION1_VOLUME, 1.0, _screen->C_WHITE);
 
-    updateSampleConfig(slot, 1, false, NONE);
-    updateSampleConfig(slot, 1, true, NONE);
+    // waveform (option 2) draws over "looping" area
     updateSampleConfig(slot, 2, false, NONE);
     updateSampleConfig(slot, 2, true, NONE);
+    updateSampleConfig(slot, 1, false, NONE);
+    updateSampleConfig(slot, 1, true, NONE);
     updateSampleConfig(slot, 3, false, NONE);
     updateSampleConfig(slot, 3, true, NONE);
     updateSampleConfig(slot, 4, false, NONE);
@@ -450,11 +459,11 @@ void LiveScreen::_drawSampleWaveform(int sampleId72, boolean reverse) {
     _screen->fillArea(_waveFormArea, _screen->C_BLACK);
 
     // draw zero line
-    _screen->drawFastHLine(0, _centerLineY, 320, _screen->C_WHITE);
+    _screen->drawFastHLine(0, _centerLineWaveformY, 320, _screen->C_WHITE);
 
     // draw waveform
     for (int i=0; i<320; i++) {        
-      _screen->drawLine(i, floor(_centerLineY+_sfsio->waveFormBuffer[sampleId72-1][(reverse ? 319-i : i)][0]*scaleFactor), i, floor(_centerLineY-_sfsio->waveFormBuffer[sampleId72-1][(reverse ? 319-i : i)][1]*scaleFactor), (i >= _sfsio->waveFormBufferLength[sampleId72-1] ? _screen->C_LIGHTGREY : _screen->C_WHITE ));
+      _screen->drawLine(i, floor(_centerLineWaveformY+_sfsio->waveFormBuffer[sampleId72-1][(reverse ? 319-i : i)][0]*scaleFactor), i, floor(_centerLineWaveformY-_sfsio->waveFormBuffer[sampleId72-1][(reverse ? 319-i : i)][1]*scaleFactor), (i >= _sfsio->waveFormBufferLength[sampleId72-1] ? _screen->C_LIGHTGREY : _screen->C_WHITE ));
     }
 }
 
@@ -466,10 +475,13 @@ void LiveScreen::updateSampleConfig(Play::LiveSlotDefinitionStruct slot, int enc
         case 1:
             if (push) {
                 _screen->drawTextInArea(_sampleCompleteArea, Screen::TEXTPOSITION_LEFT_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, slot.immediateStopOnRelease ? "while hold" : "complete");
+                _screen->drawTextInArea(_sampleCompleteAreaLooped, Screen::TEXTPOSITION_HCENTER_BOTTOM, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_ORANGE, slot.loop ? "loop" : "1x");                
             } else {
                 _tempInt = static_cast<int>(slot.velocity/2);
                 _screen->fillRect(_screen->AREA_SEQUENCER_OPTION1_VOLUME.x1+1+_tempInt, _screen->AREA_SEQUENCER_OPTION1_VOLUME.y1+1, 63-_tempInt, 7, _screen->C_BLACK);
-                _screen->fillRect(_screen->AREA_SEQUENCER_OPTION1_VOLUME.x1+1, _screen->AREA_SEQUENCER_OPTION1_VOLUME.y1+1, _tempInt, 7, _screen->C_TRIM_START);                
+                if (slot.velocity > 0) {
+                    _screen->fillRect(_screen->AREA_SEQUENCER_OPTION1_VOLUME.x1+1, _screen->AREA_SEQUENCER_OPTION1_VOLUME.y1+1, _tempInt, 7, _screen->C_TRIM_START);
+                }
             }                
         break;
 

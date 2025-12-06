@@ -31,7 +31,7 @@
 #ifndef Configuration_h
 #define Configuration_h
 
-#define VERSIONNUMBER "0.9.7.3 - Aufholjagd"
+#define VERSIONNUMBER "0.9.8 - brass monkey"
 
 // Display configuration -----------------------------
 

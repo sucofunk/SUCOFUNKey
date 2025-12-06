@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -273,7 +273,8 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
             if (_currentState == CONFIG_SAMPLE) {
               _playSlot(_editingSlotId, 128, false, 128);
             }  else {
-              _play->stopArrangement();
+              _play->stopArrangement();            
+              _turnOffAllLEDs(true); // turn off all looped sample LEDs
             }
             _keyboard->setScratchMute(false);     
           break;
@@ -485,8 +486,6 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
           break;
       }
     }
-
-
 }
 
 void Live::setActive(boolean active) {
@@ -504,6 +503,9 @@ void Live::setActive(boolean active) {
     _isActive = false;
     _isInitialized = false;
     _keyboard->setBank(0);
+    
+    _play->stopArrangement();
+    _turnOffAllLEDs(true); // turn off all looped sample LEDs
   }
 }
 
@@ -708,8 +710,7 @@ void Live::_playSlot(int slotIndex, byte velocity, boolean pressed, byte note) {
     if (_holdSlotIndex == -1) {
       _holdSlotIndex = slotIndex;      
     } else {
-      slotHold = _slots[_holdSlotIndex];
-      
+      slotHold = _slots[_holdSlotIndex];      
     }
   } else {
     if (_holdSlotIndex == slotIndex) {
@@ -730,7 +731,7 @@ void Live::_playSlot(int slotIndex, byte velocity, boolean pressed, byte note) {
         if ((_holdSlotIndex != -1 && _holdSlotIndex != slotIndex) && _play->isSnippetPlaying(slotHold.snippet)) {
 
           if (!_play->isSnippetPlaying(slot.snippet)) {
-            _play->chainSnippet(slotHold.snippet, slot.snippet, slot.loopSnippet);                                
+            _play->chainSnippet(slotHold.snippet, slot.snippet, slot.loop);                                
           }
           _holdSlotAction = true;
         }
@@ -741,7 +742,7 @@ void Live::_playSlot(int slotIndex, byte velocity, boolean pressed, byte note) {
       if (slot.snippet != -1 && !_holdSlotAction) {
 
           // queue unsynced snippet
-          if (slot.loopSnippet) {
+          if (slot.loop) {
             if (!_LEDHighlightSlots[slotIndex]) {
               // start looping snippet
               _play->queueSnippet(slot.snippet, false, true);
@@ -774,12 +775,28 @@ void Live::_playSlot(int slotIndex, byte velocity, boolean pressed, byte note) {
 
   if (slot.type == Play::SAMPLE) {
     if (pressed) {
-      // play sample    
-      _play->playNextFreeMemory(slot.sampleNumber, velocity == 128 ? slot.velocity : velocity, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, slot.faderScratching ,true);
+
+      if (slot.loop && !slot.immediateStopOnRelease && _currentState != PIANO) {
+        if (_LEDHighlightSlots[slotIndex]) {
+          _LEDHighlightSlots[slotIndex] = false;
+          _play->playNextFreeMemory(slot.sampleNumber, 0, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, false, false, false);
+        } else {
+          _LEDHighlightSlots[slotIndex] = true;
+          _play->playNextFreeMemory(slot.sampleNumber, velocity == 128 ? slot.velocity : velocity, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, slot.faderScratching, true, slot.loop);
+        } 
+
+        // change looping LED state
+        _keyboard->setLEDState(_keyboard->getLEDPinBySampleId(slotIndex+1), _LEDHighlightSlots[slotIndex]);
+        _LEDHighlightSlotsBlinking[slotIndex] = false;
+      } else {
+        // just play sample 
+        _play->playNextFreeMemory(slot.sampleNumber, velocity == 128 ? slot.velocity : velocity, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, slot.faderScratching, true, slot.loop);
+      }
+      
     } else {
       if (slot.immediateStopOnRelease || _currentState == PIANO) {
-        _play->playNextFreeMemory(slot.sampleNumber, 0, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, false, false);
-      }
+        _play->playNextFreeMemory(slot.sampleNumber, 0, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, false, false, slot.loop);
+      }       
     }
   }
 
@@ -889,7 +906,7 @@ void Live::_handleSnippetConfiguration(byte encoder, boolean function, int actio
         break;
       case 2:
         if (!function) {
-          _slots[_editingSlotId].loopSnippet = !_slots[_editingSlotId].loopSnippet;
+          _slots[_editingSlotId].loop = !_slots[_editingSlotId].loop;
           _liveScreen.updateSnippetConfig(_slots[_editingSlotId], 2, (action == 0 ? true : false), LiveScreen::NONE);
         } 
         break;
@@ -927,8 +944,14 @@ void Live::_handleSampleConfiguration(byte encoder, boolean function, int action
       case 1:
         if (!function) {
           if (action == 0) {
-            // toggling play complete and stop on release
-            _slots[_editingSlotId].immediateStopOnRelease = !_slots[_editingSlotId].immediateStopOnRelease;          
+            // toggling play complete and stop on release with looping or no looping
+            if (_slots[_editingSlotId].loop) {
+              _slots[_editingSlotId].immediateStopOnRelease = !_slots[_editingSlotId].immediateStopOnRelease;
+              _slots[_editingSlotId].loop = false;
+            } else {
+              _slots[_editingSlotId].loop = true;
+            }            
+
             _liveScreen.updateSampleConfig(_slots[_editingSlotId], 1, true, LiveScreen::NONE);
           } else {
             if (action == -1 && _slots[_editingSlotId].velocity > 1) _slots[_editingSlotId].velocity -= 2;
@@ -1102,3 +1125,19 @@ int Live::_getSlotIndexBySnippet(int snippet) {
   }
   return -1;
 }
+
+void Live::_turnOffAllLEDs(boolean loopedSamplesOnly) {
+   for (int i=0; i<72; i++) {
+      if (loopedSamplesOnly) {
+        if (_slots[i].type == Play::SAMPLE && _slots[i].loop && _LEDHighlightSlots[i]) {
+          _LEDHighlightSlots[i] = false;
+          _LEDHighlightSlotsBlinking[i] = false;
+          _keyboard->setLEDState(_keyboard->getLEDPinBySampleId(i+1), false);
+        }
+      } else {
+        _LEDHighlightSlots[i] = false;
+        _LEDHighlightSlotsBlinking[i] = false;
+        _keyboard->setLEDState(_keyboard->getLEDPinBySampleId(i+1), false);
+      }
+    }
+};

@@ -77,6 +77,7 @@ class LiveScreen {
         char _cBuff5[5];
         char _cBuff10[10];
         int _centerLineY = 105;
+        int _centerLineWaveformY = 120;        
         int _tempInt;
 
         Screen::Area _slotTypeSelectionAreaLeft;
@@ -94,6 +95,7 @@ class LiveScreen {
         Screen::Area _sampleScratchArea;
         Screen::Area _sampleDirectionArea;
         Screen::Area _sampleCompleteArea;
+        Screen::Area _sampleCompleteAreaLooped;
 
         Screen::Area _waveFormArea;
 

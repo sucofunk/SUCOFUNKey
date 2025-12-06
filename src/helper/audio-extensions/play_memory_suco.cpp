@@ -52,9 +52,7 @@ void AudioPlayMemorySUCO::play(const unsigned int *data)
     _noteOffPercentage = 1.0f;
 }
 
-
-void AudioPlayMemorySUCO::playPitched(const unsigned int *data, byte baseNote, byte note, int startDelaySamples, boolean reverse)
-{
+void AudioPlayMemorySUCO::playPitched(const unsigned int *data, byte baseNote, byte note, int startDelaySamples, boolean reverse, boolean loop) {
     if (playing != 0) {
         stop();
     }
@@ -70,6 +68,7 @@ void AudioPlayMemorySUCO::playPitched(const unsigned int *data, byte baseNote, b
 	playing = format >> 24;    
     _startDelayRemainSamples = startDelaySamples;
     _reverse = reverse;
+    _loop = loop;
 
     _noteOff = false;
     _noteOffPercentage = 1.0f;
@@ -81,6 +80,7 @@ void AudioPlayMemorySUCO::playPitched(const unsigned int *data, byte baseNote, b
 void AudioPlayMemorySUCO::noteOff(void) {
     _noteOffPercentage = 1.0;
     _noteOff = true;
+    _loop = false;
 }
 
 
@@ -95,6 +95,7 @@ void AudioPlayMemorySUCO::stop(void)
 
     _noteOff = false;
     _noteOffPercentage = 1.0f;
+    _loop = false;
 }
 
 
@@ -196,9 +197,20 @@ void AudioPlayMemorySUCO::update(void)
 
                 }
             } else {
+                // looping?
+                if (_loop && !_noteOff && playing != 0) {
+                    if (_reverse) {
+                        _position = (length/2)-2;
+                    } else {
+                        _position = 0.0f;
+                    } 
+                } else {
+                    // no looping, end of sample reached                    
+                    playing = 0;
+                }
                 *out++ = 0;
                 *out++ = 0;
-                playing = 0;
+                break;
             }
 
             if (_reverse) {
@@ -217,6 +229,7 @@ void AudioPlayMemorySUCO::update(void)
         _reverse = false;
         _noteOffPercentage = 1.0f;
         _noteOff = false;
+        _loop = false;
     }
 
 	transmit(block);

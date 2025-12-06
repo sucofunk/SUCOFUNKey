@@ -44,7 +44,7 @@ class AudioPlayMemorySUCO : public AudioStream
 public:
 	AudioPlayMemorySUCO(void) : AudioStream(0, NULL), playing(0) { }
 	void play(const unsigned int *data);
-    void playPitched(const unsigned int *data, byte baseNote, byte note, int startDelaySamples, boolean reverse);
+    void playPitched(const unsigned int *data, byte baseNote, byte note, int startDelaySamples, boolean reverse, boolean loop);
 	void stop(void);
 	void noteOff(void);
 	bool isPlaying(void) { return playing == 0 ? false : true ; }
@@ -64,6 +64,7 @@ private:
     boolean _isKeyboardSet = false;
     boolean _playFaderPitched = false;
     boolean _paused = false;
+    boolean _loop = false;
 
 	const unsigned int *next;
 	const unsigned int *beginning;

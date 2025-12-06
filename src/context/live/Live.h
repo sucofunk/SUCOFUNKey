@@ -134,6 +134,7 @@ class Live {
         void _playPiano(byte note, byte velocity, boolean play);
 
         int _getSlotIndexBySnippet(int snippet);
+        void _turnOffAllLEDs(boolean loopedSamplesOnly);
 };
 
 #endif

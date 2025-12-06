@@ -128,22 +128,22 @@ void Synth::_playNextFreeWavetable(byte note, boolean play) {
         // play pitched note: bankstart(1:29|2:53|3:77)+sampleId1-1 if in keyboard mode      
         switch(i) {
           case 0:
-            _audioResources->playMem1.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false);
+            _audioResources->playMem1.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false, false);
             break;
           case 1:
-            _audioResources->playMem2.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false);
+            _audioResources->playMem2.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false, false);
             break;
           case 2:
-            _audioResources->playMem3.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false);
+            _audioResources->playMem3.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false, false);
             break;
           case 3:
-            _audioResources->playMem4.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false);
+            _audioResources->playMem4.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false, false);
             break;
           case 4:
-            _audioResources->playMem5.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false);
+            _audioResources->playMem5.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false, false);
             break;
           case 5:
-            _audioResources->playMem6.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false);
+            _audioResources->playMem6.playPitched(_extmemArray + _sfsio->getExtmemOffset(_currentInstrumentId), 60, note, 0, false, false);
             break;                                                
         }
 

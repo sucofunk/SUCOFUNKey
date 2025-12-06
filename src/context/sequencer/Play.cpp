@@ -300,7 +300,7 @@ void Play::playMixedSample(byte channel, uint16_t position, int snippetSlot) {
 
       // do not play a sample, if position is a parameter change .. but check if sample is in EXTMEM
       if (_song.getPosition(channel, position).type == SongStructure::SAMPLE && _sfsio->getExtmemOffset(_song.getSampleFromBucketId(_song.getPosition(channel, position).typeIndex).sampleNumber) != -1)  {
-        mixSPM.playMemory->playPitched(_extmemArray + _sfsio->getExtmemOffset(sampleNumber), 60, pitchedNote, shiftSamples, reverse);
+        mixSPM.playMemory->playPitched(_extmemArray + _sfsio->getExtmemOffset(sampleNumber), 60, pitchedNote, shiftSamples, reverse, false);
       }
     }
 
@@ -652,7 +652,7 @@ void Play::stopArrangement() {
 // --- Live --------------------------------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------------------------------------
 
-void Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, byte baseNote, byte note, boolean reverse, boolean scratchFader, boolean play) {
+void Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, byte baseNote, byte note, boolean reverse, boolean scratchFader, boolean play, boolean loop) {
   // check if sample in extmem.. if not, load it now!
   if (!_sfsio->addSampleToMemory((sample1/24)+1, (sample1%24), false)) return;
 
@@ -709,7 +709,7 @@ void Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, 
         
           polyChangeVelocity(i, velocity, stereoPosition);
           _getPlayMemSlot(i)->setPlayFaderPitched(scratchFader);
-          _getPlayMemSlot(i)->playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse);
+          _getPlayMemSlot(i)->playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse, loop);
 
           return;
         }
@@ -721,7 +721,6 @@ void Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, 
       if (_polyMemIDs[i] == sample1 && _polyMemNotes[i] == note) {
           _polyMemIDs[i] = 0;
           _polyMemNotes[i] = 128;
-
           _getPlayMemSlot(i)->noteOff();
         return;
       }

@@ -82,7 +82,7 @@ class Play {
             LiveSlotType type = EMPTY;
             
             int snippet = -1;
-            boolean loopSnippet = false;
+            boolean loop = false;
 
             boolean immediateStopOnRelease = false;
 
@@ -133,7 +133,7 @@ class Play {
         void stopArrangement();
 
         // playing samples in live mode..
-        void playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, byte baseNote, byte note, boolean reverse, boolean scratchFader, boolean play);
+        void playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, byte baseNote, byte note, boolean reverse, boolean scratchFader, boolean play, boolean loop);
         void handlePolyphonicAftertouch(byte sample1, byte velocity, byte stereoPosition);
         void polyChangeVelocity(byte polymem, byte velocity, byte stereoPosition);
 
