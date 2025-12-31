@@ -161,8 +161,7 @@ void HomeScreen::showGeneralInformation() {
     _screen->drawTextInArea(text1Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_ORANGE, "SAMPLE");
     _screen->drawTextInArea(text2Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_ORANGE, "SKETCH");
     _screen->drawTextInArea(text3Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_ORANGE, "ARRANGE");
-    _screen->drawTextInArea(text4Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_ORANGE, "PLAY");
-   
+    _screen->drawTextInArea(text4Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_ORANGE, "PLAY");           
 };
 
 

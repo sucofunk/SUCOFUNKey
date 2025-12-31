@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -369,3 +369,45 @@ void Screen::drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_
     _tft->drawTriangle(x0, y0, x1, y1, x2, y2, color);
   }  
 };
+
+// --- Icons and helper functions ---
+/*
+uint64_t Screen::binary_string_to_uint64(const char *binary)
+{
+    uint64_t result = 0;
+
+    for (int i = 0; i < 64; i++) {
+        result <<= 1;
+
+        if (binary[i] == '1') {
+            result |= 1ULL;
+        }
+    }
+
+    return result;
+}
+*/
+
+int Screen::get_bit_at_position(uint64_t icon, uint8_t position)
+{
+    if (position > 63) {
+        return 0; // false
+    }
+
+    return (icon >> position) & 1ULL;
+}
+
+void Screen::drawIconBy64Int(int x, int y, uint64_t icon, uint16_t color) {
+  if (icon == 0) return;
+
+  int bitPosition = 0;  
+  for (int row = 0; row < 8; row++) {
+        for (int col = 0; col < 8; col++) {
+            bitPosition = (7 - row) * 8 + (7 - col);
+            if (get_bit_at_position(icon, bitPosition)) {
+                drawPixel(x + col, y + row, color);
+            }
+        }
+    }  
+}
+    

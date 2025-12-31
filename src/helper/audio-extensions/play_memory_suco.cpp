@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -81,6 +81,10 @@ void AudioPlayMemorySUCO::noteOff(void) {
     _noteOffPercentage = 1.0;
     _noteOff = true;
     _loop = false;
+
+    if (_playFaderPitched) {
+        _keyboard->switchFaderLED(false);
+    }
 }
 
 
@@ -96,37 +100,70 @@ void AudioPlayMemorySUCO::stop(void)
     _noteOff = false;
     _noteOffPercentage = 1.0f;
     _loop = false;
+    
+    if (_playFaderPitched) {
+        _keyboard->switchFaderLED(false);
+    }    
 }
 
 
 void AudioPlayMemorySUCO::update(void)
 {
+
     // adjust increment/speed for scratching sample
     if (playing && _playFaderPitched) {
-        _faderValue = _keyboard->getFaderValue(-50,50);
+        if (_tapeScratching) {            
+            // when adjusting the fader, do not change playback.. good for playing melodically with long samples
+            if (!_keyboard->isScratchFaderAdjusting()) {
+                _faderValue = _keyboard->getFaderValue(-60,60);
 
-        // left
-        if (_faderValue < -2) {
-            _reverse = true;
-            _paused = false;
-            _increment = ((_faderValue+2)*-0.0218);
-            _keyboard->switchFaderLED(false);            
+                // left
+                if (_faderValue < -2) {
+                    _reverse = true;
+                    _paused = false;
+                    _increment = ((_faderValue+2)*-0.0218);
+
+                    _keyboard->switchFaderLED(_faderValue < -50 ? true : false);
+                } else {
+                    // right
+                    if (_faderValue > 2) {
+                        _paused = false;
+                        _reverse = false;
+                        _increment = ((_faderValue-2)*0.0218);
+                        _keyboard->switchFaderLED(_faderValue > 50 ? true : false);
+                    } else {
+                        // middle position
+                        _paused = true;
+                        _reverse = false;
+                        _increment = 0.0f;
+                        _keyboard->switchFaderLED(true);
+                    }            
+                }
+            }
         } else {
-            // right
-            if (_faderValue > 2) {
-                _paused = false;
-                _reverse = false;
-                _increment = ((_faderValue-2)*0.0218);
-                _keyboard->switchFaderLED(false);
-            } else {
-                // middle position
-                _paused = true;
-                _reverse = false;
-                _increment = 0.0f;
-                _keyboard->switchFaderLED(true);
-            }            
+                // "real scratching"
+                switch (_keyboard->getScratchDirection()) {
+                    case Sucofunkey::FORWARD:
+                        _reverse = false;
+                        _paused = false;
+                        _increment = _keyboard->getFaderAcceleration();
+                        _keyboard->switchFaderLED(false);
+                        break;
+                    case Sucofunkey::BACKWARD:
+                        _reverse = true;
+                        _paused = false;
+                        _increment = _keyboard->getFaderAcceleration();
+                        _keyboard->switchFaderLED(false);
+                        break;
+                    case Sucofunkey::NONE:                        
+                    default:
+                        _paused = false;
+                        _reverse = false;
+                        _increment = _keyboard->getFaderAcceleration();
+                        _keyboard->switchFaderLED(true);
+                        break;
+                }
         }
-
     }
 
 
@@ -170,6 +207,7 @@ void AudioPlayMemorySUCO::update(void)
                     *out++ = p1;
                     *out++ = p2;
 */
+// End Bitcrushing
 
                 if (_noteOff) {
                     // fade out..
@@ -229,7 +267,11 @@ void AudioPlayMemorySUCO::update(void)
         _reverse = false;
         _noteOffPercentage = 1.0f;
         _noteOff = false;
-        _loop = false;
+        _loop = false; 
+        
+        if (_playFaderPitched) {
+            _keyboard->switchFaderLED(false);
+        }
     }
 
 	transmit(block);
@@ -254,14 +296,13 @@ void AudioPlayMemorySUCO::reversePlayback() {
     _reverse = !_reverse;
 };
 
-
-
 void AudioPlayMemorySUCO::setKeyboardReference(Sucofunkey *keyboard) {
     _keyboard = keyboard;
     _isKeyboardSet = true;
     _playFaderPitched = false;    
 }
-
-void AudioPlayMemorySUCO::setPlayFaderPitched(boolean playFaderPitched) {
+    
+void AudioPlayMemorySUCO::setPlayFaderPitched(boolean playFaderPitched, boolean tapeScratch) {
     _playFaderPitched = playFaderPitched;
+    _tapeScratching = tapeScratch; 
 };

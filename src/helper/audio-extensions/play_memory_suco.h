@@ -56,7 +56,9 @@ public:
     void reversePlayback(); // if it is already playing backward, it will play forward afterwards
 
     void setKeyboardReference(Sucofunkey *keyboard);
-    void setPlayFaderPitched(boolean playFaderPitched);
+    void setPlayFaderPitched(boolean playFaderPitched, boolean tapeScratch);
+
+    boolean isFaderPitched() { return _playFaderPitched; };
 
 private:
     Sucofunkey* _keyboard;
@@ -87,6 +89,8 @@ private:
     double _noteOffOffset = 0.0005;
 
     int _startDelayRemainSamples = 0;
+
+    boolean _tapeScratching = false; // if false, vinyl scratching mode is active
 };
 
 #endif

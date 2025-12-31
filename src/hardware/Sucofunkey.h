@@ -71,6 +71,12 @@ class Sucofunkey {
             byte  data3;
         } Key;
 
+        enum ScratchDirection {
+            NONE = 0,
+            FORWARD = 1,
+            BACKWARD = 2,
+        };
+
         Sucofunkey(Configuration *config);
         boolean hasKeyPressed();
 
@@ -355,15 +361,35 @@ class Sucofunkey {
         void setScratchMute(boolean muted);
         boolean isScratchMuted();
 
+        void setScratchFaderAdjustment(boolean adjusting);
+        boolean isScratchFaderAdjusting();
+        
+        ScratchDirection getScratchDirection();
+        float getFaderAcceleration();
+
         Configuration* getConfig();
 
     private:
         Configuration *_config;
        
         int _lastFaderReading = 0;
-        int _lastFaderReadings[5] = {0, 0, 0, 0, 0};
+        int _lastFaderReadings[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         int _faderReadingPosition = 0;
         int _faderReading = 0;
+        
+        int _faderDirectionTemp = 0;
+        int _faderDirectionTempCount = 0;
+        ScratchDirection _tempSD = NONE;
+        int _noneReadingCounter = 0;
+        float _faderAcceleration = 1.0;
+
+        int _currentScratchFaderReading = 0;
+        int _lastScratchFaderReading = 0;
+        int _tempInt = 0;
+        uint32_t _stopWatchStart = 0;
+        uint32_t _stopWatchEnd = 0;
+        uint16_t _uniqueCount = 0;
+        uint16_t _sumCount = 0;
 
         int _pseudoWatchdogCount = 0;
 
@@ -527,6 +553,10 @@ class Sucofunkey {
 
         // "global" status variable -> only accessible via getter/setter
         boolean _scratchMute = false;
+        boolean _faderAdjusting = false;
+        ScratchDirection _scratchDirection = NONE;
+
+        void _calculateFaderDirectionAndSpeed();
 };
 
 #endif

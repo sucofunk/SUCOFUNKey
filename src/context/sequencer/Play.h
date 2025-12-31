@@ -75,10 +75,18 @@ class Play {
             EMPTY = 0,
             SNIPPET = 1,
             SAMPLE = 2,
-            MUTE_SCRATCHING = 3
+            MUTE_SCRATCHING = 3,
+            ADJUST_FADER = 4
         };
 
-        typedef struct {
+        enum ScratchModes {
+            NONE = 0,
+            FADER_TAPE = 1,
+            FADER_VINYL = 2,
+            LINE_IN_SERATO = 3
+        };
+
+        struct LiveSlotDefinitionStruct {
             LiveSlotType type = EMPTY;
             
             int snippet = -1;
@@ -96,9 +104,10 @@ class Play {
             byte midiNote = 0;
             boolean isPiano = false;
 
-            boolean faderScratching = false; // if fader will be read while playing sample to scratch back and forth
+            //boolean faderScratching = false; // if fader will be read while playing sample to scratch back and forth
+            ScratchModes scratchMode = NONE;
 
-        } LiveSlotDefinitionStruct;
+        } ;
 
 
         unsigned int *_extmemArray;
@@ -133,7 +142,7 @@ class Play {
         void stopArrangement();
 
         // playing samples in live mode..
-        void playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, byte baseNote, byte note, boolean reverse, boolean scratchFader, boolean play, boolean loop);
+        boolean playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, byte baseNote, byte note, boolean reverse, ScratchModes scratchMode, boolean play, boolean loop);
         void handlePolyphonicAftertouch(byte sample1, byte velocity, byte stereoPosition);
         void polyChangeVelocity(byte polymem, byte velocity, byte stereoPosition);
 

@@ -80,9 +80,17 @@ class LiveScreen {
         int _centerLineWaveformY = 120;        
         int _tempInt;
 
+        Screen::Area _slotTypeSelectionArea1;
+        Screen::Area _slotTypeSelectionArea2;
+        Screen::Area _slotTypeSelectionArea3;
+        Screen::Area _slotTypeSelectionArea4;
+
         Screen::Area _slotTypeSelectionAreaLeft;
         Screen::Area _slotTypeSelectionAreaCenter;
         Screen::Area _slotTypeSelectionAreaRight;
+        
+
+
         Screen::Area _slotAreas[24];
         Screen::Area _bpmLabelArea;
         Screen::Area _bpmValueArea;
@@ -93,6 +101,7 @@ class LiveScreen {
         Screen::Area _snippetsMIDIArea;        
         
         Screen::Area _sampleScratchArea;
+        Screen::Area _sampleScratchAreaLooped;
         Screen::Area _sampleDirectionArea;
         Screen::Area _sampleCompleteArea;
         Screen::Area _sampleCompleteAreaLooped;

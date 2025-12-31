@@ -652,7 +652,7 @@ void Play::stopArrangement() {
 // --- Live --------------------------------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------------------------------------
 
-void Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, byte baseNote, byte note, boolean reverse, boolean scratchFader, boolean play, boolean loop) {
+boolean Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, byte baseNote, byte note, boolean reverse, ScratchModes scratchMode, boolean play, boolean loop) {
   // check if sample in extmem.. if not, load it now!
   if (!_sfsio->addSampleToMemory((sample1/24)+1, (sample1%24), false)) return;
 
@@ -665,6 +665,11 @@ void Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, 
       _freeMemChannelCount++;
     } else { 
       _polyMemIncrement[i] = _polyMemIncrement[i] + 1;    
+
+      // prevent a second scratch sample playing
+      if (_getPlayMemSlot(i)->isFaderPitched() && scratchMode != NONE) {
+        return false;
+      }
     }
   }
 
@@ -708,10 +713,10 @@ void Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, 
           _polyMemNotes[i] = note;
         
           polyChangeVelocity(i, velocity, stereoPosition);
-          _getPlayMemSlot(i)->setPlayFaderPitched(scratchFader);
+          _getPlayMemSlot(i)->setPlayFaderPitched(scratchMode == NONE ? false : true, scratchMode == FADER_TAPE ? true : false);
           _getPlayMemSlot(i)->playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse, loop);
 
-          return;
+          return true;
         }
       }
     }  
@@ -722,10 +727,12 @@ void Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, 
           _polyMemIDs[i] = 0;
           _polyMemNotes[i] = 128;
           _getPlayMemSlot(i)->noteOff();
-        return;
+        return true;
       }
     }  
   }
+  
+  return true;
 }
  
 

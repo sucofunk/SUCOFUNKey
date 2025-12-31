@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2024 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -198,11 +198,22 @@ Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness);
         const uint16_t C_LIVE_SNIPPET = RGBtoColor(80, 227, 194);
         const uint16_t C_LIVE_SAMPLE = C_ORANGE;
         const uint16_t C_LIVE_SAMPLE_SCRATCH = C_RECORDING;
-        const uint16_t C_LIVE_PIANO = C_GREEN;
+        const uint16_t C_LIVE_PIANO = C_ORANGE;
         const uint16_t C_LIVE_SCRATCH_MUTE = RGBtoColor(242, 245, 66); // yellowish
 
         const uint16_t C_SHEET = RGBtoColor(0, 0, 255);;
 
+        // use this sketch to convert 8x8 binary array to icon-number: https://onlinegdb.com/4x3xdEPWbq
+        const uint64_t ICN_SCRATCH_NEEDLE = 9367271979357307135;
+        const uint64_t ICN_SCRATCH_TAPE = 73564191326208;
+        const uint64_t ICN_WAVEFORM = 1157482824291193872;
+        const uint64_t ICN_SNIPPET = 15780669172821801984;
+        const uint64_t ICN_SCRATCH_MUTE = 9314046665461760256;
+        const uint64_t ICN_ADJUST_FADER = 71077399110779904;
+        
+        const uint64_t ICN_PIANO_LEFT = 18419051350941272319;
+        const uint64_t ICN_PIANO_RIGHT = 2240849885044740383; // offset 3 pixel to the right
+        
 
         // Area definitions
         Area AREA_SCREEN = { 0, 0, 319, 239, false, C_BLACK};  // Fullscreen
@@ -294,6 +305,10 @@ Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness);
 
         Area AREAS_CONTENT_LINES[10] = {AREA_CONTENT_LINE_1, AREA_CONTENT_LINE_2, AREA_CONTENT_LINE_3, AREA_CONTENT_LINE_4, AREA_CONTENT_LINE_5, AREA_CONTENT_LINE_6, AREA_CONTENT_LINE_7, AREA_CONTENT_LINE_8, AREA_CONTENT_LINE_9, AREA_CONTENT_LINE_10};
         Area AREAS_SETTINGS_VALUES_LINES[10] = {AREA_SETTINGS_VALUES_LINE_1, AREA_SETTINGS_VALUES_LINE_2, AREA_SETTINGS_VALUES_LINE_3, AREA_SETTINGS_VALUES_LINE_4, AREA_SETTINGS_VALUES_LINE_5, AREA_SETTINGS_VALUES_LINE_6, AREA_SETTINGS_VALUES_LINE_7, AREA_SETTINGS_VALUES_LINE_8, AREA_SETTINGS_VALUES_LINE_9, AREA_SETTINGS_VALUES_LINE_10};
+
+        void drawIconBy64Int(int x, int y, uint64_t icon, uint16_t color);
+//        uint64_t binary_string_to_uint64(const char *binary);
+        int get_bit_at_position(uint64_t icon, uint8_t position);
 
     private:
 

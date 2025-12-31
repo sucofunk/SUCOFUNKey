@@ -633,7 +633,7 @@ byte Sucofunkey::getInput() {
 // e.g. range is from 100 to 200, input (0..1023) is 512 --> 150
 int Sucofunkey::getContinuousFaderValue(int scaleMin, int scaleMax) {
   // ignore small steps, as potentiometers tend to jump a bit.
-  if (abs(_faderReading - _lastFaderReading) > 3) {
+  if (abs(_faderReading - _lastFaderReading) > 5) {
     _lastFaderReading = _faderReading;
   }
   
@@ -643,32 +643,36 @@ int Sucofunkey::getContinuousFaderValue(int scaleMin, int scaleMax) {
 };
 
 // will be called from the main loop, adds the current reading to the readings queue and calculates the average value of the queue
-void Sucofunkey::updateContinuousFaderValue() {
-  _lastFaderReadings[_faderReadingPosition] = analogRead(faderPin);
+void Sucofunkey::updateContinuousFaderValue() { 
+  _lastFaderReadings[_faderReadingPosition] = analogRead(faderPin);  
   _faderReading = 0;
 
   for (int i=0; i<5; i++) {
-    _faderReading = _faderReading + _lastFaderReadings[i];
+    _faderReading = _faderReading + _lastFaderReadings[i];    
   }
 
   _faderReading = static_cast<int>(floor(_faderReading/5.0));
+
+  if (!isScratchFaderAdjusting()) {
+    if (_faderDirectionTempCount >= 200) {
+      _faderDirectionTempCount = 0;
+      _calculateFaderDirectionAndSpeed();
+      _faderDirectionTemp = _faderReading;
+    } else {
+      _faderDirectionTempCount++;
+    }
+  } else {
+    // adjusting scratch fader, reset direction and speed
+    _scratchDirection = NONE;
+    _faderAcceleration = 1.0f;
+    _noneReadingCounter = 0;
+  }
 
   if (_faderReadingPosition >= 5) {
     _faderReadingPosition = 0;
   } else {
     _faderReadingPosition++;
   }
-
-  // ToDo: build a settings option to find the weak spot of a fader and save the configuration
-
-/*  if (_tempInt-_faderReading > 50) {
-    Serial.print(_faderReading);
-    Serial.print(";");
-    Serial.print(_tempInt);
-    Serial.print(";");
-    Serial.println(abs(_tempInt-_faderReading));
-  }
-*/
 }
 
 
@@ -682,6 +686,79 @@ int Sucofunkey::getFaderValue(int scaleMin, int scaleMax) {
   return retVal;
 };
 
+
+void Sucofunkey::_calculateFaderDirectionAndSpeed() {
+    _currentScratchFaderReading = getContinuousFaderValue(0, 400);
+
+    if (_currentScratchFaderReading == _lastScratchFaderReading) {
+      _noneReadingCounter++;
+
+      if (_noneReadingCounter == 50) {
+        _scratchDirection = NONE;        
+      }
+
+      if ((_noneReadingCounter >= 50 && _noneReadingCounter < 300) && (_faderAcceleration < 0.99 || _faderAcceleration > 1.01)) {
+
+        if (_faderAcceleration > 1.0) {
+          // slow down to normal speed
+          _faderAcceleration = _faderAcceleration - 0.01;
+        } else {
+          if (_faderAcceleration < 1.0)
+          // accelerate to normal speed
+          _faderAcceleration = _faderAcceleration + 0.01;
+        } 
+
+        _stopWatchStart = 0;
+      }
+
+    } else {
+      _tempInt = _lastScratchFaderReading - _currentScratchFaderReading;
+      // differenz einmal ausrechnen,
+      // dann jeweils mit abs rechnen, wenn notwendig
+      // wenn direction change stattfinden würde, dann checken, ob mind. 3-5 punkte unterschied.
+      
+      if (abs(_tempInt) > 2) {
+        _scratchDirection = _tempInt < 0 ? FORWARD : BACKWARD;
+        
+        // direction change?
+        if (_scratchDirection != _tempSD) {
+          // yes
+          _faderAcceleration = 0.0;
+          _uniqueCount = 0;
+          _sumCount = 0;
+          _stopWatchStart = millis();
+          _faderAcceleration = 0.2f;
+        } else {
+          // no, accelerate more, depending on time and steps
+          _uniqueCount++;
+          _sumCount += abs(_tempInt);
+          _stopWatchEnd = millis();
+          _faderAcceleration = ( _sumCount / static_cast<float>(_stopWatchEnd - _stopWatchStart) ) * (_scratchDirection == FORWARD ? 0.6 : 0.6) + 0.2f;
+          
+//          Serial.println(_faderAcceleration, 4);
+        }
+
+        _noneReadingCounter = 0;
+      } else {
+          // do nothing, as we are already in NONE state
+          // or ignore, as it is bouncing of the fader                       
+      }
+    }
+
+    _lastScratchFaderReading = _currentScratchFaderReading;
+    _tempSD = _scratchDirection;  
+};
+
+
+
+
+float Sucofunkey::getFaderAcceleration() {
+  return _faderAcceleration;
+};
+
+Sucofunkey::ScratchDirection Sucofunkey::getScratchDirection() {
+  return _scratchDirection; 
+};
 
 
 void Sucofunkey::switchFaderLED(bool on) {
@@ -857,6 +934,17 @@ void Sucofunkey::setScratchMute(boolean muted) {
 boolean Sucofunkey::isScratchMuted() {
   return _scratchMute;
 }
+
+// for live playing -> ignore fader movements, while adjusting fader position
+void Sucofunkey::setScratchFaderAdjustment(boolean adjusting) {
+  _faderAdjusting = adjusting;
+}
+
+boolean Sucofunkey::isScratchFaderAdjusting() {
+  return _faderAdjusting;
+}
+
+
 
 Configuration* Sucofunkey::getConfig() {
   return _config;

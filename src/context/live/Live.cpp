@@ -99,24 +99,6 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
             _overview(false);
           }
 
-          if (_currentState == SLOT_TYPE_SELECT) {
-            switch(_slots[_editingSlotId].type) {
-              case Play::SAMPLE:
-                _slots[_editingSlotId].type = Play::SAMPLE;
-                break;
-              case Play::SNIPPET:
-                _slots[_editingSlotId].type = Play::SAMPLE;
-                break;
-              case Play::MUTE_SCRATCHING:
-                _slots[_editingSlotId].type = Play::SNIPPET;
-                break;
-              default:
-                break;                
-            }
-
-            _handleSlotTypeSelection(_editingSlotBank, _editingSlotKey, false);
-          }
-
           if (_currentState == WAIT_SAMPLE_SELECT) {
             _sampleBank = _keyboard->setBankDown();
           }
@@ -133,25 +115,6 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
             _overview(false);
           }
 
-          if (_currentState == SLOT_TYPE_SELECT) {
-
-            switch(_slots[_editingSlotId].type) {
-              case Play::SAMPLE:
-                _slots[_editingSlotId].type = Play::SNIPPET;
-                break;
-              case Play::SNIPPET:
-                _slots[_editingSlotId].type = Play::MUTE_SCRATCHING;
-                break;
-              case Play::MUTE_SCRATCHING:
-                _slots[_editingSlotId].type = Play::MUTE_SCRATCHING;
-                break;
-              default:
-                break;                                
-            }
-
-            _handleSlotTypeSelection(_editingSlotBank, _editingSlotKey, false);
-          }
-
           if (_currentState == WAIT_SAMPLE_SELECT) {
             _sampleBank = _keyboard->setBankUp();
           }
@@ -161,6 +124,54 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
           }
 
           break;
+
+        case Sucofunkey::CURSOR_UP:
+          if (_currentState == SLOT_TYPE_SELECT) {
+            switch(_slots[_editingSlotId].type) {
+              case Play::SAMPLE:
+                _slots[_editingSlotId].type = Play::SAMPLE;
+                break;
+              case Play::SNIPPET:
+                _slots[_editingSlotId].type = Play::SAMPLE;
+                break;
+              case Play::MUTE_SCRATCHING:
+                _slots[_editingSlotId].type = Play::SNIPPET;
+                break;
+              case Play::ADJUST_FADER:
+                _slots[_editingSlotId].type = Play::MUTE_SCRATCHING;
+                break;  
+              default:
+                break;                
+            }
+
+            _handleSlotTypeSelection(_editingSlotBank, _editingSlotKey, false);
+          }          
+          break;
+
+          case Sucofunkey::CURSOR_DOWN:
+            if (_currentState == SLOT_TYPE_SELECT) {
+
+              switch(_slots[_editingSlotId].type) {
+                case Play::SAMPLE:
+                  _slots[_editingSlotId].type = Play::SNIPPET;
+                  break;
+                case Play::SNIPPET:
+                  _slots[_editingSlotId].type = Play::MUTE_SCRATCHING;
+                  break;
+                case Play::MUTE_SCRATCHING:
+                  _slots[_editingSlotId].type = Play::ADJUST_FADER;
+                  break;
+                case Play::ADJUST_FADER:
+                  _slots[_editingSlotId].type = Play::ADJUST_FADER;
+                  break;
+                default:
+                  break;                                
+              }
+
+              _handleSlotTypeSelection(_editingSlotBank, _editingSlotKey, false);
+            }          
+          break;
+
 
         case Sucofunkey::SET:
           if (_currentState == CONFIG_SNIPPET || _currentState == CONFIG_SAMPLE) {
@@ -196,9 +207,9 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
           if (_currentState == SLOT_TYPE_SELECT) {
             if (_slots[_editingSlotId].type == Play::SNIPPET) { _changeState(WAIT_SNIPPET_SELECT); };
             if (_slots[_editingSlotId].type == Play::SAMPLE) { _changeState(WAIT_SAMPLE_SELECT); };
-            if (_slots[_editingSlotId].type == Play::MUTE_SCRATCHING) { 
+            if (_slots[_editingSlotId].type == Play::MUTE_SCRATCHING || _slots[_editingSlotId].type == Play::ADJUST_FADER) { 
               saveConfig();
-              _changeState(OVERVIEW);           
+              _changeState(OVERVIEW);
               _cancel(); 
             };
             break;
@@ -417,7 +428,7 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
           _changeState(CONFIG_SAMPLE);
         }
 
-        if (_slots[slotsIndex].type == Play::MUTE_SCRATCHING) {
+        if (_slots[slotsIndex].type == Play::MUTE_SCRATCHING || _slots[slotsIndex].type == Play::ADJUST_FADER) {
           _slots[slotsIndex].type = Play::EMPTY;
           _liveScreen.drawOverviewSlot(_slots[slotsIndex], slot);
         }  
@@ -779,10 +790,10 @@ void Live::_playSlot(int slotIndex, byte velocity, boolean pressed, byte note) {
       if (slot.loop && !slot.immediateStopOnRelease && _currentState != PIANO) {
         if (_LEDHighlightSlots[slotIndex]) {
           _LEDHighlightSlots[slotIndex] = false;
-          _play->playNextFreeMemory(slot.sampleNumber, 0, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, false, false, false);
+          _play->playNextFreeMemory(slot.sampleNumber, 0, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, Play::ScratchModes::NONE, false, false);
         } else {
-          _LEDHighlightSlots[slotIndex] = true;
-          _play->playNextFreeMemory(slot.sampleNumber, velocity == 128 ? slot.velocity : velocity, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, slot.faderScratching, true, slot.loop);
+          // set return boolean return value to slotsarray .. only one scratch sample can be played at a time -> prevent lighting up the looping led
+          _LEDHighlightSlots[slotIndex] = _play->playNextFreeMemory(slot.sampleNumber, velocity == 128 ? slot.velocity : velocity, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, slot.scratchMode, true, slot.loop);          
         } 
 
         // change looping LED state
@@ -790,12 +801,12 @@ void Live::_playSlot(int slotIndex, byte velocity, boolean pressed, byte note) {
         _LEDHighlightSlotsBlinking[slotIndex] = false;
       } else {
         // just play sample 
-        _play->playNextFreeMemory(slot.sampleNumber, velocity == 128 ? slot.velocity : velocity, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, slot.faderScratching, true, slot.loop);
+        _play->playNextFreeMemory(slot.sampleNumber, velocity == 128 ? slot.velocity : velocity, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, slot.scratchMode, true, slot.loop);
       }
       
     } else {
       if (slot.immediateStopOnRelease || _currentState == PIANO) {
-        _play->playNextFreeMemory(slot.sampleNumber, 0, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, false, false, slot.loop);
+        _play->playNextFreeMemory(slot.sampleNumber, 0, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, Play::ScratchModes::NONE, false, slot.loop);
       }       
     }
   }
@@ -811,6 +822,19 @@ void Live::_playSlot(int slotIndex, byte velocity, boolean pressed, byte note) {
       _keyboard->setScratchMute(false);
     }
   }
+
+  // FADER ADJUSTMENT
+
+  if (slot.type == Play::ADJUST_FADER) {    
+    if (pressed) {
+      // mute
+      _keyboard->setScratchFaderAdjustment(true);
+    } else {
+      // unmute
+      _keyboard->setScratchFaderAdjustment(false);
+    }
+  }
+
 
 };
 
@@ -944,13 +968,21 @@ void Live::_handleSampleConfiguration(byte encoder, boolean function, int action
       case 1:
         if (!function) {
           if (action == 0) {
-            // toggling play complete and stop on release with looping or no looping
-            if (_slots[_editingSlotId].loop) {
-              _slots[_editingSlotId].immediateStopOnRelease = !_slots[_editingSlotId].immediateStopOnRelease;
-              _slots[_editingSlotId].loop = false;
-            } else {
-              _slots[_editingSlotId].loop = true;
-            }            
+            // toggle sample scratching option
+            switch (_slots[_editingSlotId].scratchMode) {
+              case Play::ScratchModes::NONE:
+                _slots[_editingSlotId].scratchMode = Play::ScratchModes::FADER_TAPE;
+                break;
+              case Play::ScratchModes::FADER_TAPE:
+                _slots[_editingSlotId].scratchMode = Play::ScratchModes::FADER_VINYL;
+                break;
+              case Play::ScratchModes::FADER_VINYL:
+                _slots[_editingSlotId].scratchMode = Play::ScratchModes::NONE;
+                break;
+              default:
+                _slots[_editingSlotId].scratchMode = Play::ScratchModes::NONE;
+                break;
+            }
 
             _liveScreen.updateSampleConfig(_slots[_editingSlotId], 1, true, LiveScreen::NONE);
           } else {
@@ -977,9 +1009,15 @@ void Live::_handleSampleConfiguration(byte encoder, boolean function, int action
       case 3:
         if (!function) {
           if (action == 0) {
-            // toggle sample scratching option
-            _slots[_editingSlotId].faderScratching = !_slots[_editingSlotId].faderScratching;
-            _liveScreen.updateSampleConfig(_slots[_editingSlotId], 3, true, LiveScreen::NONE);
+            // toggling play complete and stop on release with looping or no looping
+            if (_slots[_editingSlotId].loop) {
+              _slots[_editingSlotId].immediateStopOnRelease = !_slots[_editingSlotId].immediateStopOnRelease;
+              _slots[_editingSlotId].loop = false;
+            } else {
+              _slots[_editingSlotId].loop = true;
+            }            
+
+            _liveScreen.updateSampleConfig(_slots[_editingSlotId], 3, true, LiveScreen::NONE);            
           } else {
             if (action == -1 && _slots[_editingSlotId].pitchedNote > 29) _slots[_editingSlotId].pitchedNote--;
             if (action == 1 && _slots[_editingSlotId].pitchedNote < 100) _slots[_editingSlotId].pitchedNote++;
