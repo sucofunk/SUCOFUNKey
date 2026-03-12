@@ -35,10 +35,6 @@ Currently I am creating almost everything by myself. So the next steps might tak
 - ADSR envelope
 - effect processing on sample
 
-### Sequencer
-- add feature to <del>select and</del> move blocks
-- copy and paste selections in the sequencer to re-use them
-
 ### Play Mode
 - option to use beatmaker's sketchbook as a midi keyboard
 - Send MIDI Chords

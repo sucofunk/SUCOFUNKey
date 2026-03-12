@@ -157,11 +157,12 @@ Black key Menu Options
     To start a selection. Move the cursor and a selection will span. PLAY will play just the selection. Use SNI to save the selection as a snippet.
 
     MOV     
-    Move a grid cell to another position. Go to the source cell, hit MOV, go to the destination and hit MOV again.
+    Move a grid cell or selection to another position. Go to the source cell, hit MOV, go to the destination and hit MOV again.
     
     DBL     
-    Double an cell. This makes a copy of the cell you hit DBL on. Move the cursor to the copy detination and hit DBL again.    
+    Double a cell or selection. This makes a copy of the cell you hit DBL on. Move the cursor to the copy detination and hit DBL again.
     If you hit DBL twice, a copy of the current active cell will be added to the cell right beside it - if it is empty.
+    When a selection is done before, you can select a position where the selection should be copied to.
 
     SNI
     Snippets. Can be saved to one of the 14 white keys of the keyboard from a selection. Free slots will light up on the keyboard.
