@@ -20,7 +20,7 @@ The firmware is a VSCode project, using the [PlatformIO](https://platformio.org/
 ## Status
 
 SUCOFUNKey is work in progress. The firmware functionality is more complex than initially planned and a fully functional DAW for your pocket.
-It includes a *sampler*, a *sequencer* (samples and midi) with an approach that is a bit different to what you might know from other tools, an *arranger* to chain patterns from the sequencer to a complete song and a *play* mode for live performances.
+It includes a *sampler*, a *sequencer* (samples and midi), an *arranger* to chain patterns from the sequencer to a complete song and a *play* mode for live performances.
 
 Read the [user manual](doc/manual.md) for details.
 
@@ -31,29 +31,27 @@ Currently I am creating almost everything by myself. So the next steps might tak
 
 ### Sampler
 - make samplenames editable after they are set once
-- set a base note for a sample e.g. C4 to map chromatic pitching to note keys
+- define looping area
 - ADSR envelope
-- bitcrusher
+- effect processing on sample
 
 ### Sequencer
 - add feature to <del>select and</del> move blocks
 - copy and paste selections in the sequencer to re-use them
 
 ### Play Mode
-  - chain snippets
-  - option to use beatmaker's sketchbook as a midi keyboard
-  - Send MIDI Chords
-  - Send MIDI Program Change
-  - optimize session recording
+- option to use beatmaker's sketchbook as a midi keyboard
+- Send MIDI Chords
+- Send MIDI Program Change
+- optimize session recording
+- bitcrusher
 
 ### Miscellaneous
-- move settings from code to a configuration menu within the device
 - create a better manual / feature overview
   
 ## Roadmap / Vision / Nice-to-have
 - Effects
 - Timestretching samples
-- USB Audio
 - Web-application to copy samples and edit/export sketches
 
 
@@ -64,7 +62,7 @@ Beatmaker's sketchbook houses:
 - 12 functional keys (play, stop, record, ...)
 - 4 endless rotary encoders
 - 10mm fader
-- [2 inch LCD display](https://www.waveshare.com/product/displays/lcd-oled/lcd-oled-3/2inch-lcd-module.htm)
+- [2.4 inch LCD display](https://www.waveshare.com/catalog/product/view/id/4146/s/2.4inch-lcd-module/category/399/)
 - 32 LEDs
 - built-in microphone 
 - headphone output
@@ -72,6 +70,3 @@ Beatmaker's sketchbook houses:
 - 3.5mm line-in and line-out
 - MIDI-in and MIDI-out
 
-Optional:
-- built-in LiPo battery with [charger](https://www.adafruit.com/product/1944)
-- built in stereo speakers, driven by a small [amplifier](https://www.adafruit.com/product/987)

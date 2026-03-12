@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -45,10 +45,10 @@ class SampleFSIO {
 
         typedef struct  {
             char name[40]; // display name
-            uint32_t envelopeA = 0;
-            uint32_t envelopeD = 0;
-            uint32_t envelopeS = 0;
-            uint32_t envelopeR = 0;
+            uint32_t envelopeA = 0; // Attack: 0..amount of samples until 100% volume (linear fading)
+            uint32_t envelopeD = 0; // Decay: envelopeA + envelopeD -> time to fade down to envelopeS value
+            uint32_t envelopeS = 0; // Sustain level: 0..100
+            uint32_t envelopeR = 0; // Release: end of sample - envelopeR -> starting point of release phase (linear fading out)
             uint32_t loopStart = 0;
             uint32_t loopEnd = 0;
             byte baseMidiNote = 60;
@@ -115,6 +115,12 @@ class SampleFSIO {
         char * getSampleInfosName(int sampleId1);
         void getSampleInfosName(int sampleId1, int maxLength, char* returnArray);
         void resetSampleInfos(int sampleId1);
+
+        byte getBaseMidiNote(int sampleId1);
+        void setBaseMidiNote(int sampleId1, byte basMidiNote);
+
+        // ToDo: other options (ADSR & LOOP)
+
         // -----------------------------
 
         void debugInfos();

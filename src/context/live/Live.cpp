@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -134,11 +134,11 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
               case Play::SNIPPET:
                 _slots[_editingSlotId].type = Play::SAMPLE;
                 break;
-              case Play::MUTE_SCRATCHING:
+              case Play::UNMUTE_SCRATCHING:
                 _slots[_editingSlotId].type = Play::SNIPPET;
                 break;
               case Play::ADJUST_FADER:
-                _slots[_editingSlotId].type = Play::MUTE_SCRATCHING;
+                _slots[_editingSlotId].type = Play::UNMUTE_SCRATCHING;
                 break;  
               default:
                 break;                
@@ -156,9 +156,9 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
                   _slots[_editingSlotId].type = Play::SNIPPET;
                   break;
                 case Play::SNIPPET:
-                  _slots[_editingSlotId].type = Play::MUTE_SCRATCHING;
+                  _slots[_editingSlotId].type = Play::UNMUTE_SCRATCHING;
                   break;
-                case Play::MUTE_SCRATCHING:
+                case Play::UNMUTE_SCRATCHING:
                   _slots[_editingSlotId].type = Play::ADJUST_FADER;
                   break;
                 case Play::ADJUST_FADER:
@@ -197,7 +197,15 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
             if (_slots[_editingSlotId].sampleNumber == 255) break;
 
             _changeState(CONFIG_SAMPLE);
+
+            _slots[_editingSlotId].baseMidiNote = _sfsio->getBaseMidiNote(_slots[_editingSlotId].sampleNumber);
+            _slots[_editingSlotId].pitchedNote = _sfsio->getBaseMidiNote(_slots[_editingSlotId].sampleNumber);
+
+
             // set default midi in note
+
+            // ToDo: shall we really set this midi note as default?
+            //       it is a problem when assigning midi note from external gear
             _slots[_editingSlotId].midiNote = _editingSlotId + 29;
             _liveScreen.showSampleConfig(_slots[_editingSlotId]);
             break;
@@ -207,7 +215,7 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
           if (_currentState == SLOT_TYPE_SELECT) {
             if (_slots[_editingSlotId].type == Play::SNIPPET) { _changeState(WAIT_SNIPPET_SELECT); };
             if (_slots[_editingSlotId].type == Play::SAMPLE) { _changeState(WAIT_SAMPLE_SELECT); };
-            if (_slots[_editingSlotId].type == Play::MUTE_SCRATCHING || _slots[_editingSlotId].type == Play::ADJUST_FADER) { 
+            if (_slots[_editingSlotId].type == Play::UNMUTE_SCRATCHING || _slots[_editingSlotId].type == Play::MUTE_SCRATCHING || _slots[_editingSlotId].type == Play::ADJUST_FADER) { 
               saveConfig();
               _changeState(OVERVIEW);
               _cancel(); 
@@ -282,12 +290,14 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
 
         case Sucofunkey::PAUSE:
             if (_currentState == CONFIG_SAMPLE) {
+              // stops prelisten the current sample in config mode.
+              // will only be needed, when changing the pitch while holding the button before releasing.
               _playSlot(_editingSlotId, 128, false, 128);
             }  else {
-              _play->stopArrangement();            
+              _play->stopArrangement();
               _turnOffAllLEDs(true); // turn off all looped sample LEDs
             }
-            _keyboard->setScratchMute(false);     
+            _keyboard->setScratchMute(_defaultScratchMute);
           break;
 
         case Sucofunkey::ENCODER_1_PUSH:
@@ -318,6 +328,18 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
         default:
           break;                  
       }      
+    } else {
+      switch(event.index) {        
+        case Sucofunkey::PLAY:
+            // play samle in config mode only while holding the play button.
+            // if we would wait for the end or PAUSE pressed, we could trigger the same sample multiple times, when changing the pitch
+            if (_currentState == CONFIG_SAMPLE) {
+              _playSlot(_editingSlotId, 128, false, 128);
+            }
+          break;
+        default:
+          break;
+      }
     }
 
 
@@ -333,10 +355,9 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
           break;
         
         case OVERVIEW:
-            if (_slots[slotsIndex].type != Play::EMPTY) {
-              _playSlot(slotsIndex, 128, event.pressed, 128);
-            } 
-
+          if (_slots[slotsIndex].type != Play::EMPTY) {
+            _playSlot(slotsIndex, 128, event.pressed, 128);
+          } 
           break;
 
         case WAIT_SNIPPET_SELECT:
@@ -428,10 +449,17 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
           _changeState(CONFIG_SAMPLE);
         }
 
+        // 1. UNMUTE SCRATCHING -> UNMUTE SCRATCHING -> EMPTY
+        // 2. ADJUST FADER -> EMPTY
         if (_slots[slotsIndex].type == Play::MUTE_SCRATCHING || _slots[slotsIndex].type == Play::ADJUST_FADER) {
           _slots[slotsIndex].type = Play::EMPTY;
           _liveScreen.drawOverviewSlot(_slots[slotsIndex], slot);
-        }  
+          saveConfig();
+        } else if (_slots[slotsIndex].type == Play::UNMUTE_SCRATCHING) { 
+          _slots[slotsIndex].type = Play::MUTE_SCRATCHING;
+          _liveScreen.drawOverviewSlot(_slots[slotsIndex], slot);
+          saveConfig();
+        }
 
       }
     }
@@ -493,6 +521,18 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
           _LEDHighlightSlotsBlinking[tempInt] = false;
           _updateAllLoopingLEDs(); // ToDo: update only one, not all!
           break;
+        case Sucofunkey::SCRATCH_SAMPLE_ENDED:
+          if (event.data1 == 0 && _currentState == OVERVIEW) { // normal sample, as looped samples are already processed
+            if (!_play->isScratchSamplePlaying()) { // if another scratch sample is already triggered (stopped this one), do not overwrite the new waveform
+              _liveScreen.hideScratchSampleWaveform();  
+            }            
+          }          
+          break;
+        case Sucofunkey::SCRATCH_NEEDLE_PIXEL_POSITION:
+          if (_currentState == OVERVIEW) {
+            _liveScreen.updateScratchNeedlePosition(event.value);
+          }          
+          break;
         default:
           break;
       }
@@ -509,7 +549,8 @@ void Live::setActive(boolean active) {
     // might have changed in sequencer
     _play->checkIfAllSamplesAreLoaded();
     _isInitialized = true;
-    _playbackTickSpeed = _play->calculatePlaybackTickSpeed();    
+    _playbackTickSpeed = _play->calculatePlaybackTickSpeed(); 
+    _keyboard->setScratchMute(_defaultScratchMute);
   } else {
     _isActive = false;
     _isInitialized = false;
@@ -694,6 +735,10 @@ void Live::_changeState(LiveState state) {
       _liveScreen.showSnippetConfig(_slots[_editingSlotId]);
       break;
     case CONFIG_SAMPLE:
+
+      Serial.print("Sample selected! :: basenote: ");
+      Serial.println(_slots[_editingSlotId].baseMidiNote);
+
       _liveScreen.showSampleConfig(_slots[_editingSlotId]);
       break;
     case WAIT_PIANO_SAMPLE_SELECT:
@@ -717,6 +762,7 @@ void Live::_playSlot(int slotIndex, byte velocity, boolean pressed, byte note) {
 
   if (slot.type == Play::EMPTY) return;
 
+  // check for chaining snippets..
   if (pressed && slot.type == Play::SNIPPET) {    
     if (_holdSlotIndex == -1) {
       _holdSlotIndex = slotIndex;      
@@ -783,45 +829,98 @@ void Live::_playSlot(int slotIndex, byte velocity, boolean pressed, byte note) {
   }
 
   // SAMPLES
+  boolean retVal = false; 
 
   if (slot.type == Play::SAMPLE) {
     if (pressed) {
+      // Key pressed
 
+      // looped samples - scratch and no scratch
       if (slot.loop && !slot.immediateStopOnRelease && _currentState != PIANO) {
+
         if (_LEDHighlightSlots[slotIndex]) {
           _LEDHighlightSlots[slotIndex] = false;
-          _play->playNextFreeMemory(slot.sampleNumber, 0, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, Play::ScratchModes::NONE, false, false);
+          // stop sample if it is looping
+          retVal = _play->playNextFreeMemory(slot.sampleNumber, 0, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, Play::ScratchModes::NONE, false, false);
+          _stopLoopedSampleMeta(slotIndex);
+
         } else {
-          // set return boolean return value to slotsarray .. only one scratch sample can be played at a time -> prevent lighting up the looping led
-          _LEDHighlightSlots[slotIndex] = _play->playNextFreeMemory(slot.sampleNumber, velocity == 128 ? slot.velocity : velocity, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, slot.scratchMode, true, slot.loop);          
+          if (slot.scratchMode != Play::ScratchModes::NONE && _play->isScratchSamplePlaying()) {   
+            // stop scratch sample, if playing
+            if (_lastPlayingScratchSampleSlotID != -1) {
+              _play->playNextFreeMemory(_slots[_lastPlayingScratchSampleSlotID].sampleNumber, 0, _slots[_lastPlayingScratchSampleSlotID].stereoPosition, _slots[_lastPlayingScratchSampleSlotID].baseMidiNote, note == 128 ? _slots[_lastPlayingScratchSampleSlotID].pitchedNote : note, false, Play::ScratchModes::NONE, false, false);                                 
+              _stopLoopedSampleMeta(_lastPlayingScratchSampleSlotID);            
+            }  
+          } 
+          
+          retVal = _play->playNextFreeMemory(slot.sampleNumber, velocity == 128 ? slot.velocity : velocity, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, slot.scratchMode, true, slot.loop);
+          if (retVal) {
+            _startLoopedSampleMeta(slotIndex);
+          }   
         } 
 
-        // change looping LED state
-        _keyboard->setLEDState(_keyboard->getLEDPinBySampleId(slotIndex+1), _LEDHighlightSlots[slotIndex]);
-        _LEDHighlightSlotsBlinking[slotIndex] = false;
       } else {
-        // just play sample 
-        _play->playNextFreeMemory(slot.sampleNumber, velocity == 128 ? slot.velocity : velocity, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, slot.scratchMode, true, slot.loop);
+        // just play sample complete or while hold
+
+        // might be scratch sample! STOP!
+        if (slot.scratchMode != Play::ScratchModes::NONE && _play->isScratchSamplePlaying()) {                        
+            if (_lastPlayingScratchSampleSlotID != -1) {
+              _play->playNextFreeMemory(_slots[_lastPlayingScratchSampleSlotID].sampleNumber, 0, _slots[_lastPlayingScratchSampleSlotID].stereoPosition, _slots[_lastPlayingScratchSampleSlotID].baseMidiNote, note == 128 ? _slots[_lastPlayingScratchSampleSlotID].pitchedNote : note, false, Play::ScratchModes::NONE, false, false);                                 
+              _stopLoopedSampleMeta(_lastPlayingScratchSampleSlotID);            
+            }  
+        } 
+
+        retVal = _play->playNextFreeMemory(slot.sampleNumber, velocity == 128 ? slot.velocity : velocity, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, slot.scratchMode, true, slot.loop);        
+
+        if (retVal && slot.scratchMode != Play::ScratchModes::NONE && _currentState == OVERVIEW) {
+          _liveScreen.drawScratchSampleWaveform(slot.sampleNumber, slot.reverse);
+          _lastPlayingScratchSampleSlotID = slotIndex;
+        }        
       }
       
     } else {
+      // Key released
+
       if (slot.immediateStopOnRelease || _currentState == PIANO) {
         _play->playNextFreeMemory(slot.sampleNumber, 0, slot.stereoPosition, slot.baseMidiNote, note == 128 ? slot.pitchedNote : note, slot.reverse, Play::ScratchModes::NONE, false, slot.loop);
-      }       
+
+        // might have been scratch sample!
+        if (slot.scratchMode != Play::ScratchModes::NONE && _play->isScratchSamplePlaying()) {                                  
+            if (_lastPlayingScratchSampleSlotID != -1) {
+              _play->playNextFreeMemory(_slots[_lastPlayingScratchSampleSlotID].sampleNumber, 0, _slots[_lastPlayingScratchSampleSlotID].stereoPosition, _slots[_lastPlayingScratchSampleSlotID].baseMidiNote, note == 128 ? _slots[_lastPlayingScratchSampleSlotID].pitchedNote : note, false, Play::ScratchModes::NONE, false, false);                                 
+              _stopLoopedSampleMeta(_lastPlayingScratchSampleSlotID);            
+            }  
+
+        }
+      }
     }
   }
 
-  // SCRATCH MUTE
 
+  // SCRATCH MUTE / UNMUTE
+  // Scratch samples are by default muted and can be unmuted with the corresponding slot type.
   if (slot.type == Play::MUTE_SCRATCHING) {    
-    if (pressed) {
+    if (!pressed) {
+      // unmute
+      _keyboard->setScratchMute(false);
+    } else {
+      // mute
+      _keyboard->setScratchMute(true);
+    }
+    _defaultScratchMute = true;
+  }
+
+  if (slot.type == Play::UNMUTE_SCRATCHING) {    
+    if (!pressed) {
       // mute
       _keyboard->setScratchMute(true);
     } else {
       // unmute
       _keyboard->setScratchMute(false);
     }
+    _defaultScratchMute = false;
   }
+
 
   // FADER ADJUSTMENT
 
@@ -835,8 +934,36 @@ void Live::_playSlot(int slotIndex, byte velocity, boolean pressed, byte note) {
     }
   }
 
-
 };
+
+
+void Live::_stopLoopedSampleMeta(int slotIndex) {
+  if (slotIndex == -1) return;
+  
+  _LEDHighlightSlots[slotIndex] = false;
+  _keyboard->setLEDState(_keyboard->getLEDPinBySampleId(slotIndex+1), false);
+
+  if (_lastPlayingScratchSampleSlotID == slotIndex) {
+    _liveScreen.hideScratchSampleWaveform();
+    _lastPlayingScratchSampleSlotID = -1;
+  }  
+}
+
+void Live::_startLoopedSampleMeta(int slotIndex) {
+  if (slotIndex == -1) return;
+
+  _LEDHighlightSlots[slotIndex] = true;
+  _keyboard->setLEDState(_keyboard->getLEDPinBySampleId(slotIndex+1), true);
+
+  if (_slots[slotIndex].scratchMode != Play::ScratchModes::NONE) {
+    if (_currentState == OVERVIEW) {
+      _liveScreen.drawScratchSampleWaveform(_slots[slotIndex].sampleNumber, _slots[slotIndex].reverse);
+    }
+    _lastPlayingScratchSampleSlotID = slotIndex;
+  }
+}
+
+
 
 void Live::_handleSlotTypeSelection(byte bank, byte key, boolean initialize) {   
   int s = (bank-1)*24+key-1;
@@ -977,8 +1104,11 @@ void Live::_handleSampleConfiguration(byte encoder, boolean function, int action
                 _slots[_editingSlotId].scratchMode = Play::ScratchModes::FADER_VINYL;
                 break;
               case Play::ScratchModes::FADER_VINYL:
-                _slots[_editingSlotId].scratchMode = Play::ScratchModes::NONE;
+                _slots[_editingSlotId].scratchMode = Play::ScratchModes::LINE_IN_SERATO;
                 break;
+              case Play::ScratchModes::LINE_IN_SERATO:
+                _slots[_editingSlotId].scratchMode = Play::ScratchModes::NONE;
+                break;                
               default:
                 _slots[_editingSlotId].scratchMode = Play::ScratchModes::NONE;
                 break;
@@ -1114,6 +1244,11 @@ void Live::loadConfig() {
         _midiNoteToSlot[_slots[i].midiNote] = i;
         if (_slots[i].isPiano) _pianoSampleSlotIndex = i;
       }
+
+      // check if a slot configuration is configured for DVS input check
+      if(_slots[i].type == Play::SAMPLE && _slots[i].scratchMode == Play::ScratchModes::LINE_IN_SERATO) {
+        _hasDVS = true;
+      }
     }
 
   } else {
@@ -1123,24 +1258,31 @@ void Live::loadConfig() {
 
 
 void Live::saveConfig() {
-    char buff[40];
-    File writeFile;
-    byte *bufferBlocks;
+  char buff[40];
+  File writeFile;
+  byte *bufferBlocks;
 
-    // write _slots 
-    strcpy(buff, _sfsio->getSongPath());
-    strcat(buff, "/PATTERN/LIVESLTS.DAT");
+  // write _slots 
+  strcpy(buff, _sfsio->getSongPath());
+  strcat(buff, "/PATTERN/LIVESLTS.DAT");
 
-    if (SD.exists(buff)) { SD.remove(buff); }
+  if (SD.exists(buff)) { SD.remove(buff); }
 
-    writeFile = SD.open(buff, FILE_WRITE);
+  writeFile = SD.open(buff, FILE_WRITE);
 
-    for (uint16_t i=0; i<sizeof(_slots)/sizeof(Play::LiveSlotDefinitionStruct); i++) {
-        bufferBlocks = (byte *) &_slots[i];
-        writeFile.write(bufferBlocks, sizeof(_slots[i]));
+  for (uint16_t i=0; i<sizeof(_slots)/sizeof(Play::LiveSlotDefinitionStruct); i++) {
+      bufferBlocks = (byte *) &_slots[i];
+      writeFile.write(bufferBlocks, sizeof(_slots[i]));
+  }
+
+  writeFile.close(); 
+
+  for (int i=0; i<72; i++) {
+    // check if a slot configuration is configured for DVS input check
+    if(_slots[i].type == Play::SAMPLE && _slots[i].scratchMode == Play::ScratchModes::LINE_IN_SERATO) {
+      _hasDVS = true;
     }
- 
-    writeFile.close(); 
+  }
 };
 
 

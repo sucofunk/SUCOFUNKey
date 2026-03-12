@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -59,7 +59,8 @@ class Sampler {
             SAMPLER_WAIT_DELETE_CONFIRM = 6,
             SAMPLER_DELETE_CONFIRMED = 7,
             SAMPLER_LIBRARY_OPEN = 8,
-            SAMPLER_ENVELOPE = 9
+            SAMPLER_ENVELOPE = 9,
+            SAMPLER_SAMPLE_CONFIGURATION_BASENOTE = 10
         };
 
         enum FaderState
@@ -107,6 +108,7 @@ class Sampler {
         float _volumeScaleFactor = 1.0;
 
         byte _tempBank = 1;
+        byte _tempBank2 = 1;
 
         void _blinkSampleSlot(byte sampleId1, boolean on);
         void _play();
@@ -114,6 +116,11 @@ class Sampler {
         int _timerCounter = 0;
 
         void _resetTrimMarkerOffsets(boolean start, boolean end);
-};
+
+        char _cBuff5_baseMidiNote[5];
+        void _updateBaseMidiNoteString();
+
+        byte _tempBaseNote = 60;
+    };
 
 #endif

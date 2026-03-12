@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -67,6 +67,7 @@ void AudioPlayMemorySUCO::playPitched(const unsigned int *data, byte baseNote, b
 	length = format & 0xFFFFFF;
 	playing = format >> 24;    
     _startDelayRemainSamples = startDelaySamples;
+    _initialReverse = reverse;
     _reverse = reverse;
     _loop = loop;
 
@@ -82,9 +83,12 @@ void AudioPlayMemorySUCO::noteOff(void) {
     _noteOff = true;
     _loop = false;
 
-    if (_playFaderPitched) {
+    if (_scratchMode != 0) {
         _keyboard->switchFaderLED(false);
+        _scratchMode = 0;
+        _keyboard->addApplicationEventToQueue(Sucofunkey::SCRATCH_SAMPLE_ENDED);        
     }
+    
 }
 
 
@@ -95,15 +99,19 @@ void AudioPlayMemorySUCO::stop(void)
      // reset play position and frequency data for next sample
     _position = 0.0f;
     _increment = 1.0f;
+    _initialReverse = false;
     _reverse = false;
 
     _noteOff = false;
     _noteOffPercentage = 1.0f;
-    _loop = false;
     
-    if (_playFaderPitched) {
+    if (_scratchMode != 0) {
         _keyboard->switchFaderLED(false);
+        _keyboard->addApplicationEventWithValueDataToQueue(Sucofunkey::SCRATCH_SAMPLE_ENDED, 0, _loop ? 1 : 0, 0, 0);
+        _scratchMode = 0;
     }    
+
+    _loop = false;
 }
 
 
@@ -111,46 +119,53 @@ void AudioPlayMemorySUCO::update(void)
 {
 
     // adjust increment/speed for scratching sample
-    if (playing && _playFaderPitched) {
-        if (_tapeScratching) {            
-            // when adjusting the fader, do not change playback.. good for playing melodically with long samples
-            if (!_keyboard->isScratchFaderAdjusting()) {
-                _faderValue = _keyboard->getFaderValue(-60,60);
+    if (playing && _scratchMode != 0) {
+        switch (_scratchMode) {
+            case 1: // FADER_TAPE
+                // when adjusting the fader, do not change playback.. good for playing melodically with long samples
+                if (!_keyboard->isScratchFaderAdjusting()) {
+                    _faderValue = _keyboard->getFaderValue(-60,60);
 
-                // left
-                if (_faderValue < -2) {
-                    _reverse = true;
-                    _paused = false;
-                    _increment = ((_faderValue+2)*-0.0218);
-
-                    _keyboard->switchFaderLED(_faderValue < -50 ? true : false);
-                } else {
-                    // right
-                    if (_faderValue > 2) {
+                    // left
+                    if (_faderValue < -2) {
+                        //_reverse = true;
+                        _reverse = _initialReverse ? false : true;
                         _paused = false;
-                        _reverse = false;
-                        _increment = ((_faderValue-2)*0.0218);
-                        _keyboard->switchFaderLED(_faderValue > 50 ? true : false);
+                        _increment = ((_faderValue+2)*-0.0218);
+
+                        _keyboard->switchFaderLED(_faderValue < -50 ? true : false);
                     } else {
-                        // middle position
-                        _paused = true;
-                        _reverse = false;
-                        _increment = 0.0f;
-                        _keyboard->switchFaderLED(true);
-                    }            
-                }
-            }
-        } else {
+                        // right
+                        if (_faderValue > 2) {
+                            _paused = false;
+                            //_reverse = false;
+                            _reverse = _initialReverse ? true : false;
+                            _increment = ((_faderValue-2)*0.0218);
+                            _keyboard->switchFaderLED(_faderValue > 50 ? true : false);
+                        } else {
+                            // middle position
+                            _paused = true;
+                            //_reverse = false;
+                            _reverse = _initialReverse ? true : false;
+                            _increment = 0.0f;
+                            _keyboard->switchFaderLED(true);
+                        }            
+                    }
+                }   
+                break;
+            case 2: // FADER_VINYL
                 // "real scratching"
                 switch (_keyboard->getScratchDirection()) {
                     case Sucofunkey::FORWARD:
-                        _reverse = false;
+                        //_reverse = false;
+                        _reverse = _initialReverse ? true : false;
                         _paused = false;
                         _increment = _keyboard->getFaderAcceleration();
                         _keyboard->switchFaderLED(false);
                         break;
                     case Sucofunkey::BACKWARD:
-                        _reverse = true;
+                        //_reverse = true;
+                        _reverse = _initialReverse ? false : true;
                         _paused = false;
                         _increment = _keyboard->getFaderAcceleration();
                         _keyboard->switchFaderLED(false);
@@ -158,14 +173,34 @@ void AudioPlayMemorySUCO::update(void)
                     case Sucofunkey::NONE:                        
                     default:
                         _paused = false;
-                        _reverse = false;
+                        //_reverse = false;
+                        _reverse = _initialReverse ? true : false;
                         _increment = _keyboard->getFaderAcceleration();
                         _keyboard->switchFaderLED(true);
                         break;
                 }
+                break;
+            case 3: // LINE_IN_SERATO
+                if (_keyboard->isDVSplaying()) {
+                    _paused = false;
+                    if (_keyboard->isDVSDirectionForward()) {                        
+                        _increment = _keyboard->getDVSSpeed();
+                        //_reverse = false;
+                        _reverse = _initialReverse ? true : false;
+                    } else {
+                        _increment = _keyboard->getDVSSpeed();
+                        //_reverse = true;                        
+                        _reverse = _initialReverse ? false : true;
+                    }
+                } else {                    
+                    _paused = true;
+                    //_reverse = false;
+                    _reverse = _initialReverse ? true : false;
+                    _increment = 0.0f;
+                }            
+                break;
         }
-    }
-
+    } 
 
 	audio_block_t *block;
 	const unsigned int *in;
@@ -223,16 +258,18 @@ void AudioPlayMemorySUCO::update(void)
                     }
                 } else {
 
-                    if (_playFaderPitched && _keyboard->isScratchMuted()) {
+                    if (_scratchMode != 0 && _keyboard->isScratchMuted()) {
                         *out++ = 0;
                         *out++ = 0;
                     } else {                        
                         *out++ = (int16_t)(tmp32 & 65535);
-                        *out++ = (int16_t)(tmp32 >> 16);
-
-                        // ToDo: add values to scratch visualization buffer.. might be a bit tricky
+                        *out++ = (int16_t)(tmp32 >> 16);                        
                     }
 
+                    // send "needle" position within the sample to GUI
+                    if (_scratchMode != 0) {
+                        _calculateScratchNeedlePixelPosition();
+                    }
                 }
             } else {
                 // looping?
@@ -267,11 +304,13 @@ void AudioPlayMemorySUCO::update(void)
         _reverse = false;
         _noteOffPercentage = 1.0f;
         _noteOff = false;
-        _loop = false; 
         
-        if (_playFaderPitched) {
+        if (_scratchMode != 0) {
             _keyboard->switchFaderLED(false);
+            _keyboard->addApplicationEventWithValueDataToQueue(Sucofunkey::SCRATCH_SAMPLE_ENDED, 0, _loop ? 1 : 0, 0, 0);
         }
+
+        _loop = false; 
     }
 
 	transmit(block);
@@ -280,12 +319,20 @@ void AudioPlayMemorySUCO::update(void)
 
 void AudioPlayMemorySUCO::setBaseMIDINote(byte baseNote) {
     _baseNote = baseNote;
+
+//    Serial.print("BaseNote::");
+//    Serial.println(_baseNote);
 };
 
 void AudioPlayMemorySUCO::setFrequencyByMIDINote(byte note) {
     _note = note;
     // offset for note change.. apply before pitching e.g. with fader..
     _baseIncrementOffset = 1.0 - pow(2.0, (_note - _baseNote)/12.0);
+    
+//    Serial.print("Note::");
+//    Serial.println(note);
+//    Serial.print("BaseIncrementOffset::");
+//    Serial.println(_baseIncrementOffset);
 };
 
 void AudioPlayMemorySUCO::adjustFrequencyByTick(int pitchChange) {
@@ -299,10 +346,20 @@ void AudioPlayMemorySUCO::reversePlayback() {
 void AudioPlayMemorySUCO::setKeyboardReference(Sucofunkey *keyboard) {
     _keyboard = keyboard;
     _isKeyboardSet = true;
-    _playFaderPitched = false;    
 }
     
-void AudioPlayMemorySUCO::setPlayFaderPitched(boolean playFaderPitched, boolean tapeScratch) {
-    _playFaderPitched = playFaderPitched;
-    _tapeScratching = tapeScratch; 
+void AudioPlayMemorySUCO::setScratchMode(int scratchMode) {
+    _scratchMode = scratchMode;
+};
+
+void AudioPlayMemorySUCO::_calculateScratchNeedlePixelPosition() {
+    _scratchNeedlePixelPosition = _positionInt / (length/640); // 2*320px
+
+    if (_lastCommunicatedScratchNeedlePixelPosition != _scratchNeedlePixelPosition) {
+        _lastCommunicatedScratchNeedlePixelPosition = _scratchNeedlePixelPosition;
+
+        // communicate new position to GUI
+        _keyboard->addApplicationEventWithValueDataToQueue(Sucofunkey::SCRATCH_NEEDLE_PIXEL_POSITION, _scratchNeedlePixelPosition, 0, 0, 0);
+    }
+
 };

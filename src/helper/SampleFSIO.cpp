@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -697,6 +697,8 @@ void SampleFSIO::resetSampleInfos(int sampleId1) {
   t.append(sampleId1);
   t.toCharArray(_sampleInfos[sampleId1-1].name, t.length()+1);
 
+  _sampleInfos[sampleId1-1].baseMidiNote = 60; // C4 as baseMidiNote
+
   // ToDo: fill up remaining values, when implemented!
 
   saveSampleInfosToSD();
@@ -716,6 +718,17 @@ void SampleFSIO::getSampleInfosName(int sampleId1, int maxLength, char* returnAr
     t.toCharArray(returnArray, t.length()+1);
   }
 };
+
+
+byte SampleFSIO::getBaseMidiNote(int sampleId1) {
+  return _sampleInfos[sampleId1-1].baseMidiNote;
+};
+
+void SampleFSIO::setBaseMidiNote(int sampleId1, byte basMidiNote) {
+  _sampleInfos[sampleId1-1].baseMidiNote = basMidiNote;
+  saveSampleInfosToSD();
+};
+
 
 
 void SampleFSIO::debugInfos() {

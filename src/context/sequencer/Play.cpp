@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -46,8 +46,9 @@ boolean Play::loadSetPlay(byte bank1, byte sample1, byte channel, int position) 
     _audioResources->playMem.stop();
 
     SongStructure::sampleStruct s;
-    s.baseMidiNote = 60;
-    s.pitchedNote = 60;
+
+    s.baseMidiNote = _sfsio->getBaseMidiNote((bank1-1)*24 + sample1);
+    s.pitchedNote = _sfsio->getBaseMidiNote((bank1-1)*24 + sample1);
     s.probability = 100;
     s.sampleNumber = (bank1-1)*24+sample1;
     s.stereoPosition = 64;
@@ -248,7 +249,7 @@ void Play::playMixedSample(byte channel, uint16_t position, int snippetSlot) {
         pitchedNote = _song.getSampleFromBucketId(sps.typeIndex).pitchedNote;
         baseMidiNote = _song.getSampleFromBucketId(sps.typeIndex).baseMidiNote;
         sampleNumber = _song.getSampleFromBucketId(sps.typeIndex).sampleNumber;
-        
+
         swingExpression = _song.getSampleFromBucketId(sps.typeIndex).swing;
         swingLevel = _song.getSwing()->getLevelFromBinarySwingExpression(swingExpression);
         swingGroup = _song.getSwing()->getGroupFromBinarySwingExpression(swingExpression);    
@@ -300,10 +301,9 @@ void Play::playMixedSample(byte channel, uint16_t position, int snippetSlot) {
 
       // do not play a sample, if position is a parameter change .. but check if sample is in EXTMEM
       if (_song.getPosition(channel, position).type == SongStructure::SAMPLE && _sfsio->getExtmemOffset(_song.getSampleFromBucketId(_song.getPosition(channel, position).typeIndex).sampleNumber) != -1)  {
-        mixSPM.playMemory->playPitched(_extmemArray + _sfsio->getExtmemOffset(sampleNumber), 60, pitchedNote, shiftSamples, reverse, false);
+        mixSPM.playMemory->playPitched(_extmemArray + _sfsio->getExtmemOffset(sampleNumber), baseMidiNote, pitchedNote, shiftSamples, reverse, false);
       }
     }
-
 
   }
 }
@@ -652,26 +652,56 @@ void Play::stopArrangement() {
 // --- Live --------------------------------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------------------------------------
 
+boolean Play::isScratchSamplePlaying() {
+  for (int i=0; i<8; i++) {
+    if (_getPlayMemSlot(i)->isScratchSample() && _getPlayMemSlot(i)->isPlaying()) {
+      return true;
+    }
+  }
+  return false;
+};
+
+void Play::stopScratchSamples() {
+  for (int i=0; i<8; i++) {
+    if (_getPlayMemSlot(i)->isScratchSample()) {
+      _getPlayMemSlot(i)->stop();
+      _polyMemIncrement[i] = 0;
+      _polyMemIDs[i] = 0;
+      _polyMemNotes[i] = 128;
+    }
+  }
+};
+
+
 boolean Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, byte baseNote, byte note, boolean reverse, ScratchModes scratchMode, boolean play, boolean loop) {
   // check if sample in extmem.. if not, load it now!
   if (!_sfsio->addSampleToMemory((sample1/24)+1, (sample1%24), false)) return;
+
+  boolean scratchIsPlaying = false;
 
   // sample still playing? and count free slots
   _freeMemChannelCount = 0;
 
   for (int i=0; i<8; i++) {
     if (!_getPlayMemSlot(i)->isPlaying()) {
-      _polyMemIDs[i] = 0; _polyMemIncrement[i] = 0;
+      _polyMemIDs[i] = 0; 
+      _polyMemIncrement[i] = 0;
       _freeMemChannelCount++;
     } else { 
       _polyMemIncrement[i] = _polyMemIncrement[i] + 1;    
+    }
 
-      // prevent a second scratch sample playing
-      if (_getPlayMemSlot(i)->isFaderPitched() && scratchMode != NONE) {
-        return false;
-      }
+    // prevent a second scratch sample playing
+    if (play && _getPlayMemSlot(i)->isScratchSample() && _getPlayMemSlot(i)->isPlaying() && scratchMode != NONE) {        
+      scratchIsPlaying = true;
     }
   }
+
+  if (scratchIsPlaying) {
+    return false;
+  }
+
+
 
   if (play) {
     _tempFirstIndex = 127;
@@ -713,7 +743,7 @@ boolean Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPositio
           _polyMemNotes[i] = note;
         
           polyChangeVelocity(i, velocity, stereoPosition);
-          _getPlayMemSlot(i)->setPlayFaderPitched(scratchMode == NONE ? false : true, scratchMode == FADER_TAPE ? true : false);
+          _getPlayMemSlot(i)->setScratchMode(scratchMode);
           _getPlayMemSlot(i)->playPitched(_extmemArray + _sfsio->getExtmemOffset(sample1), baseNote, note, 0, reverse, loop);
 
           return true;
@@ -726,7 +756,14 @@ boolean Play::playNextFreeMemory(byte sample1, byte velocity, byte stereoPositio
       if (_polyMemIDs[i] == sample1 && _polyMemNotes[i] == note) {
           _polyMemIDs[i] = 0;
           _polyMemNotes[i] = 128;
-          _getPlayMemSlot(i)->noteOff();
+          
+          if (_getPlayMemSlot(i)->isScratchSample()) {
+            // stop scratch samples immediately!
+            _getPlayMemSlot(i)->stop();
+          } else {
+            _getPlayMemSlot(i)->noteOff();
+          }
+
         return true;
       }
     }  

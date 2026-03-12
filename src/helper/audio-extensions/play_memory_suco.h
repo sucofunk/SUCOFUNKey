@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -55,16 +55,14 @@ public:
 	void adjustFrequencyByTick(int pitchChange);
     void reversePlayback(); // if it is already playing backward, it will play forward afterwards
 
-    void setKeyboardReference(Sucofunkey *keyboard);
-    void setPlayFaderPitched(boolean playFaderPitched, boolean tapeScratch);
-
-    boolean isFaderPitched() { return _playFaderPitched; };
+    void setKeyboardReference(Sucofunkey *keyboard); 
+    void setScratchMode(int scratchMode); // refers to Play::ScratchModes, as including play.h would create a circular dependency
+    boolean isScratchSample() { return _scratchMode != 0 ? true : false; };
 
 private:
     Sucofunkey* _keyboard;
     int _faderValue = 0;
     boolean _isKeyboardSet = false;
-    boolean _playFaderPitched = false;
     boolean _paused = false;
     boolean _loop = false;
 
@@ -83,6 +81,7 @@ private:
     byte _baseNote = 60;
     byte _note = 60;
 
+    boolean _initialReverse = false;
     boolean _reverse = false;
     boolean _noteOff = false;
     double _noteOffPercentage = 1.0;
@@ -90,7 +89,11 @@ private:
 
     int _startDelayRemainSamples = 0;
 
-    boolean _tapeScratching = false; // if false, vinyl scratching mode is active
+    int _lastCommunicatedScratchNeedlePixelPosition = 0;
+    int _scratchNeedlePixelPosition = 0;
+    void _calculateScratchNeedlePixelPosition();
+
+    int _scratchMode = 0; // refers to Play::ScratchModes    
 };
 
 #endif

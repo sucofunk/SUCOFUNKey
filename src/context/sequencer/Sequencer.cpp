@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -322,8 +322,6 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
         
       if (_currentMenuState == MENU_PIANO) {
         
-        // ToDo: basenote setzen FN+NoteKey? -> eher in sampler??? -> da wird dann ja auch ADSR Hüllkurve gesetzt..
-
         if (_song->isSomethingAt(_cursorChannel, _cursorPosition)) {
           // set reference as origin in piano keyboard
           if (_song->getPosition(_cursorChannel, _cursorPosition).type == SongStructure::SAMPLE) {

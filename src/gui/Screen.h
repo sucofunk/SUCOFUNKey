@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -172,7 +172,7 @@ Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness);
 
         const uint16_t C_STARTUP_BG = C_BLACK;
         const uint16_t C_STARTUP_HR = C_WHITE;
-        const uint16_t C_GREY = RGBtoColor(20, 20, 20);
+        const uint16_t C_GREY = RGBtoColor(100, 100, 100);
         const uint16_t C_LIGHTGREY = RGBtoColor(150, 150, 150);
 
         const uint16_t C_WARNING = RGBtoColor(250, 50, 10);
@@ -197,18 +197,21 @@ Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness);
 
         const uint16_t C_LIVE_SNIPPET = RGBtoColor(80, 227, 194);
         const uint16_t C_LIVE_SAMPLE = C_ORANGE;
-        const uint16_t C_LIVE_SAMPLE_SCRATCH = C_RECORDING;
+        const uint16_t C_LIVE_SAMPLE_SCRATCH = RGBtoColor(255, 0, 0);
+        const uint16_t C_LIVE_SAMPLE_SCRATCH_DVS = RGBtoColor(100, 100, 100);
         const uint16_t C_LIVE_PIANO = C_ORANGE;
         const uint16_t C_LIVE_SCRATCH_MUTE = RGBtoColor(242, 245, 66); // yellowish
 
         const uint16_t C_SHEET = RGBtoColor(0, 0, 255);;
 
-        // use this sketch to convert 8x8 binary array to icon-number: https://onlinegdb.com/4x3xdEPWbq
+        // use this sketch to convert 8x8 binary array to icon-number: https://onlinegdb.com/mYTstKODV
         const uint64_t ICN_SCRATCH_NEEDLE = 9367271979357307135;
         const uint64_t ICN_SCRATCH_TAPE = 73564191326208;
         const uint64_t ICN_WAVEFORM = 1157482824291193872;
         const uint64_t ICN_SNIPPET = 15780669172821801984;
-        const uint64_t ICN_SCRATCH_MUTE = 9314046665461760256;
+        const uint64_t ICN_SCRATCH_UNMUTE = 18410218400514113280;
+        const uint64_t ICN_SCRATCH_MUTE = 1746410389194735360;
+
         const uint64_t ICN_ADJUST_FADER = 71077399110779904;
         
         const uint64_t ICN_PIANO_LEFT = 18419051350941272319;
@@ -305,6 +308,8 @@ Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness);
 
         Area AREAS_CONTENT_LINES[10] = {AREA_CONTENT_LINE_1, AREA_CONTENT_LINE_2, AREA_CONTENT_LINE_3, AREA_CONTENT_LINE_4, AREA_CONTENT_LINE_5, AREA_CONTENT_LINE_6, AREA_CONTENT_LINE_7, AREA_CONTENT_LINE_8, AREA_CONTENT_LINE_9, AREA_CONTENT_LINE_10};
         Area AREAS_SETTINGS_VALUES_LINES[10] = {AREA_SETTINGS_VALUES_LINE_1, AREA_SETTINGS_VALUES_LINE_2, AREA_SETTINGS_VALUES_LINE_3, AREA_SETTINGS_VALUES_LINE_4, AREA_SETTINGS_VALUES_LINE_5, AREA_SETTINGS_VALUES_LINE_6, AREA_SETTINGS_VALUES_LINE_7, AREA_SETTINGS_VALUES_LINE_8, AREA_SETTINGS_VALUES_LINE_9, AREA_SETTINGS_VALUES_LINE_10};
+
+        Area AREA_SAMPLER_BASENOTE = {AREA_SCREEN.x1, static_cast<int>(AREA_SCREEN.y2*0.5), AREA_SCREEN.x2, static_cast<int>(AREA_SCREEN.y2*0.5+20), false, C_BLACK};
 
         void drawIconBy64Int(int x, int y, uint64_t icon, uint16_t color);
 //        uint64_t binary_string_to_uint64(const char *binary);

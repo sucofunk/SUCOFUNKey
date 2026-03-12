@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -47,6 +47,7 @@
 #include "context/recorder/Recorder.h"
 #include "context/check/Check.h"
 #include "context/synthcopy/SynthCopy.h"
+#include "helper/audio-extensions/dvs/SeratoTimecode.h"
 #include <Audio.h>
 #include <MIDI.h>
 
@@ -159,6 +160,8 @@ StartupScreen startupContext(&keyboard, &screen, &fsio, activeSongName);
 Check systemCheckContext(&keyboard, &screen);
 
 SynthCopy synthCopyContext(&keyboard, &screen, &fsio, &sfsio, &playContext);
+
+SeratoTimecode timecodeDVS(audioResources);
 
 // --- START Audio Connections
 // unfortunately this is not initializable in the AudioResources class?!?
@@ -273,10 +276,17 @@ AudioConnection          patchCord082(audioResources.playMemLive8, 0, audioResou
 AudioConnection          patchCord084(audioResources.mixerOutL, 0, audioResources.audioOutputUSB, 0);
 AudioConnection          patchCord085(audioResources.mixerOutR, 0, audioResources.audioOutputUSB, 1);
 
+// analyzing input for digital vinyl system (1kHZ signal - Serato)
+AudioConnection          patchCord86(audioResources.audioInput, 0, audioResources.queueL, 0);
+AudioConnection          patchCord87(audioResources.audioInput, 1, audioResources.queueR, 0);
 
-// next patchcord nr: 090
+
+// -----
+
+// next patchcord nr: 088
 
 // --- END of AudioConnections
+
 
 // Images converted at http://javl.github.io/image2cpp/
 
@@ -504,7 +514,7 @@ void setup() {
   keyboard.setBank(0);
 
   AudioMemoryUsageMaxReset();
-  AudioMemory(100);
+  AudioMemory(120);
   
   // Enable the audio shield, select input and enable output
   audioResources.audioShield.enable();
@@ -560,7 +570,9 @@ void setup() {
   fsio.loadConfiguration(&config.configurationValues);
   keyboard.addApplicationEventToQueue(Sucofunkey::SETUP_LINE_INPUT_FROM_CONFIG);
   
-  
+  timecodeDVS.begin(); // initialize DVS Timecode reader
+  timecodeDVS.setEnabled(false); // immediately disable it to save resources. will be enabled from main loop, when in live context and DVS is needed.
+
   Serial.println("setup done");
   // remove before flight... just for testing, if soldering worked and did not fry the MCPs
   //keyboard.scanI2C();
@@ -680,13 +692,14 @@ void sendTickToActiveContext() {
 
 int z = 0;
 int zz = 0;
-
+int dvsCounter = 0;
 
 void loop() {  
   // recording? -> has highest priority -> store record buffer to sd..
   if (recorderContext.currentState == recorderContext.RECORDER_RECORDING || recorderContext.currentState == recorderContext.RECORDER_MULTISAMPLE_RECORDING || recorderContext.currentState == recorderContext.RECORDER_MULTISAMPLE_WAIT_END) recorderContext.continueRecording();
   z++;
   zz++;
+  dvsCounter++;
 
   // handle encoder and keyboard events.. but divide reading PIN changes and handling the events into two loops to not disrupt recording
   // 1. Checks if a PIN changed (Key pressed, released or encoder state change) and adds it to the event queue
@@ -743,17 +756,66 @@ void loop() {
     
   }
 
-
   // update fader reading queue
   keyboard.updateContinuousFaderValue();
 
+  // normal MIDI readings (analog input)
   if (MIDI.read()) { 
     // route midi messages for incoming MIDI Messages to Play or Piano context
     if (MIDI.getChannel() == keyboard.getConfig()->configurationValues.midiChannelPlay || MIDI.getChannel() == keyboard.getConfig()->configurationValues.midiChannelPiano) {
       liveContext.receiveMidiData(MIDI.getChannel(), MIDI.getType(), MIDI.getData1(), MIDI.getData2());
+/*      Serial.print("MIDI received. Channel: ");
+      Serial.print(MIDI.getChannel());
+      Serial.print(" Type: ");
+      Serial.print(MIDI.getType());
+      Serial.print(" Data1: ");
+      Serial.print(MIDI.getData1());
+      Serial.print(" Data2: ");
+      Serial.println(MIDI.getData2());*/
     }
   }
-}
+
+  // USB midi readings
+  if (usbMIDI.read()) { 
+    // route midi messages for incoming MIDI Messages to Play or Piano context
+    if (usbMIDI.getChannel() == keyboard.getConfig()->configurationValues.midiChannelPlay || usbMIDI.getChannel() == keyboard.getConfig()->configurationValues.midiChannelPiano) {
+      liveContext.receiveMidiData(usbMIDI.getChannel(), usbMIDI.getType(), usbMIDI.getData1(), usbMIDI.getData2());
+/*      Serial.print("USB MIDI received. Channel: ");
+      Serial.print(usbMIDI.getChannel());
+      Serial.print(" Type: ");
+      Serial.print(usbMIDI.getType());
+      Serial.print(" Data1: ");
+      Serial.print(usbMIDI.getData1());
+      Serial.print(" Data2: ");
+      Serial.println(usbMIDI.getData2());*/
+    }
+  }
+
+
+  if (dvsCounter == 25) { 
+
+    // timecode DVS is only needed in live mode
+    if (currentAppContext == LIVE) {
+      if (liveContext.hasDVS() && !timecodeDVS.isEnabled()) {
+          timecodeDVS.resume();
+      } else if (!liveContext.hasDVS() && timecodeDVS.isEnabled()) {
+          timecodeDVS.pause();
+      }
+    } else {
+      timecodeDVS.setEnabled(false);
+    }
+
+    if (timecodeDVS.isEnabled()) {
+        timecodeDVS.update();
+        
+        // keyboard is accessible in the play object, so we do not need to hardwire the optional dvs feature.
+        keyboard.setDVSValues(timecodeDVS.isPlaying(), timecodeDVS.getSpeedScaled(), timecodeDVS.isForward());    
+    }
+
+    dvsCounter = 0;
+  }
+
+} // end of loop()
 
 
 void changeContext(AppContext context) {    
@@ -839,7 +901,6 @@ void handleKeyboardEventQueue() {
 //    Serial.println(AudioMemoryUsageMax());
 
     // global events - not necessarily connected to a specific context
-
     if (event.type == Sucofunkey::EVENT_APPLICATION) {
       switch(event.index) {
         case Sucofunkey::SONGSELECTED:
@@ -901,6 +962,10 @@ void handleKeyboardEventQueue() {
           }
           break;
 
+        case Sucofunkey::CHANGE_CONTEXT_TO_HOME:
+          changeContext(HOME);
+          break;          
+
         case Sucofunkey::CHANGE_CONTEXT_TO_SYNTHCOPY:
           changeContext(SYNTHCOPY);
           break;
@@ -908,6 +973,8 @@ void handleKeyboardEventQueue() {
         case Sucofunkey::CHANGE_CONTEXT_TO_SETTINGS:
           changeContext(SETTINGS);
           break;          
+
+
 
         case Sucofunkey::SYNTHCOPY_START_NOTE:
           // value = ms to release note, data1 = NOTE, data2 = VELOCITY, data3 = CHANNEL

@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -85,16 +85,16 @@ long HomeScreen::receiveTimerTick() {
 void HomeScreen::showGeneralInformation() {
     _activeComponent = NONE;
 
-    Screen::Area projectTitle = {_screen->AREA_SCREEN.x1, _screen->AREA_SCREEN.y1, _screen->AREA_SCREEN.x2, _screen->AREA_SCREEN.x1 + 90, false, _screen->C_BLACK};
+    Screen::Area projectTitle = {_screen->AREA_SCREEN.x1, _screen->AREA_SCREEN.y1 + 10, _screen->AREA_SCREEN.x2, _screen->AREA_SCREEN.x1 + 90, false, _screen->C_BLACK};
 
 
     _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);
 
     // Song title
-    _screen->drawTextInArea(projectTitle, _screen->TEXTPOSITION_HCENTER_VCENTER, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _activeSongName);
+    _screen->drawTextInArea(projectTitle, _screen->TEXTPOSITION_HCENTER_TOP, false, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, _activeSongName);
 
 
-    int encYPos = 140;
+    int encYPos = 125;
     int radius = 20;
     int menuSpacing = 5;
     int menuWidthHalf = 6; 
@@ -104,10 +104,10 @@ void HomeScreen::showGeneralInformation() {
 
     int encX[4] = {40, 120, 200, 280};
 
-//    Screen::Area encoder1Area = {encX[0]-20, encYPos + radius + legendSpacing, encX[0]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
-//    Screen::Area encoder2Area = {encX[1]-20, encYPos + radius + legendSpacing, encX[1]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
-//    Screen::Area encoder3Area = {encX[2]-20, encYPos + radius + legendSpacing, encX[2]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
-//    Screen::Area encoder4Area = {encX[3]-20, encYPos + radius + legendSpacing, encX[3]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
+    Screen::Area encoder1Area = {encX[0]-20, encYPos + radius + legendSpacing, encX[0]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
+    Screen::Area encoder2Area = {encX[1]-20, encYPos + radius + legendSpacing, encX[1]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
+    Screen::Area encoder3Area = {encX[2]-20, encYPos + radius + legendSpacing, encX[2]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
+    Screen::Area encoder4Area = {encX[3]-20, encYPos + radius + legendSpacing, encX[3]+20, encYPos + radius + legendSpacing + 20, false, _screen->C_BLACK};
 
 
     Screen::Area text1Area = {encX[0]-20, encYPos - radius - legendSpacing - 12, encX[0]+20, encYPos - radius - legendSpacing, false, _screen->C_BLACK};
@@ -142,7 +142,6 @@ void HomeScreen::showGeneralInformation() {
             break;
         }
         
-
         // Burger Menu icon
         _screen->drawFastHLine(encX[i]-menuWidthHalf, encYPos, menuWidthHalf*2, _screen->C_LIGHTGREY);
         _screen->drawFastHLine(encX[i]-menuWidthHalf, encYPos-menuSpacing, menuWidthHalf*2, _screen->C_LIGHTGREY);
@@ -151,10 +150,10 @@ void HomeScreen::showGeneralInformation() {
     }
     
     // Text ENC 1,2,3,4
-//    _screen->drawTextInArea(encoder1Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "ENC 1");
-//    _screen->drawTextInArea(encoder2Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "ENC 2");
-//    _screen->drawTextInArea(encoder3Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "ENC 3");
-//    _screen->drawTextInArea(encoder4Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_LIGHTGREY, "ENC 4");
+    _screen->drawTextInArea(encoder1Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_GREY, "ENC 1");
+    _screen->drawTextInArea(encoder2Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_GREY, "ENC 2");
+    _screen->drawTextInArea(encoder3Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_GREY, "ENC 3");
+    _screen->drawTextInArea(encoder4Area, _screen->TEXTPOSITION_HCENTER_TOP, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_GREY, "ENC 4");
 
 
     // Text Sample, SKETCH, ARRANGE, PLAY

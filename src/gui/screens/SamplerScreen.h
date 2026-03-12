@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -65,6 +65,9 @@ class SamplerScreen {
 
         void showNoSampleInfo();
         void transitionToSelection();
+        
+        void showBasenoteSelector(char *basenote);
+        void updateBaseMidiNoteName(char *basenote);
 
     private:
         Sucofunkey *_keyboard;
@@ -83,7 +86,7 @@ class SamplerScreen {
         boolean isPlayerPositionVisible = false;        
 
         void _drawSampleSelector();
-        void _hideSampleSelector();
+        void _hideSampleSelector();        
 };
 
 #endif

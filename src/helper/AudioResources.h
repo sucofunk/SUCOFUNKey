@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2023 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -158,17 +158,10 @@ class AudioResources {
         AudioOutputUSB          audioOutputUSB;
         AudioInputUSB           audioInputUSB;
         AudioMixer4             recordInputMixer;
-/*
-        // from Open Audio for phaseshifter
-        AudioConvert_I16toF32    cnvrt1;    // Convert to float
-        AudioConvert_F32toI16    cnvrt2;
 
-        RadioIQMixer_F32         iqmixer1;
-        AudioFilter90Deg_F32     hilbert1;
-        AudioMixer4_F32          sum1;      // Summing node for the SSB receiver
-        AudioFilterFIR_F32       fir1;      // Low Pass Filter to frequency limit the SSB
-        AudioEffectDelay_OA_F32  delay1;    // Pleasant and useful sound between L & R
-*/
+        // Record queues for accessing raw samples from input
+        AudioRecordQueue        queueL;  // Left channel
+        AudioRecordQueue        queueR;  // Right channel
 };
 
 #endif

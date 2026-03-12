@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -63,7 +63,11 @@ void Settings::handleEvent(Sucofunkey::keyQueueStruct event) {
             _updateOption(_activeOption, true);
           }
           break;
-      }
+        case Sucofunkey::SET:
+          setActive(false);
+          _keyboard->addApplicationEventToQueue(Sucofunkey::CHANGE_CONTEXT_TO_HOME);
+          break;
+        }
     }
 }
 

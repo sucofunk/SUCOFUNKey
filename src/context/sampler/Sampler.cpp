@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -54,10 +54,8 @@ Sampler::Sampler(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *s
     //_blackKeyMenu.setOption(8, "");
 
     //_blackKeyMenu.setOption(9, "");
-    //_blackKeyMenu.setOption(10, "");
+    _blackKeyMenu.setOption(10, "BAS");
     //_blackKeyMenu.hideMenu();
-
-    // reverse, mute, fade out?
 }
 
 void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
@@ -180,20 +178,49 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
                   if (_sfsio->sampleBanksStatus[_activeBank-1][_activeSampleSlot-1] || _activeSampleSlot == 0) {
                     
                     if (currentState == SAMPLE_SELECTED) {
-                        _blinkSampleSlot(_activeSampleSlot, false);                        
+                        _blinkSampleSlot(_activeSampleSlot, false);   
+                        
+                        // Do not show config option, when editing the latest recording
+                        if (_activeSampleSlot == 0) {
+                          _blackKeyMenu.setOption(10, "   ");
+                        } else {                          
+                          // write base midi note to menu as option to change
+                          _updateBaseMidiNoteString();
+                         // _keyboard->getMIDINoteName(_sfsio->getBaseMidiNote((_keyboard->getBank()-1)*24 + _activeSampleSlot)).toCharArray(_cBuff5_1, 4);                        
+                          _blackKeyMenu.setOption(10, _cBuff5_baseMidiNote);
+                        }
+
                         _blackKeyMenu.showMenu();
                     }                  
                   }
                 }
               break;
         case Sucofunkey::SET:
+              if (currentState == SAMPLER_SAMPLE_CONFIGURATION_BASENOTE) {
+                currentState = SAMPLE_SELECTED;
+                _keyboard->setBank(_tempBank2);
+                _activeBank = _keyboard->getBank();
+                _samplerScreen.showSampleInfo(_keyboard->getBank()-1, _activeSampleSlot-1, 1.0);
+                _blinkSampleSlot(_activeSampleSlot, true);
+                // save sample configuration changes
+                _sfsio->setBaseMidiNote((_tempBank2-1)*24 + _activeSampleSlot, _tempBaseNote);
+              }
               break;
         case Sucofunkey::FN_SET:
               // abort save as..
               if (currentState == SAMPLE_WAIT_SAVE_SLOT) {
                 cancel();
                 _blackKeyMenu.showMenu();
-                _blinkSampleSlot(_activeSampleSlot, false);
+                _blinkSampleSlot(_activeSampleSlot, true);
+              }
+
+              // go back from sample configuration to sample info without saving changes
+              if (currentState == SAMPLER_SAMPLE_CONFIGURATION_BASENOTE) {
+                currentState = SAMPLE_SELECTED;
+                _keyboard->setBank(_tempBank2);
+                _activeBank = _keyboard->getBank();
+                _samplerScreen.showSampleInfo(_keyboard->getBank()-1, _activeSampleSlot-1, 1.0);
+                _blinkSampleSlot(_activeSampleSlot, true);
               }
               break;
 
@@ -274,6 +301,24 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
             _activeSampleSlot = 0;
             currentState = SAMPLE_NOTHING;            
           }
+        } else {
+          
+          if (currentState == SAMPLER_SAMPLE_CONFIGURATION_BASENOTE && event.pressed) {
+            int slot = _keyboard->getSampleIdByEventKey(event.index);
+
+            char tb[5];
+            _keyboard->getMIDINoteName((_keyboard->getBank()-1)*24 + slot + 28).toCharArray(tb, 4);
+
+/*            Serial.print("Temporarily setting basenote for sample ");
+            Serial.print((_tempBank2-1)*24 + _activeSampleSlot);
+            Serial.print(" :: ");
+            Serial.print((_keyboard->getBank()-1)*24 + slot + 28);
+            Serial.print(" :: ");
+            Serial.println(tb);
+*/            
+            _samplerScreen.updateBaseMidiNoteName(tb);
+            _tempBaseNote = (_keyboard->getBank()-1)*24 + slot + 28;            
+          }
         }
       }
 
@@ -316,11 +361,11 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
       switch(event.index) {
 
         case Sucofunkey::BLACKKEY_NAV_ITEM1:
-          // save          
+          // save
+          _blackKeyMenu.removeExclusiveAndExceptions(true);
           saveActiveSample();
           cancel();          
-          _blinkSampleSlot(_activeSampleSlot, false);
-          _blackKeyMenu.removeExclusiveAndExceptions(true);
+          _blackKeyMenu.hideMenu();
           break;
         case Sucofunkey::BLACKKEY_NAV_ITEM2:
           saveActiveSampleAs();
@@ -355,11 +400,6 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
           // trim sample
           break;
         case Sucofunkey::BLACKKEY_NAV_ITEM5:
-          Serial.println("Envelope");
-          
-          //currentState = SAMPLER_ENVELOPE;
-
-          // envelope
           break;
         case Sucofunkey::BLACKKEY_NAV_ITEM6:
           break;
@@ -370,6 +410,14 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
         case Sucofunkey::BLACKKEY_NAV_ITEM9:
           break;
         case Sucofunkey::BLACKKEY_NAV_ITEM10:
+          // configuration is not available for the latest recording
+          if (_activeSampleSlot != 0) {
+            currentState = SAMPLER_SAMPLE_CONFIGURATION_BASENOTE;
+            _blackKeyMenu.hideMenu();
+            _samplerScreen.showBasenoteSelector(_cBuff5_baseMidiNote);
+            _tempBank2 = _keyboard->getBank();
+//            _blinkSampleSlot(_activeSampleSlot, false);
+          }
           break;
 
         case Sucofunkey::SAMPLE_LIBRARY_SELECTED:
@@ -568,7 +616,7 @@ void Sampler::_play() {
   char * filename = (_activeSampleSlot == 0 ? _sfsio->recorderFilename : _sfsio->sampleFilename[_keyboard->getBank()-1][_activeSampleSlot-1]);
 
   // play whole sample..
-  if (currentState == SAMPLE_SELECTED) {
+  if (currentState == SAMPLE_SELECTED || currentState == SAMPLER_SAMPLE_CONFIGURATION_BASENOTE) {
       _audioResources->playSdRaw.play(filename);
   }
   
@@ -774,4 +822,9 @@ void Sampler::indicatePlayerPosition() {
 void Sampler::_resetTrimMarkerOffsets(boolean start, boolean end) {
   if (start) _trimMarkerStartSampleCountOffset = 0;
   if (end) _trimMarkerEndSampleCountOffset = 0;
+}
+
+// "writes" the base midi note of the active sample to the placeholder variable like "C#4"
+void Sampler::_updateBaseMidiNoteString() { 
+  _keyboard->getMIDINoteName(_sfsio->getBaseMidiNote((_keyboard->getBank()-1)*24 + _activeSampleSlot)).toCharArray(_cBuff5_baseMidiNote, 4);
 }

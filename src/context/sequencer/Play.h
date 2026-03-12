@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -76,9 +76,13 @@ class Play {
             SNIPPET = 1,
             SAMPLE = 2,
             MUTE_SCRATCHING = 3,
-            ADJUST_FADER = 4
+            UNMUTE_SCRATCHING = 4,
+            ADJUST_FADER = 5
         };
 
+        // do not change the values, as the are referenced by their numbers in play_memory_suco class!
+        // including this header in the play_memory_suco class would create a circular dependency.
+        // when adding new values, please update play_memory_suco.h accordingly!
         enum ScratchModes {
             NONE = 0,
             FADER_TAPE = 1,
@@ -142,6 +146,8 @@ class Play {
         void stopArrangement();
 
         // playing samples in live mode..
+        boolean isScratchSamplePlaying();
+        void stopScratchSamples();
         boolean playNextFreeMemory(byte sample1, byte velocity, byte stereoPosition, byte baseNote, byte note, boolean reverse, ScratchModes scratchMode, boolean play, boolean loop);
         void handlePolyphonicAftertouch(byte sample1, byte velocity, byte stereoPosition);
         void polyChangeVelocity(byte polymem, byte velocity, byte stereoPosition);

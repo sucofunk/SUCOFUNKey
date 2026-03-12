@@ -262,3 +262,12 @@ void BlackKeyMenu::_redrawOption(uint8_t option) {
             break;                                                            
     }
 };
+
+void BlackKeyMenu::disableOption(byte position) {
+
+};
+
+void BlackKeyMenu::enableOption(byte position) {
+    
+};
+

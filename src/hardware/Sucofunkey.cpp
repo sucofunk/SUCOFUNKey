@@ -945,6 +945,24 @@ boolean Sucofunkey::isScratchFaderAdjusting() {
 }
 
 
+void Sucofunkey::setDVSValues(bool isPlaying, float speed, bool forward) {
+  _dvsIsPlaying = isPlaying;
+  _dvsSpeed = speed;
+  _dvsDirectionForward = forward;
+};
+
+bool Sucofunkey::isDVSplaying() {
+  return _dvsIsPlaying;
+};
+
+bool Sucofunkey::isDVSDirectionForward() {
+  return _dvsDirectionForward;
+};
+
+float Sucofunkey::getDVSSpeed() {
+  return _dvsSpeed;
+};
+
 
 Configuration* Sucofunkey::getConfig() {
   return _config;

@@ -3,9 +3,11 @@
 Beatmaker's sketchbook is developed to be as intuitive to use as possible. As you know, it is Open Source and will change and improve over time.
 Each firmware with new features has its own manual with updates from the previous version.
 
-## User Manual for Firmware version: 0.9.6.2
+## User Manual for Firmware version: 0.9.9
 
-Last edited: 31.05.2024
+Last edited: 12.03.2026
+
+As the last edit was for version 9.6, there might be more features implemented, that described in this document. The plan is to have one sheet with all keys and shortcuts to check the whole functionality at once.
 
 
 ## 1 General Information
@@ -106,6 +108,7 @@ The Options in the Black keys menu are:
     DEL   Delete the current sample
 
     CUT   Cut the current sample
+    C4    Option to set the basenote of the sample. Default is C4. Label adjusts to basenote.
 
 
 The **Sample library** (SWITCH at an empty sample slot) displays all samples on the SD card. You can browse the whole SD-card filesystem. Samples will always be played for pre-listening, as you scoll through a directory. Hit PLAY to pre-listen to the sample again. Use SET to select the selected sample, cancel by pushing SWITCH again.
@@ -124,8 +127,18 @@ To fine-adjust the start- and end-point, use FUNK+ENCODER1/2. The amount of 16 B
 
 You can push ENCODER1 and ENCODER2 to give control over the marker to the fader. Push the Encoder again to set the position from the fader and fine-adjust it.
 
+LEFT and RIGHT move the selected area around. This is for cutting loops into same-sized slices.
+
 When the right part is selected, you can SAV it and overwrite the current sample with the selected part.
 With SAS (save as) the selection can be saved to a free sample slot. Free sample slots light up green.
+
+### Changing the base note
+
+The most right item in the menu show by default C4. When hitting it, you can hti any key on the piano keyboard to set this as the midi base note for the sample. LEFT and RIGHT will change the octaves. When done, hit SET to save it.
+The menu item label changes to the new set base note.
+
+Changing the base-note is relevant for chromatically pitching the samples. Before this feature, the sequencer was assuming that a sample is always C4. Playing it in the piano mode would be wrong in terms of frequencies.
+
 
 
 ## 8 Sequencer (sketch)
@@ -164,6 +177,9 @@ Black key Menu Options
 
     REV
     Reverse changes the playback direction of a sample. Can be used with parameter changes to change the playback direction while playing a sample.
+
+    MUT
+    Mutes the channel the curseris currently on. Muted channels are displayed with a red line on the right side of the screen.
 
     CLS
     Clear Selection -> when used on a selection
@@ -225,10 +241,12 @@ Shortcuts
     FUNK+UP      The selected cell will be played as many times as you hit the combination. Indicated via (+1, +2,...)
     FUNK+DOWN    Remove one repetition of the selected cell.
 
+When recording to a DAW, e.g. via USB audio, you can solo a channel with the first eight black keys. This way you can record all eight channels to different channels in your daw and fine-tune them there.
 
 
 ## 10 Play mode
 
+ToDo: update this section, as the user-interface changed and icons were added in addition to the color scheme.
 
 ![Play Mode](images/Play.png "Play Mode")
 
@@ -249,11 +267,17 @@ The color coding for each slots is described here:
 
 ![Play Edit Sample](images/PlayEditSample.png "Play Edit Sample")
 
-For *samples* these are: Velocity (will be overwritten when triggered from an external MIDI device with velocity value), panning and pitch. *Play complete* (ENCODER1) will play the whole sample, wehen triggered, *while hold* will stop playing the sample, when the key is released. 
+For *samples* these are: Velocity (will be overwritten when triggered from an external MIDI device with velocity value), panning and pitch. 
+
+ENCODER 1 (push) will toggle between normal and scratch playback. Scratch modes are:
+
+- *tape* mode uses the fader to adjust the speed of the sample playback. Middle position is 0, right is fast forward, left side is fast backward.
+- *vinyl* mode uses the fader to calculate the acceleration, like pushing a vinyl record back and forth. when the fader reached the edge, it can be reset to any position with the *Adjust fader position* key.
+- *DVS* mode uses the lline-in signal from a 1khz timecode signal, like the serato timecode vinyls, to scratch the sample.
 
 FORWARD and REVERSE (push ENCODER 2) will change the playback direction. 
 
-ENCODER 3 (push) will toggle between normal and scratch playback.
+ENCODER3 changes the playback behaviour. *complete* always plays the whole sample. *while hold* plays the sample as long as the key is pressed. Bot options have a subline to define if the sample should loop or not.
 
 ENCODER 4 changes the assigned MIDI note (will not affect the slot position on the internal keyboard). Pushing ENCODER4 will set the device into the learning mode and wait for an incoming MIDI note on channel 1. Pushing ENCODER4 again will assign the MIDI note. If the note is displayed in red, the MIDI note is already assigned to another slot. If you save (SET) with an already assigned MIDI note, it cannot be triggered from external gear.
 Push SET to save the sample configuration.
@@ -274,7 +298,7 @@ ENCODER1 in the overview will change the playback speed of the snippets. The ini
 
 ### Piano Sample
 
-SWITCH will ask you to select a sample. When a sample is selected, it can be played chromatically via the keyboard. This mode is called PIANO mode. Only one Sample can be assigned to PIANO mode and it is displayed in red on the overview. Whenever you hit switch on a live performance, the PIANO mode will start with the selected sample. The PIANO sample can be played via an external MIDI keyboard on MIDI channel 2 - with up to 8 notes (polyphony) at a time. FUNK+SET in piano mode will clear the sample from piano mode. 
+SWITCH will ask you to select a sample. When a sample is selected, it can be played chromatically via the keyboard. This mode is called PIANO mode. Only one Sample can be assigned to PIANO mode and it is displayed in red on the overview. Whenever you hit switch on a live performance, the PIANO mode will start with the selected sample. The PIANO sample can be played via an external MIDI keyboard on MIDI channel 2 (default, changeable in the configurations) - with up to 8 notes (polyphony) at a time. FUNK+SET in piano mode will clear the sample from piano mode. 
 
 ### Recording a session
 
@@ -283,7 +307,18 @@ To record a live performance, hit RECORD, select *resample* via the input select
 
 ## 11 Technical stuff
 
-## 11.1 SD-card
+## 11.1 Configuration
+
+The menu item CFG on the home screen opens a configuration screen for the device. You can change the following parameters:
+
+- *MIDI channel Play* - defines on which channel the play mode listens to trigger samples
+- *MIDI channel Piano* - defines on which channel the piano sample listens
+- *Send MIDI Master Clock* - you can enable or disable using the device as the MIDI master clock
+- *Send MIDI start/stop* - enable/disable sending midi signals for start and stop in sketch, arrange and play mode. Useful for recording single channels to a DAW.
+- *Receive line-in via USB audio* - when this is active, the analog line-in will be ignored and recording to via line will be done via USB audio.
+
+
+## 11.2 SD-card
 
 Everything is stored on the SD card on the teensy 4.1 microcontroller.
 There are two directories on the root folder of the SD-Card.
@@ -295,7 +330,7 @@ There are two directories on the root folder of the SD-Card.
     The subdirectories below this folder contain one song, each. If you want to delete a song, just delete the corresponding directory. 
 
 
-## 11.2 Updating the firmware
+## 11.3 Updating the firmware
 
 To update the firmware of your Beatmaker's sketchbook, just compile the sources of this project or get a pre-compiled version.
 The latest pre-built version as .hex file is stored [here](/built/).

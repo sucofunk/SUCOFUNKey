@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2022 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -227,3 +227,17 @@ void SamplerScreen::_hideSampleSelector() {
     _screen->fadeBacklightOut(1);
     clearScreen();
 }
+
+void SamplerScreen::showBasenoteSelector(char *basenote) {
+    _screen->fadeBacklightOut(1);
+    _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);
+
+    _screen->drawTextInArea(_screen->AREA_HEADLINE, Screen::TEXTPOSITION_HCENTER_VCENTER, false, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE,  "Base MIDI Note");
+    _screen->drawTextInArea(_screen->AREA_SAMPLER_BASENOTE, Screen::TEXTPOSITION_HCENTER_VCENTER, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, basenote);
+    
+    if (!_screen->isBacklightOn()) _screen->fadeBacklightIn(10);
+};
+
+void SamplerScreen::updateBaseMidiNoteName(char *basenote) {
+    _screen->drawTextInArea(_screen->AREA_SAMPLER_BASENOTE, Screen::TEXTPOSITION_HCENTER_VCENTER, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, basenote);
+};

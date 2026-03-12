@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2024 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -103,6 +103,11 @@ class Sucofunkey {
         void updateContinuousFaderValue();
         int getFaderValue(int scaleMin, int scaleMax);
         void switchFaderLED(bool on);
+
+        void setDVSValues(bool isPlaying, float speed, bool forward);
+        bool isDVSplaying();
+        bool isDVSDirectionForward();
+        float getDVSSpeed();
 
         // The following values for keys/leds correspond to the MCP PINs.
         // 0..79
@@ -318,11 +323,15 @@ class Sucofunkey {
         static const int MIDI_SEND_STOP = 505;
         static const int MIDI_CHANGE_CLOCK_SPEED = 506; // value = clock speed in microseconds
 
+        static const int SCRATCH_SAMPLE_ENDED = 550;
+        static const int SCRATCH_NEEDLE_PIXEL_POSITION = 551;
+
         static const int LIVE_SNIPPET_START = 600;
         static const int LIVE_SNIPPET_STOP = 601;
         static const int LIVE_SNIPPET_WAITING_CHAINED = 602;
         static const int LIVE_SNIPPET_CANCEL_CHAINED = 603;
 
+        static const int CHANGE_CONTEXT_TO_HOME = 700;        
         static const int CHANGE_CONTEXT_TO_SYNTHCOPY = 701;
         static const int CHANGE_CONTEXT_TO_SETTINGS = 702;
         
@@ -557,6 +566,10 @@ class Sucofunkey {
         ScratchDirection _scratchDirection = NONE;
 
         void _calculateFaderDirectionAndSpeed();
+
+        bool _dvsIsPlaying = false;
+        float _dvsSpeed = 0.0;
+        bool _dvsDirectionForward = true;
 };
 
 #endif

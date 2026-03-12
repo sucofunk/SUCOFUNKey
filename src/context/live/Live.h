@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -69,6 +69,7 @@ class Live {
         void loadConfig();
         void saveConfig();
 
+        boolean hasDVS() { return _hasDVS; };
 
     private:
         Sucofunkey* _keyboard;
@@ -114,6 +115,8 @@ class Live {
         void _overview(boolean initialize);
         void _playSlot(int slotIndex, byte velocity, boolean pressed, byte note);
         void _updateAllLoopingLEDs();
+        void _stopLoopedSampleMeta(int slotIndex);
+        void _startLoopedSampleMeta(int slotIndex);
 
         void _handleSlotTypeSelection(byte bank, byte key, boolean initialize);
         void _cancel();
@@ -135,6 +138,11 @@ class Live {
 
         int _getSlotIndexBySnippet(int snippet);
         void _turnOffAllLEDs(boolean loopedSamplesOnly);
+
+        boolean _defaultScratchMute = true;
+
+        boolean _hasDVS; // indicates, if DVS functionality is needed (set in a slot)
+        int _lastPlayingScratchSampleSlotID = -1; // saves the slot id of the last triggered scratch sample.. used to determine which LED might need to be turned off
 };
 
 #endif

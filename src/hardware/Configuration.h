@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -31,7 +31,7 @@
 #ifndef Configuration_h
 #define Configuration_h
 
-#define VERSIONNUMBER "0.9.8.1 - iconographic monkey"
+#define VERSIONNUMBER "0.9.9 - Scratch Bastard"
 
 // Display configuration -----------------------------
 

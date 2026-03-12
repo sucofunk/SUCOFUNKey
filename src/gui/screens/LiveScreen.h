@@ -9,7 +9,7 @@
     To support the development of this firmware, please donate to the project and buy hardware
     from sucofunk.com.
 
-    Copyright 2021-2025 by Marc Berendes (marc @ sucofunk.com)
+    Copyright 2021-2026 by Marc Berendes (marc @ sucofunk.com)
     
    ----------------------------------------------------------------------------------------------
 
@@ -67,6 +67,10 @@ class LiveScreen {
         void updateSampleConfig(Play::LiveSlotDefinitionStruct slot, int encoder, boolean push, Options option); // encoder: 1..4 and 5..8 (with FN hold)
         void showPianoSampleSelectMessage(boolean show);
         void showPianoMessage(boolean show);
+        
+        void drawScratchSampleWaveform(int sampleId72, boolean reverse);
+        void hideScratchSampleWaveform();
+        void updateScratchNeedlePosition(int position);
 
     private:
         Sucofunkey *_keyboard;
@@ -107,8 +111,14 @@ class LiveScreen {
         Screen::Area _sampleCompleteAreaLooped;
 
         Screen::Area _waveFormArea;
+        Screen::Area _waveFormAreaScratch;
 
-        void _drawSampleWaveform(int sampleId72, boolean reverse);
+        void _drawSampleWaveform(int sampleId72, Screen::Area area, boolean reverse, double scaleFactor = 0.7);
+        int _lastScratchNeedlePosition = -1;
+        int _activeScratchSampleId72 = -1;
+        int _activeScratchSampleReverse = false;
+        double _activeScratchSampleScaleFactor = 0.7;
+        void _redrawSingleWaveformLine(Screen::Area area, int position);
 };
 
 #endif
