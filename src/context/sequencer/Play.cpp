@@ -30,6 +30,7 @@
 
 #include "Play.h"
 #include "Selection.h"
+#include "../../helper/DebugPrint.h"
 
 SongStructure* Play::getSong() {
     return &_song;
@@ -63,7 +64,7 @@ boolean Play::loadSetPlay(byte bank1, byte sample1, byte channel, int position) 
     } else {
       // failed, because there is not enough memory left
       _song.removePosition(channel, position);
-      Serial.println("out of memory");
+      DebugPrint::println("out of memory");
       return false;
     }   
   } else {
@@ -212,7 +213,7 @@ void Play::playMixedSample(byte channel, uint16_t position, int snippetSlot) {
 
     // something went wrong
     if (playingSnippetsIndex == -1) {
-      Serial.println("ERROR!");
+      DebugPrint::println("ERROR!");
       return;
     }
 
@@ -856,8 +857,8 @@ AudioPlayMemorySUCO* Play::_getPlayMemSlot(byte slot) {
       return &_audioResources->playMemLive8;
       break;
     default:
-      Serial.print("This should never happen! Fix me! :: ");
-      Serial.println(slot);
+      DebugPrint::print("This should never happen! Fix me! :: ");
+      DebugPrint::println(slot);
       return &_audioResources->playMemLive1;      
   }  
 }

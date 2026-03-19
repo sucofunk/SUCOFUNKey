@@ -48,9 +48,17 @@
     #include "../hardware/ILI9341/ILI9341_t3n.h"
 #endif
 
+#ifdef ENABLE_SCREEN_STREAMING
+    #include "../helper/screen-streaming/ScreenStreaming.h"
+#endif
+
 
 //#include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
 //#include <Adafruit_ILI9341.h> // Hardware specific library for ILI9341
+
+#ifdef ENABLE_SCREEN_STREAMING
+class ScreenStreaming; // Forward declaration
+#endif
 
 class Screen {
     public:
@@ -131,6 +139,12 @@ Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness);
         void drawCircle(int16_t x, int16_t y, int16_t r, boolean fill, uint16_t color);
 
         void drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, boolean fill, uint16_t color);
+
+        void drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color);
+
+#ifdef ENABLE_SCREEN_STREAMING
+        void setStreaming(ScreenStreaming* streaming);
+#endif
 
         uint16_t RGBtoColor(byte r, byte g, byte b);
 
@@ -339,6 +353,11 @@ Screen(Adafruit_ST7789 *tft, int BL_PIN, int BL_brightness);
         int _BL_PIN;
         int _BL_brightness = 127;
         boolean _BL_on = true;
+
+#ifdef ENABLE_SCREEN_STREAMING
+        ScreenStreaming* _streaming = nullptr;
+        uint8_t _currentFontId = 0;
+#endif
 
         void _setColor(const int *colorArr);
 };

@@ -47,7 +47,7 @@ Sampler::Sampler(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *s
     _blackKeyMenu.setOption(3, "DEL");
 
     _blackKeyMenu.setOption(4, "CUT");    
-    _blackKeyMenu.setOption(5, "ENV");
+//    _blackKeyMenu.setOption(5, "ENV");
 
     //_blackKeyMenu.setOption(6, "");
     //_blackKeyMenu.setOption(7, "");

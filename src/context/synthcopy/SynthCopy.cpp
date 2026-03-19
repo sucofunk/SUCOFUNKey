@@ -31,6 +31,7 @@
 #include <Arduino.h>
 #include "../../hardware/Sucofunkey.h"
 #include "../../helper/SampleFSIO.h"
+#include "../../helper/DebugPrint.h"
 #include "../../gui/Screen.h"
 #include "SynthCopy.h"
 #include "MIDI.h"
@@ -99,11 +100,10 @@ void SynthCopy::handleEvent(Sucofunkey::keyQueueStruct event) {
                 _nextNote();
                 break;
             case Sucofunkey::SYNTHCOPY_NOTE_MARKER:
-                Serial.print("Marker received: ");
-                Serial.print(_currentNote);
-                Serial.print(" :: ");
-                Serial.println(event.value);
-
+                DebugPrint::print("Marker received: ");
+                DebugPrint::print(_currentNote);
+                DebugPrint::print(" :: ");
+                DebugPrint::println(event.value);
                 break;
             default:
                 break;
@@ -135,8 +135,8 @@ void SynthCopy::_startRecording() {
 void SynthCopy::_nextNote() { 
     _currentNote++;
 
-    Serial.print("increasing to:: ");
-    Serial.println(_currentNote);
+    DebugPrint::print("increasing to:: ");
+    DebugPrint::println(_currentNote);
     
     if (_currentNote < _endNote) {        
         _keyboard->addApplicationEventWithValueDataToQueue(Sucofunkey::SYNTHCOPY_START_NOTE, _releaseMS, _currentNote, 100, _channel);        
@@ -148,5 +148,5 @@ void SynthCopy::_nextNote() {
 
 void SynthCopy::_stopNote() {
     _keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_NOTE_OFF, _currentNote, 0, _channel);
-    Serial.println("_stopNote");
+    DebugPrint::println("_stopNote");
 }

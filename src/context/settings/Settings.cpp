@@ -36,6 +36,7 @@
 Settings::Settings(Sucofunkey *keyboard, Screen *screen, FSIO* fsio) {
     _keyboard = keyboard;    
     _screen = screen;
+    _fsio = fsio;
     _settingsScreen = SettingsScreen(keyboard, screen);
 }
 
@@ -106,6 +107,11 @@ void Settings::_updateOption(int position1, boolean active) {
     case 5:
       _settingsScreen.drawOption(5, "Receive line-in via USB audio", _keyboard->getConfig()->configurationValues.receiveUSBAudio, _keyboard->getConfig()->configurationValues.receiveUSBAudioValueType, active);
       break;
+#ifdef ENABLE_SCREEN_STREAMING
+    case 6:
+      _settingsScreen.drawOption(6, "Screen streaming via USB", _keyboard->getConfig()->configurationValues.enableScreenStreaming, _keyboard->getConfig()->configurationValues.enableScreenStreamingValueType, active);
+      break;
+#endif
   }
 }
 
@@ -125,7 +131,13 @@ void Settings::_changeOptionValue(boolean increase) {
       break;
     case 5:
       _toggleTrueFalse(&_keyboard->getConfig()->configurationValues.receiveUSBAudio);      
-      break;            
+      break;
+#ifdef ENABLE_SCREEN_STREAMING
+    case 6:
+      _toggleTrueFalse(&_keyboard->getConfig()->configurationValues.enableScreenStreaming);
+      _keyboard->addApplicationEventToQueue(Sucofunkey::SETUP_SCREEN_STREAMING_FROM_CONFIG);
+      break;
+#endif
   }
   _updateOption(_activeOption, true);
   _fsio->saveConfiguration(&_keyboard->getConfig()->configurationValues);

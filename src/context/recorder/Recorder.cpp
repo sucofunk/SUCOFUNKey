@@ -31,6 +31,7 @@
 #include <Arduino.h>
 #include "../../hardware/Sucofunkey.h"
 #include "../../gui/Screen.h"
+#include "../../helper/DebugPrint.h"
 #include "Recorder.h"
 
 Recorder::Recorder(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *sfsio, AudioResources *audioResources) {
@@ -133,7 +134,7 @@ long Recorder::receiveTimerTick() {
       if (currentState == RECORDER_MULTISAMPLE_WAIT_PEAK && _peak > _multiSampleTreshold) {
         continueRecording();
         currentState = RECORDER_MULTISAMPLE_RECORDING;
-        Serial.println("--- RECORDER_MULTISAMPLE_RECORDING --- ");
+        DebugPrint::println("--- RECORDER_MULTISAMPLE_RECORDING --- ");
         _durationBelowTreshold = 0;
       }
 
@@ -351,7 +352,7 @@ void Recorder::adjustSilenceTreshold() {
 }
 
 void Recorder::_sendMarker() {
-  Serial.print("Sending Marker: ");
-  Serial.println(_bytesRecorded);
+  DebugPrint::print("Sending Marker: ");
+  DebugPrint::println((unsigned long)_bytesRecorded);
   _keyboard->addApplicationEventWithValueDataToQueue(Sucofunkey::SYNTHCOPY_NOTE_MARKER, _bytesRecorded, 0, 0, 0);  
 }

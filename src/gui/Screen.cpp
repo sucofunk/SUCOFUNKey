@@ -36,6 +36,10 @@
 #include "fonts/BaiJamjureeRegularMonoDigits8pt7b.h" // https://fonts.google.com/specimen/Bai+Jamjuree
 #include "fonts/BaiJamjuree_Medium5pt7b.h" // https://fonts.google.com/specimen/Bai+Jamjuree
 
+#ifdef ENABLE_SCREEN_STREAMING
+#include "../helper/screen-streaming/ScreenStreaming.h"
+#endif
+
 #ifdef SCREEN_ILI9341
 Screen::Screen(Adafruit_ILI9341 *tft, int BL_PIN, int BL_brightness) {
   _tft = tft;
@@ -96,9 +100,20 @@ boolean Screen::isBacklightOn() {
   return _BL_on;
 }
 
+#ifdef ENABLE_SCREEN_STREAMING
+void Screen::setStreaming(ScreenStreaming* streaming) {
+    _streaming = streaming;
+}
+#endif
+
 
 void Screen::fillArea(Area area, uint16_t color) {
-  _tft->fillRect(area.x1, area.y1, area.x2-area.x1+(area.x1 == 0 ? 1 : 0), area.y2-area.y1+(area.x1 == 0 ? 1 : 0), color);
+  int16_t w = area.x2-area.x1+(area.x1 == 0 ? 1 : 0);
+  int16_t h = area.y2-area.y1+(area.x1 == 0 ? 1 : 0);
+  _tft->fillRect(area.x1, area.y1, w, h, color);
+#ifdef ENABLE_SCREEN_STREAMING
+  if (_streaming) _streaming->logFillRect(area.x1, area.y1, w, h, color);
+#endif
   area.bgColor = color;
   area.transparent = false;
 }
@@ -106,6 +121,9 @@ void Screen::fillArea(Area area, uint16_t color) {
 void Screen::clearAreaLTR(Area area, uint16_t color, int delayTime) {  
   for (int x=area.x1; x<=area.x2; x++) {
     _tft->drawLine(x, area.y1, x, area.y2, color);
+#ifdef ENABLE_SCREEN_STREAMING
+    if (_streaming) _streaming->logVLine(x, area.y1, area.y2 - area.y1 + 1, color);
+#endif
     delay(delayTime);
   }
   
@@ -116,6 +134,9 @@ void Screen::clearAreaLTR(Area area, uint16_t color, int delayTime) {
 void Screen::clearAreaRTL(Area area, uint16_t color, int delayTime) {    
   for (int x=area.x2; x>=area.x1; x--) {
     _tft->drawLine(x, area.y1, x, area.y2, color);
+#ifdef ENABLE_SCREEN_STREAMING
+    if (_streaming) _streaming->logVLine(x, area.y1, area.y2 - area.y1 + 1, color);
+#endif
     delay(delayTime);
   }
   
@@ -126,12 +147,20 @@ void Screen::clearAreaRTL(Area area, uint16_t color, int delayTime) {
 
 // draws a vertical line at the in vpos defined percentage (0..1) of the height of the area
 void Screen::hr(Area area, float vpos, uint16_t color) {
-  _tft->drawLine(area.x1, area.y1 + static_cast<int>((area.y2-area.y1)*vpos), area.x2, area.y1 + static_cast<int>((area.y2-area.y1)*vpos), color);  
+  int16_t y = area.y1 + static_cast<int>((area.y2-area.y1)*vpos);
+  _tft->drawLine(area.x1, y, area.x2, y, color);
+#ifdef ENABLE_SCREEN_STREAMING
+  if (_streaming) _streaming->logHLine(area.x1, y, area.x2 - area.x1 + 1, color);
+#endif
 }
 
 // draws a vertical line at the in hpos defined percentage (0..1) of the width of the area
 void Screen::vr(Area area, float hpos, uint16_t color) {
-  _tft->drawLine(area.x1 + abs((area.x2-area.x1)*hpos), area.y1, area.x1 + abs((area.x2-area.x1)*hpos), area.y2, color);  
+  int16_t x = area.x1 + abs((area.x2-area.x1)*hpos);
+  _tft->drawLine(x, area.y1, x, area.y2, color);
+#ifdef ENABLE_SCREEN_STREAMING
+  if (_streaming) _streaming->logVLine(x, area.y1, area.y2 - area.y1 + 1, color);
+#endif
 }
 
 void Screen::drawTextInArea(Area area, TextPosition textPosition, boolean eraseFirst, TextSize textSize, boolean monoSpaced, uint16_t color, const char *text) {
@@ -242,15 +271,38 @@ void Screen::drawTextInArea(Area area, TextPosition textPosition, boolean eraseF
 
   _tft->setTextColor(color);
   _tft->print(text);
+#ifdef ENABLE_SCREEN_STREAMING
+  if (_streaming) _streaming->logText(x, (y>area.y2 ? area.y2 : y), color, _currentFontId, text);
+#endif
 }
 
 
 void Screen::drawLine(int x1, int y1, int x2, int y2, uint16_t color) {
   _tft->drawLine(x1, y1, x2, y2, color);
+#ifdef ENABLE_SCREEN_STREAMING
+  if (_streaming) {
+    // Optimize: use VLINE for vertical lines (saves 2 bytes per command)
+    if (x1 == x2) {
+      int yStart = (y1 < y2) ? y1 : y2;
+      int h = abs(y2 - y1) + 1;
+      _streaming->logVLine(x1, yStart, h, color);
+    } else if (y1 == y2) {
+      // Horizontal line
+      int xStart = (x1 < x2) ? x1 : x2;
+      int w = abs(x2 - x1) + 1;
+      _streaming->logHLine(xStart, y1, w, color);
+    } else {
+      _streaming->logLine(x1, y1, x2, y2, color);
+    }
+  }
+#endif
 }
 
 void Screen::drawPixel(int x, int y, uint16_t color) {
   _tft->drawPixel(x, y, color);
+#ifdef ENABLE_SCREEN_STREAMING
+  if (_streaming) _streaming->logPixel(x, y, color);
+#endif
 }
 
 void Screen::loadingScreen(float percent) {
@@ -282,6 +334,7 @@ void Screen::drawText(const char *text,int x, int y, uint16_t color, const GFXfo
   _tft->setCursor(x, y);
   _tft->setTextColor(color);
   _tft->print(text);
+  // Note: custom font pointer - streaming with unknown font ID
 }
 
 void Screen::drawText(const char *text,int x, int y, TextSize textSize, uint16_t color) {
@@ -289,12 +342,18 @@ void Screen::drawText(const char *text,int x, int y, TextSize textSize, uint16_t
   _tft->setTextColor(color);
   _tft->setCursor(x, y);
   _tft->print(text);
+#ifdef ENABLE_SCREEN_STREAMING
+  if (_streaming) _streaming->logText(x, y, color, _currentFontId, text);
+#endif
 };
 
 void Screen::drawText(const char *text,int x, int y) {
   _tft->setTextColor(C_WHITE);
   _tft->setCursor(x, y);
   _tft->print(text);
+#ifdef ENABLE_SCREEN_STREAMING
+  if (_streaming) _streaming->logText(x, y, C_WHITE, _currentFontId, text);
+#endif
 }
 
 
@@ -304,30 +363,54 @@ void Screen::setTextSize(TextSize textSize, boolean monoSpaced) {
       if (monoSpaced) {
         // ToDo: create small font with monospacing, if needed one day.. currently it is the medium font
         _tft->setFont(&OxygenMono_Regular8pt7b);
+#ifdef ENABLE_SCREEN_STREAMING
+        _currentFontId = 0; // FONT_OXYGEN_MONO
+#endif
       } else {      
         _tft->setFont(&BaiJamjuree_Medium5pt7b);
+#ifdef ENABLE_SCREEN_STREAMING
+        _currentFontId = 1; // FONT_BAI_JAMJUREE_MEDIUM_5PT
+#endif
       }
       break;
     case TEXTSIZE_MEDIUM:
       if (monoSpaced) {
         _tft->setFont(&OxygenMono_Regular8pt7b);
+#ifdef ENABLE_SCREEN_STREAMING
+        _currentFontId = 0; // FONT_OXYGEN_MONO
+#endif
       } else {      
         _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
+#ifdef ENABLE_SCREEN_STREAMING
+        _currentFontId = 2; // FONT_BAI_JAMJUREE_REGULAR_MONO_DIGITS
+#endif
       }
       break;
     case TEXTSIZE_LARGE:
       // ToDo: create large font, if needed one day.. currently it is the medium font
       if (monoSpaced) {        
         _tft->setFont(&OxygenMono_Regular8pt7b);
+#ifdef ENABLE_SCREEN_STREAMING
+        _currentFontId = 0; // FONT_OXYGEN_MONO
+#endif
       } else {      
         _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
+#ifdef ENABLE_SCREEN_STREAMING
+        _currentFontId = 2; // FONT_BAI_JAMJUREE_REGULAR_MONO_DIGITS
+#endif
       }
       break;
     default:
       if (monoSpaced) {
         _tft->setFont(&OxygenMono_Regular8pt7b);
+#ifdef ENABLE_SCREEN_STREAMING
+        _currentFontId = 0; // FONT_OXYGEN_MONO
+#endif
       } else {      
         _tft->setFont(&BaiJamjureeRegularMonoDigits8pt7b);
+#ifdef ENABLE_SCREEN_STREAMING
+        _currentFontId = 2; // FONT_BAI_JAMJUREE_REGULAR_MONO_DIGITS
+#endif
       }
       break;    
   }
@@ -335,14 +418,23 @@ void Screen::setTextSize(TextSize textSize, boolean monoSpaced) {
 
 void Screen::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
   _tft->drawFastHLine(x, y, w, color);
+#ifdef ENABLE_SCREEN_STREAMING
+  if (_streaming) _streaming->logHLine(x, y, w, color);
+#endif
 }
 
 void Screen::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
   _tft->drawFastVLine(x, y, h, color);
+#ifdef ENABLE_SCREEN_STREAMING
+  if (_streaming) _streaming->logVLine(x, y, h, color);
+#endif
 }
 
 void Screen::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
   _tft->fillRect(x, y, w, h, color);
+#ifdef ENABLE_SCREEN_STREAMING
+  if (_streaming) _streaming->logFillRect(x, y, w, h, color);
+#endif
 }
 
 void Screen::drawCircle(int16_t x, int16_t y, int16_t r, boolean fill, uint16_t color) {
@@ -351,6 +443,9 @@ void Screen::drawCircle(int16_t x, int16_t y, int16_t r, boolean fill, uint16_t 
   } else {
     _tft->drawCircle(x, y, r, color);
   }
+#ifdef ENABLE_SCREEN_STREAMING
+  if (_streaming) _streaming->logCircle(x, y, r, fill, color);
+#endif
 }
 
 void Screen::drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, boolean fill, uint16_t color) {
@@ -358,7 +453,15 @@ void Screen::drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_
     _tft->fillTriangle(x0, y0, x1, y1, x2, y2, color);  
   } else {
     _tft->drawTriangle(x0, y0, x1, y1, x2, y2, color);
-  }  
+  }
+#ifdef ENABLE_SCREEN_STREAMING
+  if (_streaming) _streaming->logTriangle(x0, y0, x1, y1, x2, y2, fill, color);
+#endif
+};
+
+void Screen::drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color) {
+  _tft->drawBitmap(x, y, bitmap, w, h, color);
+  // Note: bitmap streaming not implemented - would need bitmap ID lookup
 };
 
 // --- Icons and helper functions ---

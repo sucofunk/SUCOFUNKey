@@ -53,6 +53,11 @@
 #define PIN_SCREEN_RST (37)
 #define PIN_SCREEN_BL (36)
 
+// Screen streaming configuration (for mirroring display to web browser)
+// Uncomment to enable real-time screen command streaming via USB Serial
+#define ENABLE_SCREEN_STREAMING
+
+
 // ---------------------------------------------------
 
 // PINs on the Teensy 4.1 to receive Interrupts from the 5 MCP23017 chips used as port expanders to receive updated from the 36 Buttons and 4 rotary encoders
@@ -77,7 +82,7 @@ class Configuration {
 
 
         typedef struct {
-            int version = 2; // configuration type.. to check, if there should be problems in the future, when more options are available
+            int version = 5; // configuration type.. to check, if there should be problems in the future, when more options are available
 
             int midiChannelPlay = 1; // MIDI channel to receive notes for play/live mode
             ValueType midiChannelPlayValueType = MIDICHANNEL;
@@ -93,6 +98,9 @@ class Configuration {
 
             bool receiveUSBAudio = 0; // will replace the line-in with usb oudio in
             ValueType receiveUSBAudioValueType = TRUEFALSE;
+
+            bool enableScreenStreaming = 0; // enable real-time screen streaming via USB Serial (uses USB bandwidth)
+            ValueType enableScreenStreamingValueType = TRUEFALSE;
 
         } ConfigurationValues;
         

@@ -31,6 +31,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include "Sucofunkey.h"
+#include "../helper/DebugPrint.h"
 #include "Adafruit_MCP23017.h"
 #include <cppQueue.h> // https://github.com/SMFSW/Queue
 
@@ -441,10 +442,10 @@ void Sucofunkey::printQueue() {
       keyQueueStruct k;
       keyQueue.pop(&k);
       //handleEvent(k.index, k.pressed);            
-      Serial.print(k.index);
-      Serial.print(" --> ");
-      Serial.print(k.pressed);
-      Serial.println();      
+      DebugPrint::print(k.index);
+      DebugPrint::print(" --> ");
+      DebugPrint::print(k.pressed);
+      DebugPrint::println();      
     }
   }
 }
@@ -908,7 +909,7 @@ String Sucofunkey::getMIDINoteName(byte note) {
 void Sucofunkey::scanI2C() {
    byte error, address;
 
-  Serial.print("I2C: ");
+  DebugPrint::print("I2C: ");
 
   for (address = 1; address < 127; address++) {
       // The i2c_scanner uses the return value of
@@ -918,11 +919,11 @@ void Sucofunkey::scanI2C() {
       error = Wire2.endTransmission();
 
       if (error == 0) {
-        Serial.print(address,HEX);
-        Serial.print(" ");
+        DebugPrint::print(address);
+        DebugPrint::print(" ");
       }
   }
-  Serial.println("");  
+  DebugPrint::println("");  
 }
 
 

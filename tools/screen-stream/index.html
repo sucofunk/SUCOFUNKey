@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUCOFUNK Screen Stream</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #000;
+            color: #eee;
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .burger-icon {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            width: 30px;
+            height: 24px;
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .burger-icon span {
+            display: block;
+            height: 3px;
+            background: #fff;
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+        .burger-icon.open span:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+        .burger-icon.open span:nth-child(2) {
+            opacity: 0;
+        }
+        .burger-icon.open span:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+        .menu-panel {
+            position: fixed;
+            top: 0;
+            left: -190px;
+            width: 190px;
+            height: 100vh;
+            background: #222;
+            padding: 50px 15px 15px;
+            transition: left 0.3s;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .menu-panel.open {
+            left: 0;
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        #connectBtn {
+            background: #22c55e;
+            color: white;
+        }
+        #connectBtn:hover {
+            background: #16a34a;
+        }
+        #connectBtn.connected {
+            background: #ef4444;
+        }
+        #connectBtn.connected:hover {
+            background: #dc2626;
+        }
+        #dotsBtn, #saveBtn {
+            background: #6b7280;
+            color: white;
+        }
+        #dotsBtn:hover, #saveBtn:hover {
+            background: #4b5563;
+        }
+        .scale-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #6b7280;
+            padding: 6px 12px;
+            border-radius: 6px;
+        }
+        .scale-controls label {
+            font-size: 14px;
+        }
+        .scale-controls select {
+            background: #1a1a2e;
+            color: #eee;
+            border: 1px solid #444;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .canvas-container {
+            background: #000;
+            padding: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+        .corner-dot {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            background: white;
+        }
+        .corner-dot.tl { top: 0; left: 0; }
+        .corner-dot.tr { top: 0; right: 0; }
+        .corner-dot.bl { bottom: 0; left: 0; }
+        .corner-dot.br { bottom: 0; right: 0; }
+        canvas {
+            display: block;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        .stats {
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+            font-size: 12px;
+            color: #888;
+        }
+        .stats span {
+            background: #2a2a4a;
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .status.info { background: #1e40af; }
+        .status.success { background: #166534; }
+        .status.error { background: #991b1b; }
+        .debug-panel {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+        .debug-panel summary {
+            cursor: pointer;
+            padding: 8px;
+            background: #2a2a4a;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="burger-icon" id="burgerIcon">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+    
+    <div class="menu-panel" id="menuPanel">
+        <div class="controls">
+            <button id="connectBtn">Connect</button>
+            <button id="dotsBtn">Hide Dots</button>
+            <button id="saveBtn">Save PNG</button>
+            <div class="scale-controls">
+                <label>Scale:</label>
+                <select id="scaleSelect">
+                <option value="1" selected>1x</option>
+                <option value="2">2x</option>
+                <option value="3">3x</option>
+                <option value="4">4x</option>
+            </select>
+        </div>
+        </div>
+    </div>
+    
+    <div class="canvas-container">
+        <div class="corner-dot tl"></div>
+        <div class="corner-dot tr"></div>
+        <div class="corner-dot bl"></div>
+        <div class="corner-dot br"></div>
+        <canvas id="screen" width="320" height="240"></canvas>
+    </div>
+    
+    <script>
+// Command opcodes (must match ScreenStreaming.h)
+const CMD = {
+    FILL_RECT: 0x01,
+    LINE: 0x02,
+    PIXEL: 0x03,
+    HLINE: 0x04,
+    VLINE: 0x05,
+    CIRCLE: 0x06,
+    TRIANGLE: 0x07,
+    TEXT: 0x08,
+    BITMAP: 0x09,
+    SYNC: 0xFE,   // Sync marker: FE AA 55 AA 55
+    CLEAR: 0xFF
+};
+
+// Sync marker pattern (after CMD_SYNC opcode) - uses 0x00 bytes that can't appear in text
+const SYNC_PATTERN = [0x00, 0x00, 0xFE, 0x00];
+let unknownOpcodeCount = 0;  // Track consecutive unknown opcodes
+const RESYNC_THRESHOLD = 3;  // Resync after 3 consecutive errors
+
+// Font IDs (must match ScreenStreaming.h)
+const FONT_ID = {
+    OXYGEN_MONO: 0,
+    BAI_JAMJUREE_MEDIUM_5PT: 1,
+    BAI_JAMJUREE_REGULAR_MONO_DIGITS: 2
+};
+
+// Embedded GFX Fonts - BaiJamjuree_Medium5pt7b
+const BaiJamjuree_Medium5pt7b = {
+    bitmaps: new Uint8Array([
+        0x00, 0xFA, 0xB4, 0x49, 0x2F, 0xD2, 0xFD, 0x24, 0x80, 0x27, 0xA3, 0x07,
+        0x06, 0x2F, 0x20, 0xF4, 0x4A, 0x27, 0xFF, 0x90, 0xC8, 0xA4, 0x5E, 0x72,
+        0x94, 0xCA, 0xCB, 0xA0, 0xC0, 0x5A, 0xA9, 0x40, 0xA5, 0x56, 0x80, 0x5F,
+        0x80, 0x27, 0xC8, 0x40, 0x50, 0xE0, 0xC0, 0x08, 0x84, 0x42, 0x21, 0x10,
+        0x74, 0x63, 0x18, 0xC5, 0xC0, 0x74, 0x92, 0x48, 0x7C, 0x42, 0x26, 0x43,
+        0xE0, 0x74, 0x42, 0x60, 0xC5, 0xC0, 0x08, 0x62, 0x8A, 0x49, 0xF0, 0x80,
+        0xFC, 0x21, 0xE0, 0xC5, 0xC0, 0x74, 0x7D, 0x18, 0xC5, 0xC0, 0xF8, 0x84,
+        0x42, 0x21, 0x00, 0x74, 0x62, 0xE8, 0xC5, 0xC0, 0x74, 0x63, 0x17, 0xC5,
+        0xC0, 0xC0, 0xC0, 0x41, 0x60, 0x09, 0xB1, 0x83, 0x04, 0xF8, 0x3E, 0x83,
+        0x06, 0x36, 0x40, 0x74, 0x42, 0x22, 0x00, 0x80, 0x7E, 0xC1, 0xBD, 0xA5,
+        0xA5, 0xBB, 0x80, 0x7C, 0x10, 0xC2, 0x92, 0x79, 0x18, 0x40, 0xFA, 0x28,
+        0xBE, 0x86, 0x1F, 0x80, 0x7A, 0x18, 0x20, 0x86, 0x17, 0x80, 0xFA, 0x18,
+        0x61, 0x86, 0x1F, 0x80, 0xFC, 0x21, 0xF8, 0x43, 0xE0, 0xFC, 0x21, 0xE8,
+        0x42, 0x00, 0x7A, 0x18, 0x27, 0x86, 0x17, 0x80, 0x8C, 0x63, 0xF8, 0xC6,
+        0x20, 0xFE, 0x08, 0x42, 0x10, 0xC5, 0xC0, 0x8C, 0xA9, 0xCB, 0x4A, 0x20,
+        0x84, 0x21, 0x08, 0x43, 0xE0, 0x87, 0x3C, 0xED, 0xB6, 0x18, 0x40, 0x8E,
+        0x73, 0x5A, 0xCE, 0x20, 0x7A, 0x18, 0x61, 0x86, 0x17, 0x80, 0xFC, 0x63,
+        0x1F, 0x42, 0x00, 0x7A, 0x18, 0x61, 0x86, 0x37, 0xC0, 0xFC, 0x63, 0xE9,
+        0x46, 0x20, 0xF4, 0x60, 0xE0, 0xC5, 0xE0, 0xF9, 0x08, 0x42, 0x10, 0x80,
+        0x86, 0x18, 0x61, 0x86, 0x17, 0x80, 0x85, 0x14, 0x92, 0x28, 0xC1, 0x00,
+        0x89, 0x99, 0x59, 0x56, 0x66, 0x66, 0x62, 0x4D, 0x23, 0x0C, 0x31, 0x2C,
+        0x40, 0x44, 0x88, 0xA0, 0x81, 0x02, 0x04, 0x00, 0xF8, 0x84, 0x44, 0x23,
+        0xE0, 0xEA, 0xAA, 0xC0, 0x82, 0x10, 0x42, 0x08, 0x41, 0xD5, 0x55, 0xC0,
+        0x21, 0x94, 0x90, 0xF8, 0x90, 0xF9, 0xF9, 0xF0, 0x84, 0x3D, 0x18, 0xC7,
+        0xC0, 0x74, 0xA1, 0x07, 0x00, 0x08, 0x5F, 0x18, 0xC5, 0xE0, 0x74, 0xBF,
+        0x17, 0x00, 0x6B, 0xA4, 0x90, 0x7C, 0x63, 0x17, 0xC5, 0xC0, 0x88, 0xF9,
+        0x99, 0x90, 0xBE, 0x45, 0x55, 0xC0, 0x88, 0x9A, 0xEA, 0x90, 0xAA, 0xAC,
+        0xEF, 0x26, 0x4C, 0x99, 0x20, 0xF9, 0x99, 0x90, 0x74, 0x63, 0x17, 0x00,
+        0xF4, 0x63, 0x1F, 0x42, 0x00, 0x7C, 0x63, 0x17, 0x84, 0x20, 0xF2, 0x48,
+        0xF9, 0x69, 0xF0, 0x4B, 0xA4, 0x98, 0x99, 0x99, 0xF0, 0x8A, 0x94, 0xC2,
+        0x00, 0x92, 0xA5, 0xB3, 0x66, 0x40, 0x52, 0x88, 0xA9, 0x00, 0x99, 0x99,
+        0xF9, 0xF0, 0xF2, 0x44, 0xF0, 0x69, 0x2D, 0x92, 0x4C, 0xFF, 0xC0, 0xC9,
+        0x26, 0xD2, 0x58, 0xED, 0xC0
+    ]),
+    glyphs: [
+        {o:0,w:1,h:1,a:3,x:0,y:0},     // 0x20 ' '
+        {o:1,w:1,h:7,a:3,x:1,y:-6},    // 0x21 '!'
+        {o:2,w:3,h:2,a:5,x:1,y:-6},    // 0x22 '"'
+        {o:3,w:6,h:7,a:8,x:1,y:-6},    // 0x23 '#'
+        {o:9,w:5,h:9,a:7,x:1,y:-7},    // 0x24 '$'
+        {o:15,w:9,h:7,a:11,x:1,y:-6},  // 0x25 '%'
+        {o:23,w:5,h:7,a:7,x:1,y:-6},   // 0x26 '&'
+        {o:28,w:1,h:2,a:3,x:1,y:-6},   // 0x27 '''
+        {o:29,w:2,h:9,a:4,x:1,y:-6},   // 0x28 '('
+        {o:32,w:2,h:9,a:4,x:1,y:-6},   // 0x29 ')'
+        {o:35,w:3,h:3,a:5,x:1,y:-6},   // 0x2A '*'
+        {o:37,w:5,h:4,a:5,x:0,y:-4},   // 0x2B '+'
+        {o:40,w:2,h:2,a:3,x:0,y:0},    // 0x2C ','
+        {o:41,w:3,h:1,a:4,x:0,y:-2},   // 0x2D '-'
+        {o:42,w:2,h:1,a:2,x:0,y:0},    // 0x2E '.'
+        {o:43,w:5,h:8,a:5,x:0,y:-6},   // 0x2F '/'
+        {o:48,w:5,h:7,a:7,x:1,y:-6},   // 0x30 '0'
+        {o:53,w:3,h:7,a:4,x:0,y:-6},   // 0x31 '1'
+        {o:56,w:5,h:7,a:7,x:1,y:-6},   // 0x32 '2'
+        {o:61,w:5,h:7,a:7,x:1,y:-6},   // 0x33 '3'
+        {o:66,w:6,h:7,a:6,x:0,y:-6},   // 0x34 '4'
+        {o:72,w:5,h:7,a:7,x:1,y:-6},   // 0x35 '5'
+        {o:77,w:5,h:7,a:7,x:1,y:-6},   // 0x36 '6'
+        {o:82,w:5,h:7,a:5,x:0,y:-6},   // 0x37 '7'
+        {o:87,w:5,h:7,a:7,x:1,y:-6},   // 0x38 '8'
+        {o:92,w:5,h:7,a:7,x:1,y:-6},   // 0x39 '9'
+        {o:97,w:2,h:5,a:2,x:0,y:-4},   // 0x3A ':'
+        {o:99,w:2,h:6,a:3,x:0,y:-4},   // 0x3B ';'
+        {o:101,w:5,h:6,a:7,x:1,y:-5},  // 0x3C '<'
+        {o:105,w:5,h:3,a:5,x:0,y:-4},  // 0x3D '='
+        {o:107,w:5,h:6,a:7,x:1,y:-5},  // 0x3E '>'
+        {o:111,w:5,h:7,a:7,x:1,y:-6},  // 0x3F '?'
+        {o:116,w:8,h:8,a:10,x:1,y:-6}, // 0x40 '@'
+        {o:124,w:6,h:7,a:6,x:0,y:-6},  // 0x41 'A'
+        {o:130,w:6,h:7,a:8,x:1,y:-6},  // 0x42 'B'
+        {o:136,w:6,h:7,a:8,x:1,y:-6},  // 0x43 'C'
+        {o:142,w:6,h:7,a:8,x:1,y:-6},  // 0x44 'D'
+        {o:148,w:5,h:7,a:6,x:1,y:-6},  // 0x45 'E'
+        {o:153,w:5,h:7,a:6,x:1,y:-6},  // 0x46 'F'
+        {o:158,w:6,h:7,a:8,x:1,y:-6},  // 0x47 'G'
+        {o:164,w:5,h:7,a:7,x:1,y:-6},  // 0x48 'H'
+        {o:169,w:1,h:7,a:3,x:1,y:-6},  // 0x49 'I'
+        {o:170,w:5,h:7,a:7,x:1,y:-6},  // 0x4A 'J'
+        {o:175,w:5,h:7,a:7,x:1,y:-6},  // 0x4B 'K'
+        {o:180,w:5,h:7,a:6,x:1,y:-6},  // 0x4C 'L'
+        {o:185,w:6,h:7,a:8,x:1,y:-6},  // 0x4D 'M'
+        {o:191,w:5,h:7,a:7,x:1,y:-6},  // 0x4E 'N'
+        {o:196,w:6,h:7,a:8,x:1,y:-6},  // 0x4F 'O'
+        {o:202,w:5,h:7,a:7,x:1,y:-6},  // 0x50 'P'
+        {o:207,w:6,h:7,a:8,x:1,y:-6},  // 0x51 'Q'
+        {o:213,w:5,h:7,a:7,x:1,y:-6},  // 0x52 'R'
+        {o:218,w:5,h:7,a:7,x:1,y:-6},  // 0x53 'S'
+        {o:223,w:5,h:7,a:5,x:0,y:-6},  // 0x54 'T'
+        {o:228,w:6,h:7,a:8,x:1,y:-6},  // 0x55 'U'
+        {o:234,w:6,h:7,a:6,x:0,y:-6},  // 0x56 'V'
+        {o:240,w:8,h:7,a:8,x:0,y:-6},  // 0x57 'W'
+        {o:247,w:6,h:7,a:6,x:0,y:-6},  // 0x58 'X'
+        {o:253,w:7,h:7,a:7,x:0,y:-6},  // 0x59 'Y'
+        {o:260,w:5,h:7,a:7,x:1,y:-6},  // 0x5A 'Z'
+        {o:265,w:2,h:9,a:4,x:1,y:-6},  // 0x5B '['
+        {o:268,w:5,h:8,a:5,x:0,y:-6},  // 0x5C '\'
+        {o:273,w:2,h:9,a:4,x:1,y:-6},  // 0x5D ']'
+        {o:276,w:5,h:4,a:6,x:0,y:-7},  // 0x5E '^'
+        {o:279,w:5,h:1,a:5,x:0,y:1},   // 0x5F '_'
+        {o:280,w:2,h:2,a:3,x:0,y:-7},  // 0x60 '`'
+        {o:281,w:4,h:5,a:6,x:1,y:-4},  // 0x61 'a'
+        {o:284,w:5,h:7,a:7,x:1,y:-6},  // 0x62 'b'
+        {o:289,w:5,h:5,a:6,x:1,y:-4},  // 0x63 'c'
+        {o:293,w:5,h:7,a:7,x:1,y:-6},  // 0x64 'd'
+        {o:298,w:5,h:5,a:6,x:1,y:-4},  // 0x65 'e'
+        {o:302,w:3,h:7,a:4,x:0,y:-6},  // 0x66 'f'
+        {o:305,w:5,h:7,a:7,x:1,y:-4},  // 0x67 'g'
+        {o:310,w:4,h:7,a:6,x:1,y:-6},  // 0x68 'h'
+        {o:314,w:1,h:7,a:3,x:1,y:-6},  // 0x69 'i'
+        {o:315,w:2,h:9,a:3,x:0,y:-6},  // 0x6A 'j'
+        {o:318,w:4,h:7,a:6,x:1,y:-6},  // 0x6B 'k'
+        {o:322,w:2,h:7,a:3,x:1,y:-6},  // 0x6C 'l'
+        {o:324,w:7,h:5,a:9,x:1,y:-4},  // 0x6D 'm'
+        {o:329,w:4,h:5,a:6,x:1,y:-4},  // 0x6E 'n'
+        {o:332,w:5,h:5,a:7,x:1,y:-4},  // 0x6F 'o'
+        {o:336,w:5,h:7,a:7,x:1,y:-4},  // 0x70 'p'
+        {o:341,w:5,h:7,a:7,x:1,y:-4},  // 0x71 'q'
+        {o:346,w:3,h:5,a:4,x:1,y:-4},  // 0x72 'r'
+        {o:348,w:4,h:5,a:6,x:1,y:-4},  // 0x73 's'
+        {o:351,w:3,h:7,a:4,x:0,y:-6},  // 0x74 't'
+        {o:354,w:4,h:5,a:6,x:1,y:-4},  // 0x75 'u'
+        {o:357,w:5,h:5,a:5,x:0,y:-4},  // 0x76 'v'
+        {o:361,w:7,h:5,a:7,x:0,y:-4},  // 0x77 'w'
+        {o:366,w:5,h:5,a:5,x:0,y:-4},  // 0x78 'x'
+        {o:370,w:4,h:7,a:6,x:1,y:-4},  // 0x79 'y'
+        {o:374,w:4,h:5,a:6,x:1,y:-4},  // 0x7A 'z'
+        {o:377,w:3,h:10,a:4,x:0,y:-7}, // 0x7B '{'
+        {o:381,w:1,h:10,a:3,x:1,y:-8}, // 0x7C '|'
+        {o:383,w:3,h:10,a:3,x:0,y:-7}, // 0x7D '}'
+        {o:387,w:5,h:2,a:7,x:1,y:-3}   // 0x7E '~'
+    ],
+    first: 0x20,
+    last: 0x7E,
+    yAdvance: 12
+};
+
+// Embedded GFX Fonts - OxygenMono_Regular8pt7b
+const OxygenMono_Regular8pt7b = {
+    bitmaps: new Uint8Array([
+        0x00, 0xFE, 0xAA, 0x0F, 0xDE, 0xF7, 0xB0, 0x1A, 0x12, 0x12, 0x7F, 0x36,
+        0x24, 0x24, 0xFE, 0x6C, 0x68, 0x48, 0x48, 0x10, 0x21, 0xF3, 0xBD, 0x1A,
+        0x1C, 0x3C, 0x1C, 0x2C, 0x48, 0xBD, 0x6F, 0x84, 0x08, 0xE0, 0xA0, 0x90,
+        0xB1, 0xE6, 0x18, 0x66, 0x89, 0x09, 0x09, 0x09, 0x06, 0x78, 0xCC, 0xCC,
+        0xCC, 0x78, 0x30, 0xD0, 0x99, 0x8D, 0x86, 0xC6, 0x7B, 0xFF, 0xC0, 0x36,
+        0x44, 0xCC, 0xCC, 0xCC, 0xC4, 0x46, 0x30, 0x99, 0x32, 0x49, 0x24, 0xB5,
+        0xA0, 0x0C, 0x04, 0x12, 0x7F, 0x70, 0xC0, 0xE0, 0xC8, 0xC6, 0x08, 0x04,
+        0x02, 0x01, 0x0F, 0xF8, 0x40, 0x20, 0x10, 0x08, 0x00, 0x69, 0x2C, 0xF8,
+        0xF0, 0x02, 0x0C, 0x18, 0x20, 0xC1, 0x06, 0x0C, 0x10, 0x60, 0x81, 0x06,
+        0x08, 0x30, 0x00, 0x3C, 0x66, 0x46, 0xCA, 0xCB, 0xDB, 0xD3, 0xD3, 0xF2,
+        0x62, 0x66, 0x3C, 0x33, 0xCB, 0x0C, 0x30, 0xC3, 0x0C, 0x30, 0xC3, 0x3F,
+        0xF8, 0x88, 0x18, 0x30, 0x61, 0x83, 0x0C, 0x30, 0xC1, 0x03, 0xF0, 0x7C,
+        0xC6, 0x02, 0x02, 0x06, 0x38, 0x06, 0x03, 0x03, 0x03, 0xC6, 0x7C, 0x06,
+        0x07, 0x02, 0x83, 0x41, 0x21, 0x11, 0x88, 0x84, 0xFF, 0x81, 0x00, 0x80,
+        0x40, 0x7E, 0x60, 0x60, 0x60, 0x7C, 0x66, 0x02, 0x03, 0x03, 0x02, 0xC6,
+        0x7C, 0x06, 0x0C, 0x18, 0x30, 0x60, 0x7C, 0xE6, 0xC3, 0xC3, 0xC3, 0x66,
+        0x3C, 0xFE, 0x0C, 0x18, 0x60, 0xC1, 0x82, 0x0C, 0x18, 0x20, 0xC1, 0x80,
+        0x3C, 0xCD, 0x0A, 0x16, 0x67, 0x9F, 0x33, 0xC3, 0x85, 0x99, 0xE0, 0x79,
+        0x8A, 0x1C, 0x38, 0x78, 0xDF, 0x06, 0x18, 0x61, 0x87, 0x00, 0xF0, 0x3C,
+        0x6C, 0x00, 0x1B, 0xDB, 0x00, 0x01, 0x03, 0x0E, 0x38, 0xE0, 0xE0, 0x38,
+        0x0E, 0x03, 0x01, 0xFF, 0x80, 0x00, 0x1F, 0xF0, 0x80, 0xC0, 0x30, 0x1C,
+        0x07, 0x07, 0x1C, 0x70, 0xC0, 0xF9, 0x18, 0x18, 0x20, 0xC3, 0x0C, 0x10,
+        0x20, 0x00, 0x81, 0x00, 0x1E, 0x31, 0x90, 0x53, 0x5B, 0x4D, 0x26, 0x93,
+        0x49, 0xA5, 0x4D, 0xA0, 0x08, 0x23, 0xE0, 0x18, 0x18, 0x38, 0x2C, 0x24,
+        0x64, 0x64, 0x7E, 0x42, 0xC2, 0x83, 0x83, 0xFC, 0xC6, 0xC6, 0xC2, 0xC6,
+        0xF8, 0xC6, 0xC3, 0xC3, 0xC3, 0xC6, 0xFC, 0x1E, 0x61, 0x40, 0xC0, 0xC0,
+        0xC0, 0xC0, 0xC0, 0xC0, 0x40, 0x61, 0x1E, 0xF8, 0xCC, 0xC6, 0xC2, 0xC3,
+        0xC3, 0xC3, 0xC3, 0xC2, 0xC6, 0xCC, 0xF8, 0xFD, 0x02, 0x04, 0x08, 0x1F,
+        0xA0, 0x40, 0x81, 0x02, 0x07, 0xF0, 0xFE, 0x08, 0x20, 0x83, 0xF8, 0x20,
+        0x82, 0x08, 0x20, 0x1E, 0x63, 0x40, 0xC0, 0xC0, 0x80, 0x8F, 0x81, 0xC1,
+        0x41, 0x63, 0x3E, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xFF, 0xC3, 0xC3, 0xC3,
+        0xC3, 0xC3, 0xC3, 0xFC, 0xC3, 0x0C, 0x30, 0xC3, 0x0C, 0x30, 0xC3, 0x3F,
+        0x7C, 0x10, 0x41, 0x04, 0x10, 0x41, 0x04, 0x10, 0xFE, 0x87, 0x1A, 0x64,
+        0xCB, 0x1C, 0x3C, 0x48, 0x99, 0x1A, 0x14, 0x30, 0xC3, 0x0C, 0x30, 0xC3,
+        0x0C, 0x30, 0xC3, 0x0C, 0x3F, 0xC7, 0xCF, 0x9F, 0x7F, 0xBB, 0x76, 0xE1,
+        0xC3, 0x87, 0x0E, 0x10, 0xC3, 0xC7, 0x8F, 0x1F, 0x3A, 0x76, 0xE5, 0xCF,
+        0x8F, 0x1E, 0x30, 0x3C, 0x66, 0x42, 0xC2, 0xC3, 0xC3, 0xC3, 0xC3, 0xC2,
+        0x42, 0x66, 0x3C, 0xFC, 0xC6, 0xC3, 0xC3, 0xC3, 0xC2, 0xFC, 0xC0, 0xC0,
+        0xC0, 0xC0, 0xC0, 0x38, 0x8B, 0x1C, 0x18, 0x30, 0x60, 0xC1, 0x83, 0x8D,
+        0x11, 0xC0, 0x80, 0x81, 0x80, 0xFC, 0xC6, 0xC3, 0xC3, 0xC2, 0xFC, 0xCC,
+        0xC4, 0xC6, 0xC2, 0xC3, 0xC3, 0x3C, 0x8F, 0x06, 0x0E, 0x0F, 0x07, 0x03,
+        0x02, 0x07, 0x1B, 0xE0, 0xFF, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
+        0x18, 0x18, 0x18, 0x18, 0x83, 0x83, 0x83, 0x83, 0x83, 0x83, 0x83, 0x83,
+        0x83, 0xC2, 0x46, 0x7C, 0xC1, 0xA0, 0xD8, 0x4C, 0x22, 0x31, 0x98, 0xC8,
+        0x24, 0x16, 0x0E, 0x03, 0x01, 0x80, 0x81, 0x81, 0x83, 0x83, 0x83, 0x9B,
+        0x9B, 0xDA, 0xEE, 0xE6, 0xE6, 0x66, 0xC3, 0x42, 0x66, 0x24, 0x3C, 0x18,
+        0x18, 0x3C, 0x64, 0x66, 0xC2, 0x83, 0x83, 0xC2, 0x46, 0x64, 0x2C, 0x38,
+        0x18, 0x10, 0x10, 0x10, 0x10, 0x10, 0xFE, 0x0C, 0x10, 0x60, 0x83, 0x0C,
+        0x18, 0x60, 0xC3, 0x07, 0xF0, 0xFC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC,
+        0xF0, 0x82, 0x0C, 0x10, 0x41, 0x82, 0x0C, 0x10, 0x41, 0x82, 0x0C, 0x30,
+        0x40, 0xF1, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0xF0, 0x08, 0x0E, 0x05,
+        0x04, 0x42, 0x22, 0x0B, 0x07, 0x01, 0xFF, 0xC6, 0x21, 0x7C, 0x8C, 0x08,
+        0x13, 0xE8, 0x70, 0xE3, 0x7A, 0xC0, 0xC0, 0xC0, 0xDC, 0xE6, 0xC2, 0xC3,
+        0xC3, 0xC3, 0xC2, 0xE6, 0xDC, 0x3E, 0xC5, 0x06, 0x0C, 0x18, 0x10, 0x31,
+        0x3E, 0x02, 0x04, 0x09, 0xD4, 0x78, 0x60, 0xC1, 0x83, 0x85, 0x19, 0xD0,
+        0x3C, 0xCD, 0x0A, 0x1F, 0xE8, 0x10, 0x31, 0x3C, 0x1C, 0xC2, 0x3F, 0x20,
+        0x82, 0x08, 0x20, 0x82, 0x08, 0x3A, 0x8F, 0x0C, 0x18, 0x30, 0x70, 0xA3,
+        0x3A, 0x04, 0x1B, 0xC0, 0xC1, 0x83, 0x06, 0xEE, 0x78, 0x70, 0xE1, 0xC3,
+        0x87, 0x0E, 0x10, 0x30, 0xC0, 0x3C, 0x30, 0xC3, 0x0C, 0x30, 0xC3, 0x3F,
+        0x0C, 0x30, 0x1E, 0x08, 0x20, 0x82, 0x08, 0x20, 0x82, 0x0B, 0xE0, 0x81,
+        0x02, 0x04, 0x08, 0xF3, 0x2C, 0x70, 0xE1, 0x22, 0x64, 0x68, 0x60, 0xF0,
+        0x20, 0x40, 0x81, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0xF0, 0xB6, 0xDB,
+        0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0xBB, 0x38, 0x61, 0x86, 0x18,
+        0x61, 0x84, 0x3C, 0x66, 0xC2, 0xC2, 0xC3, 0xC2, 0xC2, 0x46, 0x3C, 0xDC,
+        0xE6, 0xC2, 0xC3, 0xC3, 0xC3, 0xC2, 0xE6, 0xFC, 0xC0, 0xC0, 0xC0, 0x3B,
+        0x47, 0xC3, 0x83, 0x83, 0x83, 0xC3, 0x47, 0x3B, 0x03, 0x03, 0x03, 0xBF,
+        0x31, 0x08, 0x42, 0x10, 0x80, 0x7B, 0x18, 0x30, 0x78, 0x30, 0x63, 0xF8,
+        0x30, 0x60, 0xC7, 0xF3, 0x06, 0x0C, 0x18, 0x30, 0x60, 0xC0, 0xF0, 0xC3,
+        0x87, 0x0E, 0x1C, 0x38, 0x50, 0xA3, 0x3C, 0x83, 0xC2, 0x42, 0x46, 0x64,
+        0x24, 0x3C, 0x38, 0x18, 0xCC, 0xE6, 0x53, 0x2A, 0x95, 0x3A, 0x99, 0xCC,
+        0x66, 0x23, 0x00, 0xC2, 0x66, 0x24, 0x38, 0x18, 0x38, 0x2C, 0x66, 0xC3,
+        0xC3, 0xC2, 0x46, 0x66, 0x24, 0x24, 0x3C, 0x18, 0x18, 0x10, 0x30, 0xE0,
+        0xF8, 0x21, 0x8C, 0x21, 0x8C, 0x20, 0xFC, 0x1E, 0x60, 0xC1, 0x83, 0x06,
+        0x18, 0x60, 0x60, 0x60, 0xC1, 0x83, 0x06, 0x07, 0x80, 0xFF, 0xFE, 0xE0,
+        0xC3, 0x0C, 0x30, 0xC1, 0x83, 0x18, 0xC3, 0x0C, 0x30, 0xCE, 0x00, 0x78,
+        0xE7, 0xC0
+    ]),
+    glyphs: [
+        {o:0,w:1,h:1,a:10,x:0,y:0},{o:1,w:2,h:12,a:10,x:4,y:-11},{o:4,w:5,h:4,a:10,x:2,y:-11},
+        {o:7,w:8,h:12,a:10,x:1,y:-11},{o:19,w:7,h:16,a:10,x:1,y:-13},{o:33,w:8,h:12,a:10,x:1,y:-11},
+        {o:45,w:8,h:12,a:10,x:1,y:-11},{o:57,w:2,h:5,a:10,x:4,y:-11},{o:59,w:4,h:15,a:10,x:3,y:-13},
+        {o:67,w:3,h:15,a:10,x:3,y:-13},{o:73,w:9,h:8,a:10,x:0,y:-10},{o:82,w:9,h:9,a:10,x:1,y:-10},
+        {o:93,w:3,h:5,a:10,x:3,y:-1},{o:95,w:5,h:1,a:10,x:3,y:-6},{o:96,w:2,h:2,a:10,x:4,y:-1},
+        {o:97,w:7,h:15,a:10,x:1,y:-11},{o:111,w:8,h:12,a:10,x:1,y:-11},{o:123,w:6,h:12,a:10,x:2,y:-11},
+        {o:132,w:7,h:12,a:10,x:1,y:-11},{o:143,w:8,h:12,a:10,x:1,y:-11},{o:155,w:9,h:12,a:10,x:0,y:-11},
+        {o:169,w:8,h:12,a:10,x:1,y:-11},{o:181,w:8,h:12,a:10,x:1,y:-11},{o:193,w:7,h:12,a:10,x:1,y:-11},
+        {o:204,w:7,h:12,a:10,x:1,y:-11},{o:215,w:7,h:12,a:10,x:2,y:-11},{o:226,w:2,h:7,a:10,x:4,y:-8},
+        {o:228,w:3,h:11,a:10,x:3,y:-8},{o:233,w:8,h:10,a:10,x:1,y:-10},{o:243,w:9,h:4,a:10,x:0,y:-8},
+        {o:248,w:8,h:9,a:10,x:1,y:-10},{o:257,w:7,h:12,a:10,x:1,y:-11},{o:268,w:9,h:13,a:10,x:1,y:-11},
+        {o:283,w:8,h:12,a:10,x:1,y:-11},{o:295,w:8,h:12,a:10,x:1,y:-11},{o:307,w:8,h:12,a:10,x:1,y:-11},
+        {o:319,w:8,h:12,a:10,x:1,y:-11},{o:331,w:7,h:12,a:10,x:2,y:-11},{o:342,w:6,h:12,a:10,x:2,y:-11},
+        {o:351,w:8,h:12,a:10,x:1,y:-11},{o:363,w:8,h:12,a:10,x:1,y:-11},{o:375,w:6,h:12,a:10,x:2,y:-11},
+        {o:384,w:6,h:12,a:10,x:1,y:-11},{o:393,w:7,h:12,a:10,x:2,y:-11},{o:404,w:6,h:12,a:10,x:2,y:-11},
+        {o:413,w:7,h:12,a:10,x:1,y:-11},{o:424,w:7,h:12,a:10,x:1,y:-11},{o:435,w:8,h:12,a:10,x:1,y:-11},
+        {o:447,w:8,h:12,a:10,x:1,y:-11},{o:459,w:7,h:15,a:10,x:1,y:-11},{o:473,w:8,h:12,a:10,x:1,y:-11},
+        {o:485,w:7,h:12,a:10,x:1,y:-11},{o:496,w:8,h:12,a:10,x:1,y:-11},{o:508,w:8,h:12,a:10,x:1,y:-11},
+        {o:520,w:9,h:12,a:10,x:0,y:-11},{o:534,w:8,h:12,a:10,x:1,y:-11},{o:546,w:8,h:12,a:10,x:1,y:-11},
+        {o:558,w:8,h:12,a:10,x:1,y:-11},{o:570,w:7,h:12,a:10,x:1,y:-11},{o:581,w:4,h:15,a:10,x:3,y:-13},
+        {o:589,w:6,h:15,a:10,x:2,y:-14},{o:601,w:4,h:15,a:10,x:2,y:-13},{o:609,w:9,h:8,a:10,x:1,y:-11},
+        {o:618,w:8,h:1,a:10,x:0,y:2},{o:619,w:4,h:4,a:10,x:3,y:-13},{o:621,w:7,h:9,a:10,x:1,y:-8},
+        {o:629,w:8,h:12,a:10,x:1,y:-11},{o:641,w:7,h:9,a:10,x:1,y:-8},{o:649,w:7,h:12,a:10,x:1,y:-11},
+        {o:660,w:7,h:9,a:10,x:1,y:-8},{o:668,w:6,h:12,a:10,x:2,y:-11},{o:677,w:7,h:12,a:10,x:1,y:-8},
+        {o:688,w:7,h:12,a:10,x:1,y:-11},{o:699,w:6,h:12,a:10,x:2,y:-11},{o:708,w:6,h:14,a:10,x:1,y:-11},
+        {o:719,w:7,h:13,a:10,x:2,y:-12},{o:731,w:7,h:12,a:10,x:1,y:-11},{o:742,w:8,h:9,a:10,x:1,y:-8},
+        {o:751,w:6,h:9,a:10,x:2,y:-8},{o:758,w:8,h:9,a:10,x:1,y:-8},{o:767,w:8,h:12,a:10,x:1,y:-8},
+        {o:779,w:8,h:12,a:10,x:1,y:-8},{o:791,w:5,h:9,a:10,x:3,y:-8},{o:797,w:6,h:9,a:10,x:2,y:-8},
+        {o:804,w:7,h:12,a:10,x:1,y:-11},{o:815,w:7,h:9,a:10,x:1,y:-8},{o:823,w:8,h:9,a:10,x:1,y:-8},
+        {o:832,w:9,h:9,a:10,x:0,y:-8},{o:843,w:8,h:9,a:10,x:1,y:-8},{o:852,w:8,h:12,a:10,x:1,y:-8},
+        {o:864,w:6,h:9,a:10,x:2,y:-8},{o:871,w:7,h:15,a:10,x:2,y:-13},{o:885,w:1,h:15,a:10,x:4,y:-11},
+        {o:887,w:6,h:15,a:10,x:2,y:-13},{o:899,w:9,h:2,a:10,x:1,y:-8}
+    ],
+    first: 0x20,
+    last: 0x7E,
+    yAdvance: 21
+};
+
+// Embedded GFX Fonts - BaiJamjureeRegularMonoDigits8pt7b
+const BaiJamjureeRegularMonoDigits8pt7b = {
+    bitmaps: new Uint8Array([
+        0x00, 0xFF, 0x20, 0x99, 0x90, 0x22, 0x11, 0x08, 0x9F, 0xF2, 0x21, 0x10,
+        0x89, 0xFF, 0x22, 0x11, 0x08, 0x80, 0x08, 0x04, 0x1F, 0xD8, 0x38, 0x0C,
+        0x03, 0x00, 0x7C, 0x01, 0x80, 0x60, 0x38, 0x37, 0xF0, 0x40, 0x20, 0x70,
+        0x44, 0x44, 0x22, 0x21, 0x12, 0x08, 0x97, 0x45, 0x45, 0xCA, 0x20, 0x91,
+        0x04, 0x88, 0x44, 0x42, 0x1C, 0x20, 0x00, 0x3C, 0x21, 0x10, 0x88, 0xC3,
+        0x83, 0x83, 0x25, 0x0A, 0x83, 0x61, 0x9F, 0x60, 0xE0, 0x29, 0x49, 0x24,
+        0x93, 0x24, 0x40, 0x89, 0x12, 0x49, 0x25, 0xA5, 0x00, 0x27, 0xC9, 0xF2,
+        0x00, 0x10, 0x20, 0x47, 0xF1, 0x02, 0x04, 0x00, 0x5C, 0xF0, 0x80, 0x04,
+        0x08, 0x20, 0x41, 0x02, 0x08, 0x10, 0x40, 0x82, 0x04, 0x00, 0x7E, 0xC3,
+        0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0xC3, 0x7E, 0x3F, 0x91, 0x11,
+        0x11, 0x11, 0x10, 0x7D, 0x86, 0x08, 0x10, 0x41, 0x0C, 0x30, 0xC1, 0x03,
+        0xF8, 0x7E, 0xC3, 0x81, 0x01, 0x03, 0x1E, 0x03, 0x01, 0x81, 0xC3, 0x7E,
+        0x02, 0x06, 0x0A, 0x1A, 0x12, 0x22, 0x42, 0xC2, 0xFF, 0x02, 0x02, 0xFF,
+        0x80, 0x80, 0x80, 0xFC, 0x03, 0x01, 0x01, 0x81, 0xC3, 0x7E, 0x7C, 0xC2,
+        0x82, 0x80, 0xBE, 0xC3, 0x81, 0x81, 0x81, 0x43, 0x3E, 0xFE, 0x0C, 0x10,
+        0x60, 0x81, 0x04, 0x08, 0x20, 0x40, 0x80, 0x7E, 0xC3, 0x81, 0x81, 0xC3,
+        0x7E, 0xC3, 0x81, 0x81, 0xC3, 0x7E, 0x3E, 0xC3, 0x81, 0x81, 0x81, 0xC3,
+        0x7D, 0x01, 0x81, 0xC3, 0x7E, 0x82, 0x60, 0x00, 0x4B, 0x40, 0x03, 0x0C,
+        0x38, 0x60, 0xC0, 0x60, 0x18, 0x06, 0x01, 0xFC, 0x00, 0x3F, 0x80, 0x60,
+        0x18, 0x06, 0x03, 0x0C, 0x30, 0xE0, 0x80, 0x7D, 0x86, 0x08, 0x10, 0x61,
+        0x86, 0x08, 0x10, 0x00, 0x40, 0x3F, 0xC6, 0x02, 0xC0, 0x18, 0xF9, 0x90,
+        0x99, 0x09, 0x90, 0x99, 0x09, 0x8F, 0x68, 0x00, 0x40, 0x43, 0xFC, 0x0C,
+        0x03, 0x00, 0xE0, 0x48, 0x12, 0x0C, 0x42, 0x10, 0xFC, 0x40, 0x90, 0x24,
+        0x0C, 0xFE, 0x83, 0x81, 0x81, 0x83, 0xFE, 0x81, 0x81, 0x81, 0x83, 0xFE,
+        0x3E, 0x20, 0xA0, 0x30, 0x08, 0x04, 0x02, 0x01, 0x01, 0x80, 0xA0, 0x8F,
+        0x80, 0xFC, 0x82, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x82, 0xFC,
+        0xFF, 0x02, 0x04, 0x08, 0x1F, 0xE0, 0x40, 0x81, 0x03, 0xF8, 0xFF, 0x02,
+        0x04, 0x08, 0x1F, 0xA0, 0x40, 0x81, 0x02, 0x00, 0x3E, 0x20, 0xE0, 0x30,
+        0x08, 0x04, 0x3E, 0x03, 0x01, 0x80, 0xA0, 0x8F, 0x80, 0x81, 0x81, 0x81,
+        0x81, 0x81, 0xFF, 0x81, 0x81, 0x81, 0x81, 0x81, 0xFF, 0xE0, 0x02, 0x04,
+        0x08, 0x10, 0x20, 0x40, 0xC1, 0x83, 0x8D, 0xF0, 0x82, 0x84, 0x88, 0x98,
+        0xB0, 0xF0, 0xD0, 0x88, 0x84, 0x86, 0x83, 0x81, 0x02, 0x04, 0x08, 0x10,
+        0x20, 0x40, 0x81, 0x03, 0xF8, 0x80, 0x70, 0x3C, 0x0E, 0x85, 0xA1, 0x64,
+        0x99, 0xE6, 0x31, 0x80, 0x60, 0x18, 0x04, 0x81, 0xC1, 0xE1, 0xA1, 0x91,
+        0x99, 0x89, 0x85, 0x87, 0x83, 0x81, 0x3E, 0x20, 0xA0, 0x30, 0x18, 0x0C,
+        0x06, 0x03, 0x01, 0x80, 0xA0, 0x8F, 0x80, 0xFE, 0x81, 0x81, 0x81, 0x81,
+        0x83, 0xFE, 0x80, 0x80, 0x80, 0x80, 0x3E, 0x10, 0x48, 0x0A, 0x02, 0x80,
+        0xA0, 0x28, 0x0A, 0x02, 0x82, 0x90, 0x43, 0xE8, 0xFE, 0x81, 0x81, 0x81,
+        0x83, 0xFE, 0x82, 0x82, 0x81, 0x81, 0x81, 0x7E, 0x83, 0x81, 0x80, 0xC0,
+        0x3E, 0x03, 0x01, 0x81, 0xC3, 0x7E, 0xFF, 0x08, 0x08, 0x08, 0x08, 0x08,
+        0x08, 0x08, 0x08, 0x08, 0x08, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81,
+        0x81, 0x81, 0x42, 0x7E, 0x40, 0x90, 0x24, 0x18, 0x84, 0x21, 0x08, 0xC1,
+        0x20, 0x48, 0x1C, 0x03, 0x00, 0xC0, 0x80, 0x38, 0x42, 0x86, 0x28, 0xA2,
+        0x8A, 0x24, 0x92, 0x51, 0x45, 0x14, 0x50, 0xC6, 0x0C, 0x20, 0xC0, 0x40,
+        0xB0, 0x88, 0x82, 0xC0, 0xC0, 0x60, 0x70, 0x24, 0x23, 0x30, 0x90, 0x20,
+        0x81, 0xA0, 0x98, 0xC4, 0x41, 0x40, 0xA0, 0x20, 0x10, 0x08, 0x04, 0x02,
+        0x00, 0xFF, 0x02, 0x06, 0x04, 0x08, 0x18, 0x10, 0x20, 0x40, 0x40, 0xFF,
+        0x72, 0x49, 0x24, 0x92, 0x49, 0x18, 0x82, 0x04, 0x10, 0x20, 0x81, 0x04,
+        0x08, 0x20, 0x41, 0xC4, 0x92, 0x49, 0x24, 0x92, 0x70, 0x10, 0x60, 0xA2,
+        0x44, 0x50, 0x80, 0xFF, 0xB4, 0x7D, 0x04, 0x0B, 0xF8, 0x30, 0x61, 0xBD,
+        0x81, 0x02, 0x05, 0xEC, 0x70, 0x60, 0xC1, 0x83, 0x8E, 0xF0, 0x7D, 0x86,
+        0x04, 0x08, 0x10, 0x71, 0xBE, 0x02, 0x04, 0x0B, 0xFC, 0x70, 0x60, 0xC1,
+        0x83, 0x8D, 0xE8, 0x7D, 0x86, 0x0F, 0xF8, 0x10, 0x71, 0xBE, 0x34, 0x4F,
+        0x44, 0x44, 0x44, 0x40, 0x7F, 0x8E, 0x0C, 0x18, 0x30, 0x71, 0xBD, 0x03,
+        0x8D, 0xF0, 0x81, 0x02, 0x05, 0xEC, 0x30, 0x60, 0xC1, 0x83, 0x06, 0x08,
+        0x9F, 0xE0, 0x20, 0x12, 0x49, 0x24, 0x93, 0x80, 0x81, 0x02, 0x04, 0x69,
+        0x96, 0x38, 0x78, 0x99, 0x12, 0x10, 0x92, 0x49, 0x24, 0x93, 0x80, 0xBB,
+        0xD8, 0xC6, 0x10, 0xC2, 0x18, 0x43, 0x08, 0x61, 0x0C, 0x21, 0xBD, 0x86,
+        0x0C, 0x18, 0x30, 0x60, 0xC1, 0x7D, 0x8E, 0x0C, 0x18, 0x30, 0x71, 0xBE,
+        0xBD, 0x8E, 0x0C, 0x18, 0x30, 0x71, 0xFE, 0x81, 0x02, 0x00, 0x7F, 0x8E,
+        0x0C, 0x18, 0x30, 0x71, 0xBD, 0x02, 0x04, 0x08, 0xBC, 0x88, 0x88, 0x88,
+        0x7A, 0x18, 0x38, 0x1C, 0x18, 0x5E, 0x42, 0x11, 0xF4, 0x21, 0x08, 0x42,
+        0x0E, 0x83, 0x06, 0x0C, 0x18, 0x30, 0x61, 0xBD, 0xC2, 0x85, 0x19, 0x22,
+        0x45, 0x06, 0x0C, 0x44, 0x28, 0xC9, 0x29, 0x25, 0x22, 0x94, 0x53, 0x8C,
+        0x61, 0x8C, 0x42, 0xC8, 0xB0, 0xC1, 0x85, 0x99, 0x21, 0x83, 0x06, 0x0C,
+        0x18, 0x30, 0x61, 0xBD, 0x03, 0x0D, 0xF0, 0xFE, 0x18, 0x20, 0x83, 0x0C,
+        0x10, 0x7E, 0x34, 0x44, 0x44, 0x48, 0x44, 0x44, 0x44, 0x30, 0xFF, 0xFF,
+        0xC2, 0x22, 0x22, 0x21, 0x22, 0x22, 0x22, 0xC0, 0x71, 0x49, 0xCE
+    ]),
+    glyphs: [
+        {o:0,w:1,h:1,a:4,x:0,y:0},{o:1,w:1,h:11,a:3,x:1,y:-10},{o:3,w:4,h:3,a:6,x:1,y:-10},
+        {o:5,w:9,h:11,a:11,x:1,y:-10},{o:18,w:9,h:15,a:11,x:1,y:-12},{o:35,w:13,h:12,a:15,x:1,y:-10},
+        {o:55,w:9,h:11,a:10,x:1,y:-10},{o:68,w:1,h:3,a:3,x:1,y:-10},{o:69,w:3,h:14,a:5,x:1,y:-10},
+        {o:75,w:3,h:14,a:5,x:1,y:-10},{o:81,w:5,h:5,a:7,x:1,y:-11},{o:85,w:7,h:7,a:9,x:1,y:-8},
+        {o:92,w:2,h:4,a:3,x:0,y:0},{o:93,w:4,h:1,a:6,x:1,y:-4},{o:94,w:1,h:1,a:3,x:1,y:0},
+        {o:95,w:7,h:12,a:8,x:1,y:-10},{o:106,w:8,h:11,a:10,x:1,y:-10},{o:117,w:4,h:11,a:10,x:2,y:-10},
+        {o:123,w:7,h:11,a:10,x:1,y:-10},{o:133,w:8,h:11,a:10,x:1,y:-10},{o:144,w:8,h:11,a:10,x:1,y:-10},
+        {o:155,w:8,h:11,a:10,x:1,y:-10},{o:166,w:8,h:11,a:10,x:1,y:-10},{o:177,w:7,h:11,a:10,x:1,y:-10},
+        {o:187,w:8,h:11,a:10,x:1,y:-10},{o:198,w:8,h:11,a:10,x:1,y:-10},{o:209,w:1,h:7,a:3,x:1,y:-7},
+        {o:210,w:3,h:9,a:4,x:0,y:-6},{o:214,w:8,h:9,a:9,x:1,y:-8},{o:223,w:6,h:4,a:8,x:1,y:-6},
+        {o:226,w:8,h:9,a:9,x:1,y:-8},{o:235,w:7,h:11,a:9,x:1,y:-10},{o:245,w:12,h:12,a:14,x:1,y:-10},
+        {o:263,w:10,h:11,a:10,x:0,y:-10},{o:277,w:8,h:11,a:10,x:1,y:-10},{o:288,w:9,h:11,a:11,x:1,y:-10},
+        {o:301,w:8,h:11,a:10,x:1,y:-10},{o:312,w:7,h:11,a:9,x:1,y:-10},{o:322,w:7,h:11,a:9,x:1,y:-10},
+        {o:332,w:9,h:11,a:11,x:1,y:-10},{o:345,w:8,h:11,a:10,x:1,y:-10},{o:356,w:1,h:11,a:3,x:1,y:-10},
+        {o:358,w:7,h:11,a:9,x:1,y:-10},{o:368,w:8,h:11,a:9,x:1,y:-10},{o:379,w:7,h:11,a:8,x:1,y:-10},
+        {o:389,w:10,h:11,a:12,x:1,y:-10},{o:403,w:8,h:11,a:10,x:1,y:-10},{o:414,w:9,h:11,a:11,x:1,y:-10},
+        {o:427,w:8,h:11,a:10,x:1,y:-10},{o:438,w:10,h:11,a:11,x:1,y:-10},{o:452,w:8,h:11,a:10,x:1,y:-10},
+        {o:463,w:8,h:11,a:10,x:1,y:-10},{o:474,w:8,h:11,a:10,x:1,y:-10},{o:485,w:8,h:11,a:10,x:1,y:-10},
+        {o:496,w:10,h:11,a:10,x:0,y:-10},{o:510,w:12,h:11,a:13,x:1,y:-10},{o:527,w:9,h:11,a:10,x:0,y:-10},
+        {o:540,w:9,h:11,a:9,x:0,y:-10},{o:553,w:8,h:11,a:10,x:1,y:-10},{o:564,w:3,h:15,a:5,x:1,y:-11},
+        {o:570,w:6,h:12,a:8,x:1,y:-10},{o:579,w:3,h:15,a:5,x:1,y:-11},{o:585,w:7,h:6,a:9,x:1,y:-11},
+        {o:591,w:8,h:1,a:8,x:0,y:1},{o:592,w:2,h:3,a:4,x:1,y:-11},{o:593,w:7,h:8,a:9,x:1,y:-7},
+        {o:600,w:7,h:11,a:9,x:1,y:-10},{o:610,w:7,h:8,a:9,x:1,y:-7},{o:617,w:7,h:11,a:9,x:1,y:-10},
+        {o:627,w:7,h:8,a:9,x:1,y:-7},{o:634,w:4,h:11,a:6,x:1,y:-10},{o:640,w:7,h:11,a:9,x:1,y:-7},
+        {o:650,w:7,h:11,a:9,x:1,y:-10},{o:660,w:1,h:11,a:3,x:1,y:-10},{o:662,w:3,h:14,a:4,x:0,y:-10},
+        {o:668,w:7,h:11,a:8,x:1,y:-10},{o:678,w:3,h:11,a:4,x:1,y:-10},{o:683,w:11,h:8,a:13,x:1,y:-7},
+        {o:694,w:7,h:8,a:9,x:1,y:-7},{o:701,w:7,h:8,a:9,x:1,y:-7},{o:708,w:7,h:11,a:9,x:1,y:-7},
+        {o:718,w:7,h:11,a:9,x:1,y:-7},{o:728,w:4,h:8,a:5,x:1,y:-7},{o:732,w:6,h:8,a:8,x:1,y:-7},
+        {o:738,w:5,h:11,a:7,x:1,y:-10},{o:745,w:7,h:8,a:9,x:1,y:-7},{o:752,w:7,h:8,a:8,x:0,y:-7},
+        {o:759,w:11,h:8,a:11,x:0,y:-7},{o:770,w:7,h:8,a:8,x:0,y:-7},{o:777,w:7,h:11,a:9,x:1,y:-7},
+        {o:787,w:7,h:8,a:8,x:1,y:-7},{o:794,w:4,h:15,a:6,x:1,y:-10},{o:802,w:1,h:16,a:3,x:1,y:-13},
+        {o:804,w:4,h:15,a:6,x:1,y:-10},{o:812,w:8,h:3,a:9,x:0,y:-6}
+    ],
+    first: 0x20,
+    last: 0x7E,
+    yAdvance: 20
+};
+
+// Font array indexed by font ID
+const FONTS = [
+    OxygenMono_Regular8pt7b,
+    BaiJamjuree_Medium5pt7b,
+    BaiJamjureeRegularMonoDigits8pt7b
+];
+
+// Canvas and state
+const canvas = document.getElementById('screen');
+const ctx = canvas.getContext('2d');
+let scale = 1;
+let port = null;
+let reader = null;
+let isStreaming = false;
+let cmdCount = 0;
+let byteCount = 0;
+let lastFpsTime = Date.now();
+let frameCount = 0;
+
+// Buffer for partial commands
+let buffer = new Uint8Array(0);
+
+// Sync state - wait for "STR\x01" before processing commands
+let synced = false;
+const SYNC_MARKER = new Uint8Array([0x53, 0x54, 0x52, 0x01]); // "STR" + 0x01
+
+// Debug logging
+function log(msg, type = '') {
+    const prefix = type === 'error' ? '[ERROR]' : type === 'text' ? '[TEXT]' : '[INFO]';
+    console.log(`${prefix} ${msg}`);
+}
+
+// Convert RGB565 to CSS color
+function rgb565ToCSS(color) {
+    const r = ((color >> 11) & 0x1F) << 3;
+    const g = ((color >> 5) & 0x3F) << 2;
+    const b = (color & 0x1F) << 3;
+    return `rgb(${r},${g},${b})`;
+}
+
+// Draw a GFX font glyph
+function drawGlyph(font, charCode, x, y, color) {
+    const glyphIndex = charCode - font.first;
+    if (glyphIndex < 0 || glyphIndex > (font.last - font.first)) return 0;
+    
+    const glyph = font.glyphs[glyphIndex];
+    const bitmap = font.bitmaps;
+    
+    let bo = glyph.o;
+    const w = glyph.w;
+    const h = glyph.h;
+    const xo = glyph.x;
+    const yo = glyph.y;
+    
+    // Adjust baseline - firmware sends cursor position, add half yAdvance for vertical centering
+    const yBase = y + Math.floor(font.yAdvance / 2) + yo;
+    
+    ctx.fillStyle = rgb565ToCSS(color);
+    
+    let bits = 0, bit = 0;
+    for (let yy = 0; yy < h; yy++) {
+        for (let xx = 0; xx < w; xx++) {
+            if (!(bit++ & 7)) {
+                bits = bitmap[bo++];
+            }
+            if (bits & 0x80) {
+                ctx.fillRect((x + xo + xx) * scale, (yBase + yy) * scale, scale, scale);
+            }
+            bits <<= 1;
+        }
+    }
+    
+    return glyph.a;
+}
+
+// Draw text using GFX font
+function drawText(fontId, text, x, y, color) {
+    if (fontId >= FONTS.length) fontId = 0;
+    const font = FONTS[fontId];
+    
+    let cursorX = x;
+    for (let i = 0; i < text.length; i++) {
+        const charCode = text.charCodeAt(i);
+        cursorX += drawGlyph(font, charCode, cursorX, y, color);
+    }
+}
+
+// Process a single command from buffer
+function processCommand(data) {
+    if (data.length < 1) return 0;
+    
+    const opcode = data[0];
+    cmdCount++;
+    
+    // Valid command received - reset error counter (except for default case)
+    const validCmd = [CMD.FILL_RECT, CMD.LINE, CMD.PIXEL, CMD.HLINE, CMD.VLINE, 
+                      CMD.CIRCLE, CMD.TRIANGLE, CMD.TEXT, CMD.BITMAP, CMD.CLEAR, CMD.SYNC];
+    if (validCmd.includes(opcode) && opcode !== CMD.SYNC) {
+        unknownOpcodeCount = 0;
+    }
+    
+    switch (opcode) {
+        case CMD.FILL_RECT: {
+            if (data.length < 11) return 0;
+            const x = data[1] | (data[2] << 8);
+            const y = data[3] | (data[4] << 8);
+            const w = data[5] | (data[6] << 8);
+            const h = data[7] | (data[8] << 8);
+            const color = data[9] | (data[10] << 8);
+            ctx.fillStyle = rgb565ToCSS(color);
+            ctx.fillRect(x * scale, y * scale, w * scale, h * scale);
+            // log(`FILL_RECT x=${x} y=${y} w=${w} h=${h}`);
+            return 11;
+        }
+        case CMD.LINE: {
+            if (data.length < 11) return 0;
+            const x1 = data[1] | (data[2] << 8);
+            const y1 = data[3] | (data[4] << 8);
+            const x2 = data[5] | (data[6] << 8);
+            const y2 = data[7] | (data[8] << 8);
+            const color = data[9] | (data[10] << 8);
+            ctx.strokeStyle = rgb565ToCSS(color);
+            ctx.lineWidth = scale;
+            ctx.beginPath();
+            ctx.moveTo(x1 * scale + scale/2, y1 * scale + scale/2);
+            ctx.lineTo(x2 * scale + scale/2, y2 * scale + scale/2);
+            ctx.stroke();
+            // log(`LINE x1=${x1} y1=${y1} x2=${x2} y2=${y2}`);
+            return 11;
+        }
+        case CMD.PIXEL: {
+            if (data.length < 7) return 0;
+            const x = data[1] | (data[2] << 8);
+            const y = data[3] | (data[4] << 8);
+            const color = data[5] | (data[6] << 8);
+            ctx.fillStyle = rgb565ToCSS(color);
+            ctx.fillRect(x * scale, y * scale, scale, scale);
+            return 7;
+        }
+        case CMD.HLINE: {
+            if (data.length < 9) return 0;
+            const x = data[1] | (data[2] << 8);
+            const y = data[3] | (data[4] << 8);
+            const w = data[5] | (data[6] << 8);
+            const color = data[7] | (data[8] << 8);
+            ctx.fillStyle = rgb565ToCSS(color);
+            ctx.fillRect(x * scale, y * scale, w * scale, scale);
+            // log(`HLINE x=${x} y=${y} w=${w}`);
+            return 9;
+        }
+        case CMD.VLINE: {
+            if (data.length < 9) return 0;
+            const x = data[1] | (data[2] << 8);
+            const y = data[3] | (data[4] << 8);
+            const h = data[5] | (data[6] << 8);
+            const color = data[7] | (data[8] << 8);
+            ctx.fillStyle = rgb565ToCSS(color);
+            ctx.fillRect(x * scale, y * scale, scale, h * scale);
+            // log(`VLINE x=${x} y=${y} h=${h}`);
+            return 9;
+        }
+        case CMD.CIRCLE: {
+            if (data.length < 10) return 0;
+            const x = data[1] | (data[2] << 8);
+            const y = data[3] | (data[4] << 8);
+            const r = data[5] | (data[6] << 8);
+            const fill = data[7];
+            const color = data[8] | (data[9] << 8);
+            ctx.beginPath();
+            ctx.arc(x * scale, y * scale, r * scale, 0, Math.PI * 2);
+            if (fill) {
+                ctx.fillStyle = rgb565ToCSS(color);
+                ctx.fill();
+            } else {
+                ctx.strokeStyle = rgb565ToCSS(color);
+                ctx.lineWidth = scale;
+                ctx.stroke();
+            }
+            // log(`CIRCLE x=${x} y=${y} r=${r} fill=${fill}`);
+            return 10;
+        }
+        case CMD.TRIANGLE: {
+            if (data.length < 16) return 0;
+            const x0 = data[1] | (data[2] << 8);
+            const y0 = data[3] | (data[4] << 8);
+            const x1 = data[5] | (data[6] << 8);
+            const y1 = data[7] | (data[8] << 8);
+            const x2 = data[9] | (data[10] << 8);
+            const y2 = data[11] | (data[12] << 8);
+            const fill = data[13];
+            const color = data[14] | (data[15] << 8);
+            ctx.beginPath();
+            ctx.moveTo(x0 * scale, y0 * scale);
+            ctx.lineTo(x1 * scale, y1 * scale);
+            ctx.lineTo(x2 * scale, y2 * scale);
+            ctx.closePath();
+            if (fill) {
+                ctx.fillStyle = rgb565ToCSS(color);
+                ctx.fill();
+            } else {
+                ctx.strokeStyle = rgb565ToCSS(color);
+                ctx.lineWidth = scale;
+                ctx.stroke();
+            }
+            // log(`TRIANGLE fill=${fill}`);
+            return 16;
+        }
+        case CMD.TEXT: {
+            if (data.length < 9) return 0;
+            // Check if there's a sync marker in the header bytes - if so, we're desynced
+            for (let i = 1; i < Math.min(9, data.length - 4); i++) {
+                if (data[i] === 0xFE && data[i+1] === 0x00 && data[i+2] === 0x00 && 
+                    data[i+3] === 0xFE && data[i+4] === 0x00) {
+                    // Skip silently to sync marker position
+                    return i;
+                }
+            }
+            const x = data[1] | (data[2] << 8);
+            const y = data[3] | (data[4] << 8);
+            const color = data[5] | (data[6] << 8);
+            const fontId = data[7];
+            const textLen = data[8];
+            // Sanity check coordinates and parameters
+            if (x > 320 || y > 240 || fontId > 10 || textLen > 100 || textLen === 0) {
+                // Invalid parameters - likely not a real TEXT command, skip silently
+                return 1;
+            }
+            if (data.length < 9 + textLen) return 0;
+            // Check if text contains sync marker
+            for (let i = 9; i < 9 + textLen - 4; i++) {
+                if (data[i] === 0xFE && data[i+1] === 0x00 && data[i+2] === 0x00 && 
+                    data[i+3] === 0xFE && data[i+4] === 0x00) {
+                    // Skip silently to sync marker
+                    return i;
+                }
+            }
+            const text = String.fromCharCode.apply(null, data.slice(9, 9 + textLen));
+            drawText(fontId, text, x, y, color);
+            // Don't log TEXT - too frequent
+            return 9 + textLen;
+        }
+        case CMD.CLEAR: {
+            if (data.length < 3) return 0;
+            const color = data[1] | (data[2] << 8);
+            ctx.fillStyle = rgb565ToCSS(color);
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // log(`CLEAR color=${color.toString(16)}`);
+            frameCount++;
+            return 3;
+        }
+        case CMD.BITMAP: {
+            // CMD_BITMAP: 09 x:2 y:2 w:2 h:2 color:2 dataLen:2 data...
+            if (data.length < 13) return 0;
+            const x = data[1] | (data[2] << 8);
+            const y = data[3] | (data[4] << 8);
+            const w = data[5] | (data[6] << 8);
+            const h = data[7] | (data[8] << 8);
+            const color = data[9] | (data[10] << 8);
+            const dataLen = data[11] | (data[12] << 8);
+            if (data.length < 13 + dataLen) return 0;
+            
+            // Draw 1-bit packed bitmap
+            const cssColor = rgb565ToCSS(color);
+            ctx.fillStyle = cssColor;
+            let byteIdx = 13;
+            let bitIdx = 7;
+            for (let py = 0; py < h; py++) {
+                for (let px = 0; px < w; px++) {
+                    const bit = (data[byteIdx] >> bitIdx) & 1;
+                    if (bit) {
+                        ctx.fillRect((x + px) * scale, (y + py) * scale, scale, scale);
+                    }
+                    bitIdx--;
+                    if (bitIdx < 0) {
+                        bitIdx = 7;
+                        byteIdx++;
+                    }
+                }
+                // Each row starts at a new byte
+                if (bitIdx !== 7) {
+                    bitIdx = 7;
+                    byteIdx++;
+                }
+            }
+            // log(`BITMAP x=${x} y=${y} w=${w} h=${h} len=${dataLen}`);
+            return 13 + dataLen;
+        }
+        case CMD.SYNC: {
+            // Sync marker: FE 00 00 FE 00
+            if (data.length < 5) return 0;
+            if (data[1] === 0x00 && data[2] === 0x00 && data[3] === 0xFE && data[4] === 0x00) {
+                // Don't log every sync marker - too noisy
+                // log('SYNC marker received');
+                unknownOpcodeCount = 0;  // Reset error counter
+                return 5;
+            }
+            // 0xFE followed by non-sync pattern - likely just a data byte 0xFE, not a real sync attempt
+            // Don't increment error count, just skip the byte silently
+            return 1;
+        }
+        default:
+            // 0x00 bytes are common when desynced - skip silently
+            if (opcode === 0x00) {
+                return 1;
+            }
+            // Printable ASCII (0x20-0x7E) is likely debug text leaking through - skip silently
+            // This includes letters, numbers, spaces, punctuation
+            if (opcode >= 0x20 && opcode <= 0x7E) {
+                // Skip entire ASCII text sequence silently
+                let skipLen = 1;
+                while (skipLen < data.length && data[skipLen] >= 0x20 && data[skipLen] <= 0x7E) {
+                    skipLen++;
+                }
+                // Also skip common line endings (\r\n)
+                while (skipLen < data.length && (data[skipLen] === 0x0A || data[skipLen] === 0x0D)) {
+                    skipLen++;
+                }
+                return skipLen;
+            }
+            // CR/LF characters - skip silently (line endings from debug prints)
+            if (opcode === 0x0A || opcode === 0x0D) {
+                return 1;
+            }
+            unknownOpcodeCount++;
+            log(`Unknown opcode: 0x${opcode.toString(16)}`, 'error');
+            return 1; // Skip unknown byte, processData handles resync
+    }
+}
+
+// Find initial sync marker (STR\x01) in buffer
+function findSyncMarker(buf) {
+    for (let i = 0; i <= buf.length - SYNC_MARKER.length; i++) {
+        let match = true;
+        for (let j = 0; j < SYNC_MARKER.length; j++) {
+            if (buf[i + j] !== SYNC_MARKER[j]) {
+                match = false;
+                break;
+            }
+        }
+        if (match) return i;
+    }
+    return -1;
+}
+
+// Find periodic sync marker (FE 00 00 FE 00) in buffer
+function findPeriodicSync(buf) {
+    const marker = [0xFE, 0x00, 0x00, 0xFE, 0x00];
+    for (let i = 0; i <= buf.length - marker.length; i++) {
+        let match = true;
+        for (let j = 0; j < marker.length; j++) {
+            if (buf[i + j] !== marker[j]) {
+                match = false;
+                break;
+            }
+        }
+        if (match) return i;
+    }
+    return -1;
+}
+
+// Process incoming data
+function processData(data) {
+    byteCount += data.length;
+    
+    // Append new data to buffer
+    const newBuffer = new Uint8Array(buffer.length + data.length);
+    newBuffer.set(buffer);
+    newBuffer.set(data, buffer.length);
+    buffer = newBuffer;
+    
+    // Wait for initial sync marker before processing commands
+    if (!synced) {
+        // log(`Waiting for sync, buffer len=${buffer.length}`, 'text');
+        const syncPos = findSyncMarker(buffer);
+        if (syncPos >= 0) {
+            // Found sync marker, skip everything before + marker itself
+            buffer = buffer.slice(syncPos + SYNC_MARKER.length);
+            synced = true;
+            unknownOpcodeCount = 0;
+            log('SYNCED - Stream started', 'text');
+            setStatus('Streaming active', 'success');
+        } else {
+            // Keep last 3 bytes in case sync spans chunks
+            if (buffer.length > 3) {
+                buffer = buffer.slice(buffer.length - 3);
+            }
+            return;
+        }
+    }
+    
+    // Proactive sync detection: if first byte isn't a valid opcode but we have a sync marker
+    // in the first 20 bytes, skip to it to avoid misinterpreting sync bytes as command data
+    const validOpcodes = [CMD.FILL_RECT, CMD.LINE, CMD.PIXEL, CMD.HLINE, CMD.VLINE, 
+                          CMD.CIRCLE, CMD.TRIANGLE, CMD.TEXT, CMD.BITMAP, CMD.CLEAR, CMD.SYNC];
+    if (buffer.length > 5) {
+        const syncPos = findPeriodicSync(buffer.slice(0, Math.min(buffer.length, 30)));
+        if (syncPos > 0 && syncPos < 20) {
+            // There's a sync marker ahead - check if current opcode looks valid
+            if (!validOpcodes.includes(buffer[0]) || buffer[0] === 0x00) {
+                log(`Proactive resync: skipping ${syncPos} bytes to sync marker`, 'text');
+                buffer = buffer.slice(syncPos + 5);
+            }
+        }
+    }
+    
+    // Process as many complete commands as possible
+    let consumed;
+    while ((consumed = processCommand(buffer)) > 0) {
+        buffer = buffer.slice(consumed);
+        
+        // If we hit errors, stop processing and try to resync
+        if (unknownOpcodeCount >= RESYNC_THRESHOLD) {
+            const syncPos = findPeriodicSync(buffer);
+            if (syncPos >= 0) {
+                log(`RESYNC: found sync at offset ${syncPos}, discarding ${syncPos} bytes`, 'error');
+                buffer = buffer.slice(syncPos + 5);  // Skip past sync marker
+                unknownOpcodeCount = 0;
+            } else {
+                // No sync yet, wait for more data
+                break;
+            }
+        }
+    }
+}
+
+// Serial communication
+async function connect() {
+    try {
+        log('Requesting serial port...', 'text');
+        port = await navigator.serial.requestPort();
+        log('Opening port at 57600 baud...', 'text');
+        await port.open({ baudRate: 57600 });
+        
+        document.getElementById('connectBtn').textContent = 'Disconnect';
+        document.getElementById('connectBtn').classList.add('connected');
+        setStatus('Connected! Sending start command...', 'success');
+        log('Port opened, sending STR command...', 'text');
+        
+        // Send start streaming command
+        const encoder = new TextEncoder();
+        const writer = port.writable.getWriter();
+        await writer.write(encoder.encode('STR'));
+        writer.releaseLock();
+        log('STR command sent, starting read loop...', 'text');
+        
+        isStreaming = true;
+        readLoop();
+    } catch (e) {
+        log('Connection error: ' + e.message, 'error');
+        setStatus('Connection failed: ' + e.message, 'error');
+    }
+}
+
+async function disconnect() {
+    if (!port) return;
+    
+    try {
+        // Send stop command
+        const encoder = new TextEncoder();
+        const writer = port.writable.getWriter();
+        await writer.write(encoder.encode('STP'));
+        writer.releaseLock();
+        
+        isStreaming = false;
+        synced = false;
+        buffer = new Uint8Array(0);
+        if (reader) {
+            await reader.cancel();
+            reader = null;
+        }
+        await port.close();
+        port = null;
+        
+        document.getElementById('connectBtn').textContent = 'Connect';
+        document.getElementById('connectBtn').classList.remove('connected');
+        setStatus('Disconnected', 'info');
+    } catch (e) {
+        setStatus('Disconnect error: ' + e.message, 'error');
+    }
+}
+
+async function readLoop() {
+    log('readLoop started', 'text');
+    while (port && isStreaming) {
+        try {
+            log('Getting reader...', 'text');
+            reader = port.readable.getReader();
+            log('Waiting for data...', 'text');
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done || !isStreaming) {
+                    log('Read loop ended: done=' + done + ' isStreaming=' + isStreaming, 'text');
+                    break;
+                }
+                if (value) processData(value);
+            }
+            reader.releaseLock();
+        } catch (e) {
+            if (isStreaming) {
+                log('Read error: ' + e.message, 'error');
+                setStatus('Read error: ' + e.message, 'error');
+            }
+        }
+    }
+    log('readLoop exited', 'text');
+}
+
+function setStatus(msg, type) {
+    // Status display removed
+}
+
+// Event handlers
+document.getElementById('connectBtn').addEventListener('click', () => {
+    if (port) {
+        disconnect();
+    } else {
+        connect();
+    }
+});
+
+document.getElementById('scaleSelect').addEventListener('change', (e) => {
+    scale = parseInt(e.target.value);
+    canvas.width = 320 * scale;
+    canvas.height = 240 * scale;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+});
+
+document.getElementById('dotsBtn').addEventListener('click', () => {
+    const dots = document.querySelectorAll('.corner-dot');
+    const btn = document.getElementById('dotsBtn');
+    const visible = dots[0].style.display !== 'none';
+    dots.forEach(dot => dot.style.display = visible ? 'none' : 'block');
+    btn.textContent = visible ? 'Show Dots' : 'Hide Dots';
+});
+
+document.getElementById('saveBtn').addEventListener('click', () => {
+    const link = document.createElement('a');
+    link.download = `screen-${Date.now()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+});
+
+document.getElementById('burgerIcon').addEventListener('click', () => {
+    const burger = document.getElementById('burgerIcon');
+    const menu = document.getElementById('menuPanel');
+    burger.classList.toggle('open');
+    menu.classList.toggle('open');
+});
+
+// Check WebSerial support
+if (!('serial' in navigator)) {
+    setStatus('WebSerial not supported. Use Chrome/Edge with HTTPS or localhost.', 'error');
+    document.getElementById('connectBtn').disabled = true;
+}
+    </script>
+</body>
+</html>

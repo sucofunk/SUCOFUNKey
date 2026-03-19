@@ -235,6 +235,8 @@ void SamplerScreen::showBasenoteSelector(char *basenote) {
     _screen->drawTextInArea(_screen->AREA_HEADLINE, Screen::TEXTPOSITION_HCENTER_VCENTER, false, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE,  "Base MIDI Note");
     _screen->drawTextInArea(_screen->AREA_SAMPLER_BASENOTE, Screen::TEXTPOSITION_HCENTER_VCENTER, true, Screen::TEXTSIZE_MEDIUM, false, _screen->C_WHITE, basenote);
     
+    // ToDo: add hint on the bottom of the screen
+
     if (!_screen->isBacklightOn()) _screen->fadeBacklightIn(10);
 };
 

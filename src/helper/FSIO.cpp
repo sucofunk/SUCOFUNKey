@@ -30,6 +30,7 @@
    
 #include <SD.h>
 #include "FSIO.h"
+#include "DebugPrint.h"
 #include <string.h>
 #include <cstring>
 
@@ -37,38 +38,38 @@ FSIO::FSIO() {
 }
 
 void FSIO::listAllFiles() {
-  Serial.println("Files on SD Card:");
+  DebugPrint::println("Files on SD Card:");
   File root;
   root = SD.open("/");
-  Serial.println("------------------------------------");
+  DebugPrint::println("------------------------------------");
   listDirectory(root, 0);
-  Serial.println("------------------------------------");
+  DebugPrint::println("------------------------------------");
   root.close();
 }
 
 
-void FSIO::listDirectory(File dir, int numTabs) {   
+void FSIO::listDirectory(File dir, int numTabs) {
    while(true) {
      
      File entry = dir.openNextFile();
      if (! entry) {
        // no more files
-       //Serial.println("**nomorefiles**");
+       //DebugPrint::println("**nomorefiles**");
        break;
      }
      for (uint8_t i=0; i<numTabs; i++) {
-       Serial.print('\t');
+       DebugPrint::print('\t');
      }
      
      if (entry.isDirectory()) {
-       Serial.print(entry.name());
-       Serial.println("/");
+       DebugPrint::print(entry.name());
+       DebugPrint::println("/");
        listDirectory(entry, numTabs+1);
      } else {
        // files have sizes, directories do not
-       Serial.print(entry.name());
-       Serial.print("\t\t");
-       Serial.println(entry.size(), DEC);
+       DebugPrint::print(entry.name());
+       DebugPrint::print("\t\t");
+       DebugPrint::println((unsigned long)entry.size());
      }
      entry.close();
    }
@@ -224,8 +225,8 @@ int FSIO::getSamplesCount() {
 // 4 = no name provided
 
 byte FSIO::createSong(String filename) {
-    Serial.print("Songname::");
-    Serial.println(filename);
+    DebugPrint::print("Songname::");
+    DebugPrint::println(filename);
 
     // check if a general sample library exists. if not, create a /SAMPLES directory on the SD card.
     // it is not the optimal position to do this, but there is no initial first start of the device to create the file structure on the sd card
@@ -414,23 +415,38 @@ FSIO::LibrarySample * FSIO::getLibrarySamples() {
 
 boolean FSIO::loadConfiguration(Configuration::ConfigurationValues *configurationValues) {
     File readFile;
-    byte *bufferBlock;
 
-    if (SD.exists("/CONFIG.DAT")) {    
-        readFile = SD.open("/CONFIG.DAT", FILE_READ);
-
-        bufferBlock = (byte *) configurationValues;
-
-        for (uint16_t j=0; j<sizeof(Configuration::ConfigurationValues); j++) {
-            if (readFile.available()) {
-                *(bufferBlock + j) = readFile.read();
-            }
-        }                    
-
-        readFile.close();
-    } else {
-      return false;
+    if (!SD.exists("/CONFIG.DAT")) {
+        // No config file exists yet - save current defaults
+        saveConfiguration(configurationValues);
+        return true;
     }
+    
+    readFile = SD.open("/CONFIG.DAT", FILE_READ);
+    if (!readFile) {
+        return false;
+    }
+
+    // Read the version first (it's at offset 0)
+    int fileVersion = 0;
+    readFile.read((byte*)&fileVersion, sizeof(int));
+    
+    // Get current/expected version from defaults
+    int currentVersion = configurationValues->version;
+
+    // Check if file version doesn't match current version
+    if (fileVersion != currentVersion) {
+        // Config version mismatch - delete old file and save new defaults
+        readFile.close();
+        SD.remove("/CONFIG.DAT");
+        saveConfiguration(configurationValues);
+        return true;
+    }
+
+    // Version matches - read the full config from beginning
+    readFile.seek(0);
+    readFile.read((byte*)configurationValues, sizeof(Configuration::ConfigurationValues));
+    readFile.close();
 
     return true;
 };
@@ -438,15 +454,16 @@ boolean FSIO::loadConfiguration(Configuration::ConfigurationValues *configuratio
 
 boolean FSIO::saveConfiguration(Configuration::ConfigurationValues *configurationValues) {
     File writeFile;
-    byte *bufferBlock;
 
     if (SD.exists("/CONFIG.DAT")) { SD.remove("/CONFIG.DAT"); }
 
     writeFile = SD.open("/CONFIG.DAT", FILE_WRITE);
+    if (!writeFile) {
+        return false;
+    }
 
-    bufferBlock = (byte *) configurationValues;
-    writeFile.write(bufferBlock, sizeof(Configuration::ConfigurationValues));
-
+    writeFile.write((byte*)configurationValues, sizeof(Configuration::ConfigurationValues));
+    writeFile.flush();
     writeFile.close();
 
     return true;

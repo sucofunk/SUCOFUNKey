@@ -27,40 +27,41 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.    
 
    ---------------------------------------------------------------------------------------------- */
-   
-#ifndef Settings_h
-#define Settings_h
 
-#include "../../hardware/Sucofunkey.h"
-#include "../../gui/Screen.h"
-#include "../../helper/FSIO.h"
-#include "../../gui/screens/SettingsScreen.h"
+#ifndef DebugPrint_h
+#define DebugPrint_h
 
-class Settings {
+#include <Arduino.h>
+#include "../hardware/Configuration.h"
+
+class DebugPrint {
     public:
-        Settings(Sucofunkey *keyboard, Screen *screen, FSIO* fsio);
-        void setActive(boolean active);
-        void handleEvent(Sucofunkey::keyQueueStruct event);
-
+        static void init(Configuration* config);
+        
+        // Print functions - only print when screen streaming is disabled
+        static void print(const char* msg);
+        static void print(const String& msg);
+        static void print(int value);
+        static void print(unsigned int value);
+        static void print(long value);
+        static void print(unsigned long value);
+        static void print(char c);
+        static void print(float value);
+        static void print(double value);
+        
+        static void println(const char* msg);
+        static void println(const String& msg);
+        static void println(int value);
+        static void println(unsigned int value);
+        static void println(long value);
+        static void println(unsigned long value);
+        static void println(float value);
+        static void println(double value);
+        static void println();
+        
     private:
-        Sucofunkey *_keyboard;
-        Screen *_screen;
-        FSIO* _fsio;
-        SettingsScreen _settingsScreen;
-        boolean _isActive = false;
-        byte _activeBank = 1;
-        int _activeOption = 1; // 1..n
-#ifdef ENABLE_SCREEN_STREAMING
-        int _optionsCount = 6;
-#else
-        int _optionsCount = 5;
-#endif        
-
-        void _drawAllOptions();
-        void _updateOption(int position1, boolean active); // trigger drawing an option
-        void _changeOptionValue(boolean increase); // increase = true (cursor right), decrease = false (cursor left) for _activeOption
-        void _changeMidiChannel(int *value, boolean increase); // increase = true (cursor right), decrease = false (cursor left)
-        void _toggleTrueFalse(bool *value); // for _activeOption
+        static Configuration* _config;
+        static bool canPrint();
 };
 
 #endif

@@ -31,6 +31,7 @@
 #include <Arduino.h>
 #include "../../hardware/Sucofunkey.h"
 #include "../../gui/Screen.h"
+#include "../../helper/DebugPrint.h"
 #include "Synth.h"
 
 Synth::Synth(Sucofunkey *keyboard, Screen *screen, FSIO *fsio, SampleFSIO *sfsio, unsigned int *extmemArray, AudioResources *audioResources) {
@@ -88,7 +89,7 @@ void Synth::setActive(boolean active) {
   if (active) {
     _isActive = true;
     _keyboard->setBank(_activeBank);
-    Serial.println("Synth mode");
+    DebugPrint::println("Synth mode");
     _screen->testBild("Synth mode");
   } else {
     _isActive = false;

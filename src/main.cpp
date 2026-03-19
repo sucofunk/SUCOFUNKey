@@ -34,7 +34,13 @@
 #include "hardware/Sucofunkey.h"
 #include "helper/FSIO.h"
 #include "helper/SampleFSIO.h"
+#include "helper/DebugPrint.h"
 #include "gui/Screen.h"
+
+#ifdef ENABLE_SCREEN_STREAMING
+#include "helper/screen-streaming/ScreenStreaming.h"
+#endif
+
 #include "gui/screens/StartupScreen.h"
 #include "context/home/Home.h" 
 #include "context/sampler/Sampler.h" 
@@ -137,6 +143,10 @@ Sucofunkey keyboard(&config);
 
 // Initializing GUI System
 Screen screen(&tft, PIN_SCREEN_BL, 255);
+
+#ifdef ENABLE_SCREEN_STREAMING
+ScreenStreaming screenStreaming;
+#endif
 
 FSIO fsio;
 // store the filenames from /SAMPLES from the SD card in this array for fast access
@@ -491,20 +501,25 @@ void setup() {
   tft.setRotation(3);
 #endif
 
-  tft.fillScreen(screen.C_STARTUP_BG);
+  screen.fillArea(screen.AREA_SCREEN, screen.C_STARTUP_BG);
+
+#ifdef ENABLE_SCREEN_STREAMING
+  screen.setStreaming(&screenStreaming);
+  screenStreaming.setEnabled(config.configurationValues.enableScreenStreaming);
+#endif
 
   screen.fadeBacklightIn(1);
 
   // fade logo in..
   for (int c=3; c<=370; c=c/3 + c) {   
-    tft.drawBitmap(0, 86, startup_logo, 320, 54, screen.RGBtoColor(c > 255?255:c, c > 255?255:c, c > 255?255:c));    
+    screen.drawBitmap(0, 86, startup_logo, 320, 54, screen.RGBtoColor(c > 255?255:c, c > 255?255:c, c > 255?255:c));    
     delay(20);
   };
 
   startupContext.showMessage(VERSIONNUMBER, false);
 
   // draw orange subline "beatmaker's sketchbook"
-  tft.drawBitmap(0, 155, startup_logo_subline, 320, 11, screen.C_ORANGE);
+  screen.drawBitmap(0, 155, startup_logo_subline, 320, 11, screen.C_ORANGE);
   delay(1000);
 
   currentAppContext = AppContext::STARTUP;
@@ -568,12 +583,13 @@ void setup() {
   
   // load configuration from SD
   fsio.loadConfiguration(&config.configurationValues);
+  DebugPrint::init(&config);
   keyboard.addApplicationEventToQueue(Sucofunkey::SETUP_LINE_INPUT_FROM_CONFIG);
   
   timecodeDVS.begin(); // initialize DVS Timecode reader
   timecodeDVS.setEnabled(false); // immediately disable it to save resources. will be enabled from main loop, when in live context and DVS is needed.
 
-  Serial.println("setup done");
+  DebugPrint::println("setup done");
   // remove before flight... just for testing, if soldering worked and did not fry the MCPs
   //keyboard.scanI2C();
 }
@@ -815,6 +831,11 @@ void loop() {
     dvsCounter = 0;
   }
 
+#ifdef ENABLE_SCREEN_STREAMING
+  // Check for streaming commands and send pending data
+  screenStreaming.checkSerialCommand();
+#endif
+
 } // end of loop()
 
 
@@ -1040,6 +1061,12 @@ void handleKeyboardEventQueue() {
         case Sucofunkey::SETUP_LINE_INPUT_FROM_CONFIG:
           audioResources.inputLineTypeUSB = config.configurationValues.receiveUSBAudio ? true : false;
           break;
+
+#ifdef ENABLE_SCREEN_STREAMING
+        case Sucofunkey::SETUP_SCREEN_STREAMING_FROM_CONFIG:
+          screenStreaming.setEnabled(config.configurationValues.enableScreenStreaming);
+          break;
+#endif
 
         default:
           break;

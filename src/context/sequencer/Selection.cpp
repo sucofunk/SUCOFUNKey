@@ -30,6 +30,7 @@
 
 #include <Arduino.h>
 #include "Selection.h"
+#include "../../helper/DebugPrint.h"
 
 Selection::Selection() { 
     _selection = SelectionStruct();
@@ -100,14 +101,14 @@ boolean Selection::isWarning() {
 
 void Selection::printSelection() {
     _normalize();
-    Serial.print("--- Selection --->> ");
-    Serial.print(_normalizedSelection.startX);
-    Serial.print(" / ");
-    Serial.print(_normalizedSelection.startY);
-    Serial.print(" --> ");
-    Serial.print(_normalizedSelection.endX);
-    Serial.print(" / ");
-    Serial.println(_normalizedSelection.endY);    
+    DebugPrint::print("--- Selection --->> ");
+    DebugPrint::print(_normalizedSelection.startX);
+    DebugPrint::print(" / ");
+    DebugPrint::print(_normalizedSelection.startY);
+    DebugPrint::print(" --> ");
+    DebugPrint::print(_normalizedSelection.endX);
+    DebugPrint::print(" / ");
+    DebugPrint::println(_normalizedSelection.endY);    
 }
 
 void Selection::shiftUP(int cellCount) {

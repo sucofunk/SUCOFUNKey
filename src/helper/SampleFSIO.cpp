@@ -29,6 +29,7 @@
    ---------------------------------------------------------------------------------------------- */
 
 #include "SampleFSIO.h"
+#include "DebugPrint.h"
 
 SampleFSIO::SampleFSIO(unsigned int *extmemArray, long extmemSize, Screen *screen) {
   _extmemArray = extmemArray;
@@ -134,11 +135,11 @@ void SampleFSIO::generateWaveFormBufferForSample(byte bank0, byte sampleId0) {
     if (SD.exists(filename)) {
       sample = SD.open(filename);
       if (!sample) {
-        Serial.println("unable to open sample file");
+        DebugPrint::println("unable to open sample file");
         return;
       }      
     } else { 
-      Serial.println("Sample does not exist!");
+      DebugPrint::println("Sample does not exist!");
       return;
     }
 
@@ -197,7 +198,7 @@ void SampleFSIO::generateWaveFormBufferForSample(byte bank0, byte sampleId0) {
 
 boolean SampleFSIO::copyFile(const char *f1, const char *f2) {     
   if (SD.exists(f2)) {
-    Serial.println("removing destination file");
+    DebugPrint::println("removing destination file");
     SD.remove(f2);
   }
 
@@ -210,12 +211,12 @@ boolean SampleFSIO::copyFile(const char *f1, const char *f2) {
   to = SD.open(f2, FILE_WRITE);
 
   if (!from) {
-    Serial.println("unable to open source file");
+    DebugPrint::println("unable to open source file");
     return false;
   }      
 
   if (!to) {
-    Serial.println("unable to open destination file");
+    DebugPrint::println("unable to open destination file");
     from.close();
     return false;
   }
@@ -245,7 +246,7 @@ boolean SampleFSIO::copyFile(const char *f1, const char *f2) {
 boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart, long byteEnd, float volumeScaleFactor) {
 
   if (SD.exists(f2)) {
-    Serial.println("removing destination file");
+    DebugPrint::println("removing destination file");
     SD.remove(f2);
   }
 
@@ -253,13 +254,13 @@ boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart,
   File to = SD.open(f2, FILE_WRITE);
 
   if (!from) {
-    Serial.println("unable to open source file");
+    DebugPrint::println("unable to open source file");
     to.close();
     return false;
   }      
 
   if (!to) {
-    Serial.println("unable to open destination file");
+    DebugPrint::println("unable to open destination file");
     from.close();
     return false;
   }
@@ -269,7 +270,7 @@ boolean SampleFSIO::copyFilePart(const char *f1, const char *f2, long byteStart,
   if (byteEnd == 0 || byteEnd > fromSize) { byteEnd = fromSize; }
 
   if (fromSize <  byteStart || byteStart >= byteEnd) {
-      Serial.println("operation not possible as we cannot shift back in time");
+      DebugPrint::println("operation not possible as we cannot shift back in time");
       return false;
   }
 
@@ -366,7 +367,7 @@ long SampleFSIO::copyRawFromSdToMemory(const char *filename, long startOffset) {
   if (SD.exists(filename)) {
     f = SD.open(filename, O_READ);  
   } else {
-    Serial.println("File does not exist!");
+    DebugPrint::println("File does not exist!");
     return -1;
   }
 
@@ -387,7 +388,7 @@ long SampleFSIO::copyRawFromSdToMemory(const char *filename, long startOffset) {
   long maxLength = _extmemSize/sizeof(buff);
 
   if (startOffset+c >= maxLength) {
-    Serial.println("Out of memory!");
+    DebugPrint::println("Out of memory!");
     return -1;
   }
   
@@ -631,7 +632,7 @@ boolean SampleFSIO::loadSampleInfosFromSD() {
         readFile.close();
     } else {
       // does not exist? write empty array to file
-      Serial.println(".. saving empty array first");
+      DebugPrint::println(".. saving empty array first");
       return saveSampleInfosToSD();
     }
 

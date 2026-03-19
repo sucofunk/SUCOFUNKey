@@ -30,6 +30,7 @@
    
 #include "SongStructure.h"
 #include "Swing.h"
+#include "../../helper/DebugPrint.h"
 
 // returns the closest pointer to the given position. it always returns the predecessor, even if a successor is closer, as change the pointed list at the predecessor.
 SongStructure::closestPointer SongStructure::_getClosestPointerIndex(uint8_t channel, uint16_t position) {
@@ -1297,8 +1298,8 @@ boolean SongStructure::loadFromSD(char *songPath) {
 
         readFile.close();
     } else {
-        Serial.print("ERROR reading ");
-        Serial.println(buff);
+        DebugPrint::print("ERROR reading ");
+        DebugPrint::println(buff);
         return false;
     }
 
@@ -1322,8 +1323,8 @@ boolean SongStructure::loadFromSD(char *songPath) {
 
         readFile.close();
     } else {
-        Serial.print("ERROR reading ");
-        Serial.println(buff);
+        DebugPrint::print("ERROR reading ");
+        DebugPrint::println(buff);
         return false;
     }
 
@@ -1348,8 +1349,8 @@ boolean SongStructure::loadFromSD(char *songPath) {
 
         readFile.close();
     } else {
-        Serial.print("ERROR reading ");
-        Serial.println(buff);
+        DebugPrint::print("ERROR reading ");
+        DebugPrint::println(buff);
         return false;
     }
 
@@ -1373,8 +1374,8 @@ boolean SongStructure::loadFromSD(char *songPath) {
 
         readFile.close();
     } else {
-        Serial.print("ERROR reading ");
-        Serial.println(buff);
+        DebugPrint::print("ERROR reading ");
+        DebugPrint::println(buff);
         return false;
     }
 
@@ -1398,8 +1399,8 @@ boolean SongStructure::loadFromSD(char *songPath) {
 
         readFile.close();
     } else {
-        Serial.print("ERROR reading ");
-        Serial.println(buff);
+        DebugPrint::print("ERROR reading ");
+        DebugPrint::println(buff);
         return false;
     }
 
@@ -1423,8 +1424,8 @@ boolean SongStructure::loadFromSD(char *songPath) {
 
         readFile.close();
     } else {
-        Serial.print("ERROR reading ");
-        Serial.println(buff);
+        DebugPrint::print("ERROR reading ");
+        DebugPrint::println(buff);
         return false;
     }
 
@@ -1447,8 +1448,8 @@ boolean SongStructure::loadFromSD(char *songPath) {
 
         readFile.close();
     } else {
-        Serial.print("ERROR reading ");
-        Serial.println(buff);
+        DebugPrint::print("ERROR reading ");
+        DebugPrint::println(buff);
         return false;
     }
     
@@ -1874,23 +1875,23 @@ int SongStructure::arrangementGetRepeatForPosition(int position) {
 
 void SongStructure::debugSheets() {
     for (int i=0; i<17; i++) {                        
-        Serial.print(i);
-        Serial.print("\t");
+        DebugPrint::print(i);
+        DebugPrint::print("\t");
     }
-    Serial.println("");
+    DebugPrint::println("");
 
     for (int i=0; i<17; i++) {                        
-        Serial.print(_meta.sheetDividerPositions[i]);
-        Serial.print("\t");        
+        DebugPrint::print(_meta.sheetDividerPositions[i]);
+        DebugPrint::print("\t");        
     }
-    Serial.println("");
-    Serial.println("-----");
+    DebugPrint::println("");
+    DebugPrint::println("-----");
 
-    Serial.print("next 32::");
-    Serial.println(getNextSheetDividerPosition(32));    
+    DebugPrint::print("next 32::");
+    DebugPrint::println(getNextSheetDividerPosition(32));    
 
-    Serial.print("previous 32::");
-    Serial.println(getPreviousSheetDividerPosition(32));    
+    DebugPrint::print("previous 32::");
+    DebugPrint::println(getPreviousSheetDividerPosition(32));    
 }
 
 
@@ -1975,16 +1976,16 @@ boolean SongStructure::arrangementRemovePosition(int position) {
 
 void SongStructure::debugArrangement() {
     // keep an eye on this bug.. probably a versioning problem..
-    Serial.print("maxSheets::");
-    Serial.println(_meta.maxSheetsInArrangement);
+    DebugPrint::print("maxSheets::");
+    DebugPrint::println(_meta.maxSheetsInArrangement);
     if (_meta.maxSheetsInArrangement > 10) _meta.maxSheetsInArrangement = 80;
 
-    Serial.print("Arrangement :: ");
+    DebugPrint::print("Arrangement :: ");
     for (int i=0; i<_meta.maxSheetsInArrangement; i++) {
-        Serial.print(_meta.arrangementSheets[i]);
-        Serial.print(" ");
+        DebugPrint::print(_meta.arrangementSheets[i]);
+        DebugPrint::print(" ");
     }
-    Serial.println("");
+    DebugPrint::println("");
 }
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -1993,11 +1994,11 @@ void SongStructure::debugArrangement() {
 
 void SongStructure::debugInfos() {
 
-    Serial.println("DEBUG INFOS");
-    Serial.print("_meta.playbackspeed::");
-    Serial.print(_meta.playbackSpeed);
-    Serial.print("::");
-    Serial.println(getPlayBackSpeed());
+    DebugPrint::println("DEBUG INFOS");
+    DebugPrint::print("_meta.playbackspeed::");
+    DebugPrint::print(_meta.playbackSpeed);
+    DebugPrint::print("::");
+    DebugPrint::println(getPlayBackSpeed());
 
     // DEBUG Information
 /*    Serial.println("Blocks");
@@ -2047,47 +2048,47 @@ void SongStructure::test() {
     s.stereoPosition = 64;
     s.velocity = 120;
 
-    Serial.println(setSample(0, 5, s));
-    Serial.println(setSample(1, 1, s));
+    DebugPrint::println(setSample(0, 5, s));
+    DebugPrint::println(setSample(1, 1, s));
     s.sampleNumber = 5;
     s.velocity = 25;
-    Serial.println(setSample(2, 15, s));
+    DebugPrint::println(setSample(2, 15, s));
     testLog();
 
-    Serial.println(setSample(0, 3, s));
+    DebugPrint::println(setSample(0, 3, s));
     testLog();
 
-    Serial.println(setSample(0, 5, s));
+    DebugPrint::println(setSample(0, 5, s));
     testLog();
 
-    Serial.println(setSample(0, 0, s));
+    DebugPrint::println(setSample(0, 0, s));
     testLog();
 
     s.sampleNumber = 10;
-    Serial.println(setSample(5, 2222, s));
+    DebugPrint::println(setSample(5, 2222, s));
     testLog();
 
     testLogSample(0, 6);
 
     s.sampleNumber = 70;
     s.velocity = 99;
-    Serial.println(setSample(0, 6, s));
+    DebugPrint::println(setSample(0, 6, s));
     testLog();
 
     testLogSample(0, 6);
 
-    Serial.println(">>> removing 0/0");
+    DebugPrint::println(">>> removing 0/0");
 
     removePosition(0, 0);
     testLogSample(0, 0);
 
     testLog();
 
-    Serial.println(">>> adding new 0/0 with sample 77 and velocity 76");
+    DebugPrint::println(">>> adding new 0/0 with sample 77 and velocity 76");
 
     s.sampleNumber = 72;
     s.velocity = 76;
-    Serial.println(setSample(0, 0, s));
+    DebugPrint::println(setSample(0, 0, s));
     testLogSample(0, 0);
 
     testLog();
@@ -2105,109 +2106,109 @@ void SongStructure::test() {
     getSamplesUsed();
     endTime = micros();
 
-    Serial.print("Microseconds used for retrieving all Samples: ");
-    Serial.println(endTime-startTime);
+    DebugPrint::print("Microseconds used for retrieving all Samples: ");
+    DebugPrint::println(endTime-startTime);
 
 
-    Serial.println("\nSamples used:");
+    DebugPrint::println("\nSamples used:");
     for (int i=0; i<72; i++) {
         if (samplesUsed[i]) {
-            Serial.print(i+1);
-            Serial.print(" ");
+            DebugPrint::print(i+1);
+            DebugPrint::print(" ");
         }
     }
-    Serial.println("");
+    DebugPrint::println("");
 
     // -----------------------------------------------
 }
 
 
 void SongStructure::testLog() {
-    //Serial.println("Matrix content");
+    //DebugPrint::println("Matrix content");
     for (int j=0; j<8; j++) {
-        Serial.print(j);
-        Serial.print(":");
+        DebugPrint::print(j);
+        DebugPrint::print(":");
         for (int i = 0; i<20; i++) {
-            Serial.print((isSomethingAt(j, i) ? "x" : "-"));
+            DebugPrint::print((isSomethingAt(j, i) ? "x" : "-"));
         }        
-        Serial.println("");
+        DebugPrint::println("");
     } 
 
-    Serial.println("");
+    DebugPrint::println("");
 
-    //Serial.println("closest Pointer");
+    //DebugPrint::println("closest Pointer");
     for (int i = 0; i<20; i++) {
         switch(_getClosestPointerIndex(0, i).type) {
             case NONE:
-                Serial.print("-");   
+                DebugPrint::print("-");   
                 break;
             case TAKEN:
-                Serial.print("x");   
+                DebugPrint::print("x");   
                 break;
             case PREDECESSOR:
-                Serial.print("<");   
+                DebugPrint::print("<");   
                 break;
             case SUCCESSOR:
-                Serial.print(">");   
+                DebugPrint::print(">");   
                 break;
         }
     }
 
-    Serial.println("");
-    //Serial.println("Pointer Types");
+    DebugPrint::println("");
+    //DebugPrint::println("Pointer Types");
 
     for (int i = 0; i<20; i++) {
         switch(getPosition(0, i).type) {
             case UNDEFINED:
-                Serial.print("u");   
+                DebugPrint::print("u");   
                 break;
             case SAMPLE:
-                Serial.print("S");   
+                DebugPrint::print("S");   
                 break;
             case PARAMETER_CHANGE_SAMPLE:
-                Serial.print("P");   
+                DebugPrint::print("P");   
                 break;
             case NOTE_OFF:
-                Serial.print("-");   
+                DebugPrint::print("-");   
                 break;
             default:
                 break;
         }
     }
 
-    Serial.println("\n----------");
+    DebugPrint::println("\n----------");
 }
 
 
 void SongStructure::testLogSample(uint16_t channel, uint16_t position) {
         uint16_t ti;
-        Serial.print("Channel::");
-        Serial.println(channel);
-        Serial.print("Position::");
-        Serial.println(position);
+        DebugPrint::print("Channel::");
+        DebugPrint::println(channel);
+        DebugPrint::print("Position::");
+        DebugPrint::println(position);
 
         switch(getPosition(channel, position).type) {
             case UNDEFINED:
-                Serial.println("UNDEFINED");
+                DebugPrint::println("UNDEFINED");
                 break;
             case SAMPLE:
-                Serial.println("SAMPLE");   
+                DebugPrint::println("SAMPLE");   
                 ti = getPosition(channel, position).typeIndex;
-                Serial.print("SampleNumber::");
-                Serial.println(_sampleBucket[ti].sampleNumber);
-                Serial.print("Velocity::");
-                Serial.println(_sampleBucket[ti].velocity);
+                DebugPrint::print("SampleNumber::");
+                DebugPrint::println(_sampleBucket[ti].sampleNumber);
+                DebugPrint::print("Velocity::");
+                DebugPrint::println(_sampleBucket[ti].velocity);
                 break;
             case PARAMETER_CHANGE_SAMPLE:
-                Serial.println("PARAMETER_CHANGE");   
+                DebugPrint::println("PARAMETER_CHANGE");   
                 ti = getPosition(channel, position).typeIndex;
                 break;
             case NOTE_OFF:
-                Serial.println("NOTE_OFF");   
+                DebugPrint::println("NOTE_OFF");   
                 break;
             default:
                 break;
         }
 
-        Serial.println("");
+        DebugPrint::println("");
 };

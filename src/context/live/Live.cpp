@@ -31,6 +31,7 @@
 #include <Arduino.h>
 #include "../../hardware/Sucofunkey.h"
 #include "../../helper/SampleFSIO.h"
+#include "../../helper/DebugPrint.h"
 #include "../../gui/Screen.h"
 #include "Live.h"
 #include "MIDI.h"
@@ -736,8 +737,8 @@ void Live::_changeState(LiveState state) {
       break;
     case CONFIG_SAMPLE:
 
-      Serial.print("Sample selected! :: basenote: ");
-      Serial.println(_slots[_editingSlotId].baseMidiNote);
+      DebugPrint::print("Sample selected! :: basenote: ");
+      DebugPrint::println(_slots[_editingSlotId].baseMidiNote);
 
       _liveScreen.showSampleConfig(_slots[_editingSlotId]);
       break;
@@ -1252,7 +1253,7 @@ void Live::loadConfig() {
     }
 
   } else {
-    Serial.println("Live Configuration does not exist on SD card.. using default values.");
+    DebugPrint::println("Live Configuration does not exist on SD card.. using default values.");
   }
 };
 
