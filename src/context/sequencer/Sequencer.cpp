@@ -390,7 +390,9 @@ void Sequencer::handleEvent(Sucofunkey::keyQueueStruct event) {
       if (event.pressed) {
         byte sampleId0 = _keyboard->getSampleIdByEventKey(event.index)-1;  
         if (_sfsio->sampleBanksStatus[_keyboard->getBank()-1][sampleId0]) {
-          _audioResources->playSdRaw.play(_sfsio->sampleFilename[_keyboard->getBank()-1][sampleId0]);
+          char samplePath[40];
+          _sfsio->getSampleFilePath(_keyboard->getBank(), sampleId0+1, samplePath);
+          _audioResources->playSdRaw.play(samplePath);
         }
       } else {
         _audioResources->playSdRaw.stop();

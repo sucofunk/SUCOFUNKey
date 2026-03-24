@@ -35,7 +35,7 @@
 // Buffer in DMAMEM to save regular RAM
 DMAMEM static uint8_t _streamBuffer[STREAM_BUFFER_SIZE];
 
-ScreenStreaming::ScreenStreaming() {
+FLASHMEM ScreenStreaming::ScreenStreaming() {
     _buffer = _streamBuffer;
     _head = 0;
     _tail = 0;
@@ -45,12 +45,12 @@ ScreenStreaming::ScreenStreaming() {
     _cmdCount = 0;
 }
 
-void ScreenStreaming::write16(uint8_t* buf, uint16_t val) {
+FLASHMEM void ScreenStreaming::write16(uint8_t* buf, uint16_t val) {
     buf[0] = val & 0xFF;
     buf[1] = (val >> 8) & 0xFF;
 }
 
-uint16_t ScreenStreaming::availableSpace() {
+FLASHMEM uint16_t ScreenStreaming::availableSpace() {
     if (_head >= _tail) {
         return STREAM_BUFFER_SIZE - (_head - _tail) - 1;
     } else {
@@ -58,7 +58,7 @@ uint16_t ScreenStreaming::availableSpace() {
     }
 }
 
-bool ScreenStreaming::writeToBuffer(const uint8_t* data, uint16_t len) {
+FLASHMEM bool ScreenStreaming::writeToBuffer(const uint8_t* data, uint16_t len) {
     if (!_enabled || !_streaming) return false;
     
     // Send sync marker periodically
@@ -93,7 +93,7 @@ bool ScreenStreaming::writeToBuffer(const uint8_t* data, uint16_t len) {
 }
 
 // Send sync marker: FE 00 00 FE 00 (can't appear in text or valid coordinates)
-void ScreenStreaming::doSendSync() {
+FLASHMEM void ScreenStreaming::doSendSync() {
     if (!_enabled || !_streaming) return;
     
     // Wait for buffer to drain before sending sync
@@ -104,12 +104,12 @@ void ScreenStreaming::doSendSync() {
     Serial.flush();  // Ensure sync is sent before continuing
 }
 
-void ScreenStreaming::sendSync() {
+FLASHMEM void ScreenStreaming::sendSync() {
     doSendSync();
     _cmdCount = 0;  // Reset counter
 }
 
-void ScreenStreaming::setEnabled(bool enabled) {
+FLASHMEM void ScreenStreaming::setEnabled(bool enabled) {
     _enabled = enabled;
     if (!enabled) {
         _streaming = false;
@@ -118,16 +118,16 @@ void ScreenStreaming::setEnabled(bool enabled) {
     }
 }
 
-bool ScreenStreaming::isEnabled() {
+FLASHMEM bool ScreenStreaming::isEnabled() {
     return _enabled;
 }
 
-void ScreenStreaming::setCurrentFont(uint8_t fontId) {
+FLASHMEM void ScreenStreaming::setCurrentFont(uint8_t fontId) {
     _currentFont = fontId;
 }
 
 // CMD_FILL_RECT: 01 x:2 y:2 w:2 h:2 color:2 = 11 bytes
-void ScreenStreaming::logFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
+FLASHMEM void ScreenStreaming::logFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
     uint8_t cmd[11];
     cmd[0] = CMD_FILL_RECT;
     write16(&cmd[1], x);
@@ -139,7 +139,7 @@ void ScreenStreaming::logFillRect(int16_t x, int16_t y, int16_t w, int16_t h, ui
 }
 
 // CMD_LINE: 02 x0:2 y0:2 x1:2 y1:2 color:2 = 11 bytes
-void ScreenStreaming::logLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color) {
+FLASHMEM void ScreenStreaming::logLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color) {
     uint8_t cmd[11];
     cmd[0] = CMD_LINE;
     write16(&cmd[1], x0);
@@ -151,7 +151,7 @@ void ScreenStreaming::logLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, ui
 }
 
 // CMD_PIXEL: 03 x:2 y:2 color:2 = 7 bytes
-void ScreenStreaming::logPixel(int16_t x, int16_t y, uint16_t color) {
+FLASHMEM void ScreenStreaming::logPixel(int16_t x, int16_t y, uint16_t color) {
     uint8_t cmd[7];
     cmd[0] = CMD_PIXEL;
     write16(&cmd[1], x);
@@ -161,7 +161,7 @@ void ScreenStreaming::logPixel(int16_t x, int16_t y, uint16_t color) {
 }
 
 // CMD_HLINE: 04 x:2 y:2 w:2 color:2 = 9 bytes
-void ScreenStreaming::logHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
+FLASHMEM void ScreenStreaming::logHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
     uint8_t cmd[9];
     cmd[0] = CMD_HLINE;
     write16(&cmd[1], x);
@@ -172,7 +172,7 @@ void ScreenStreaming::logHLine(int16_t x, int16_t y, int16_t w, uint16_t color) 
 }
 
 // CMD_VLINE: 05 x:2 y:2 h:2 color:2 = 9 bytes
-void ScreenStreaming::logVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
+FLASHMEM void ScreenStreaming::logVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
     uint8_t cmd[9];
     cmd[0] = CMD_VLINE;
     write16(&cmd[1], x);
@@ -183,7 +183,7 @@ void ScreenStreaming::logVLine(int16_t x, int16_t y, int16_t h, uint16_t color) 
 }
 
 // CMD_CIRCLE: 06 x:2 y:2 r:2 fill:1 color:2 = 10 bytes
-void ScreenStreaming::logCircle(int16_t x, int16_t y, int16_t r, bool fill, uint16_t color) {
+FLASHMEM void ScreenStreaming::logCircle(int16_t x, int16_t y, int16_t r, bool fill, uint16_t color) {
     uint8_t cmd[10];
     cmd[0] = CMD_CIRCLE;
     write16(&cmd[1], x);
@@ -195,7 +195,7 @@ void ScreenStreaming::logCircle(int16_t x, int16_t y, int16_t r, bool fill, uint
 }
 
 // CMD_TRIANGLE: 07 x0:2 y0:2 x1:2 y1:2 x2:2 y2:2 fill:1 color:2 = 16 bytes
-void ScreenStreaming::logTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, bool fill, uint16_t color) {
+FLASHMEM void ScreenStreaming::logTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, bool fill, uint16_t color) {
     uint8_t cmd[16];
     cmd[0] = CMD_TRIANGLE;
     write16(&cmd[1], x0);
@@ -210,7 +210,7 @@ void ScreenStreaming::logTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1
 }
 
 // CMD_TEXT: 08 x:2 y:2 color:2 font:1 len:1 chars... = 9 + len bytes
-void ScreenStreaming::logText(int16_t x, int16_t y, uint16_t color, uint8_t fontId, const char* text) {
+FLASHMEM void ScreenStreaming::logText(int16_t x, int16_t y, uint16_t color, uint8_t fontId, const char* text) {
     uint8_t len = strlen(text);
     if (len > 200) len = 200; // Max text length
     
@@ -230,7 +230,7 @@ void ScreenStreaming::logText(int16_t x, int16_t y, uint16_t color, uint8_t font
 
 // CMD_BITMAP: 09 x:2 y:2 w:2 h:2 color:2 dataLen:2 data... 
 // For now, just log position and dimensions, skip actual bitmap data to save bandwidth
-void ScreenStreaming::logBitmap(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color, const uint8_t* data) {
+FLASHMEM void ScreenStreaming::logBitmap(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color, const uint8_t* data) {
     // Calculate bitmap data size (1 bit per pixel, packed)
     uint16_t dataLen = ((w + 7) / 8) * h;
     
@@ -250,14 +250,14 @@ void ScreenStreaming::logBitmap(int16_t x, int16_t y, int16_t w, int16_t h, uint
 }
 
 // CMD_CLEAR: FF color:2 = 3 bytes
-void ScreenStreaming::logClear(uint16_t color) {
+FLASHMEM void ScreenStreaming::logClear(uint16_t color) {
     uint8_t cmd[3];
     cmd[0] = CMD_CLEAR;
     write16(&cmd[1], color);
     writeToBuffer(cmd, 3);
 }
 
-void ScreenStreaming::checkSerialCommand() {
+FLASHMEM void ScreenStreaming::checkSerialCommand() {
     if (!_enabled) return;
     
     // Check for streaming start/stop commands
@@ -293,8 +293,45 @@ void ScreenStreaming::checkSerialCommand() {
     }
 }
 
-void ScreenStreaming::streamPending() {
+FLASHMEM void ScreenStreaming::streamPending() {
     // No longer needed - writeToBuffer now writes directly to Serial
+}
+
+// CMD_LED_STATE: 10 ledId:1 state:1 = 3 bytes
+FLASHMEM void ScreenStreaming::logLedState(uint8_t ledId, bool state) {
+    uint8_t cmd[3];
+    cmd[0] = CMD_LED_STATE;
+    cmd[1] = ledId;
+    cmd[2] = state ? 1 : 0;
+    writeToBuffer(cmd, 3);
+}
+
+// CMD_KEY_EVENT: 11 indexLow:1 indexHigh:1 pressed:1 type:1 = 5 bytes
+FLASHMEM void ScreenStreaming::logKeyEvent(int index, bool pressed, uint8_t type) {
+    uint8_t cmd[5];
+    cmd[0] = CMD_KEY_EVENT;
+    cmd[1] = index & 0xFF;
+    cmd[2] = (index >> 8) & 0xFF;
+    cmd[3] = pressed ? 1 : 0;
+    cmd[4] = type;
+    writeToBuffer(cmd, 5);
+}
+
+// CMD_ENCODER: 12 encoderId:1 clockwise:1 = 3 bytes
+FLASHMEM void ScreenStreaming::logEncoderEvent(uint8_t encoderId, bool clockwise) {
+    uint8_t cmd[3];
+    cmd[0] = CMD_ENCODER;
+    cmd[1] = encoderId;
+    cmd[2] = clockwise ? 1 : 0;
+    writeToBuffer(cmd, 3);
+}
+
+// CMD_FADER: 13 percent:1 = 2 bytes
+FLASHMEM void ScreenStreaming::logFaderPosition(uint8_t percent) {
+    uint8_t cmd[2];
+    cmd[0] = CMD_FADER;
+    cmd[1] = percent > 100 ? 100 : percent;
+    writeToBuffer(cmd, 2);
 }
 
 #endif // ENABLE_SCREEN_STREAMING

@@ -76,7 +76,9 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
           if (event.pressed) {          
             // is there a sample in this slot?
             if (_sfsio->sampleBanksStatus[_activeBank-1][_keyboard->getSampleIdByEventKey(event.index)-1]) {
-              _audioResources->playSdRaw.play(_sfsio->sampleFilename[_keyboard->getBank()-1][_keyboard->getSampleIdByEventKey(event.index)-1]);
+              char samplePath[40];
+              _sfsio->getSampleFilePath(_keyboard->getBank(), _keyboard->getSampleIdByEventKey(event.index), samplePath);
+              _audioResources->playSdRaw.play(samplePath);
             }
           } else {
             _audioResources->playSdRaw.stop();
@@ -286,7 +288,9 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
           } else {
             // yes -> show sample
             _samplerScreen.showSampleInfo(_keyboard->getBank()-1, sampleId-1, 1.0);
-            _audioResources->playSdRaw.play(_sfsio->sampleFilename[_keyboard->getBank()-1][sampleId-1]);
+            char samplePath[40];
+            _sfsio->getSampleFilePath(_keyboard->getBank(), sampleId, samplePath);
+            _audioResources->playSdRaw.play(samplePath);
           }
         } else {
           _audioResources->playSdRaw.stop();
@@ -334,9 +338,15 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
           uint32_t end = _sfsio->pixelToWaveformSamples[sampleId72] * _trimMarkerEndPosition + _trimMarkerEndSampleCountOffset;
 
           if (_activeSampleSlot == 0) {
-            _sfsio->copyFilePart(_sfsio->recorderFilename, _sfsio->sampleFilename[_keyboard->getBank()-1][sampleId-1], start*2, end*2, _volumeScaleFactor);
+            char destPath[40];
+            _sfsio->getSampleFilePath(_keyboard->getBank(), sampleId, destPath);
+            _sfsio->copyFilePart(_sfsio->recorderFilename, destPath, start*2, end*2, _volumeScaleFactor);
           } else {
-            _sfsio->copyFilePart(_sfsio->sampleFilename[_tempBank-1][_activeSampleSlot-1], _sfsio->sampleFilename[_keyboard->getBank()-1][sampleId-1], start*2, end*2, _volumeScaleFactor);
+            char srcPath[40];
+            char destPath[40];
+            _sfsio->getSampleFilePath(_tempBank, _activeSampleSlot, srcPath);
+            _sfsio->getSampleFilePath(_keyboard->getBank(), sampleId, destPath);
+            _sfsio->copyFilePart(srcPath, destPath, start*2, end*2, _volumeScaleFactor);
           }
                     
           _sfsio->readSampleBankStatusFromSD();
@@ -422,8 +432,11 @@ void Sampler::handleEvent(Sucofunkey::keyQueueStruct event) {
 
         case Sucofunkey::SAMPLE_LIBRARY_SELECTED:
           // a sample from the library was selected.. copy it to this slot!
-
-          _sfsio->copyFile(_fsio->getSelectedSamplePathFromSD(), _sfsio->sampleFilename[_keyboard->getBank()-1][_activeSampleSlot-1]);
+          {
+            char destPath[40];
+            _sfsio->getSampleFilePath(_keyboard->getBank(), _activeSampleSlot, destPath);
+            _sfsio->copyFile(_fsio->getSelectedSamplePathFromSD(), destPath);
+          }
           _sfsio->generateWaveFormBufferForSample(_keyboard->getBank()-1, _activeSampleSlot-1);
 
           // update sample meta infos
@@ -613,7 +626,12 @@ void Sampler::setActive(boolean active) {
 
 void Sampler::_play() {
   // select sample to play (slot|recorder)
-  char * filename = (_activeSampleSlot == 0 ? _sfsio->recorderFilename : _sfsio->sampleFilename[_keyboard->getBank()-1][_activeSampleSlot-1]);
+  char filename[40];
+  if (_activeSampleSlot == 0) {
+    strcpy(filename, _sfsio->recorderFilename);
+  } else {
+    _sfsio->getSampleFilePath(_keyboard->getBank(), _activeSampleSlot, filename);
+  }
 
   // play whole sample..
   if (currentState == SAMPLE_SELECTED || currentState == SAMPLER_SAMPLE_CONFIGURATION_BASENOTE) {
@@ -686,7 +704,13 @@ void Sampler::deleteActiveSample() {
     delay(10);
   }
 
-  _sfsio->deleteFile( _activeSampleSlot == 0 ? _sfsio->recorderFilename : _sfsio->sampleFilename[_tempBank-1][_activeSampleSlot-1]);
+  char deleteFilename[40];
+  if (_activeSampleSlot == 0) {
+    strcpy(deleteFilename, _sfsio->recorderFilename);
+  } else {
+    _sfsio->getSampleFilePath(_tempBank, _activeSampleSlot, deleteFilename);
+  }
+  _sfsio->deleteFile(deleteFilename);
   
   _sfsio->readSampleBankStatusFromSD();
   _sfsio->clearWaveFormBufferById(sample72);
@@ -724,7 +748,12 @@ void Sampler::saveActiveSample() {
   // mark correct end with a zero!
   if (_trimMarkerEndPosition == 319) end = 0;
 
-  char * filename = _activeSampleSlot == 0 ? _sfsio->recorderFilename : _sfsio->sampleFilename[_tempBank-1][_activeSampleSlot-1];
+  char filename[40];
+  if (_activeSampleSlot == 0) {
+    strcpy(filename, _sfsio->recorderFilename);
+  } else {
+    _sfsio->getSampleFilePath(_tempBank, _activeSampleSlot, filename);
+  }
 
   boolean reloadAfterSaving = false;
 

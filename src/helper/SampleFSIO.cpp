@@ -31,19 +31,16 @@
 #include "SampleFSIO.h"
 #include "DebugPrint.h"
 
+// Waveform buffer in DMAMEM to save ~47KB of primary RAM
+DMAMEM static byte _waveFormBufferStorage[73][320][2];
+
 SampleFSIO::SampleFSIO(unsigned int *extmemArray, long extmemSize, Screen *screen) {
   _extmemArray = extmemArray;
   _extmemSize = extmemSize;
   _screen = screen;
 
-  // initialize empty fileName array
-  for (int b = 0; b < 3; b++) {
-    for (int s = 0; s < 24; s++) {
-      for (int f = 0; f < 40; f++) {
-        sampleFilename[b][s][f] = ' ';
-      }      
-    }
-  }
+  // Point to DMAMEM storage
+  waveFormBuffer = _waveFormBufferStorage;
 
   // initialize waveFormBuffer for all 72 possible samples -> ToDo: find a more progressive data structure?
   // waveFormBuffer for recorder is stored at position 72
@@ -58,24 +55,22 @@ SampleFSIO::SampleFSIO(unsigned int *extmemArray, long extmemSize, Screen *scree
   }
 }
 
+// Helper to build sample file path on demand
+void SampleFSIO::_getSampleFilePath(byte bank0, byte sampleId0, char* buffer) {
+  sprintf(buffer, "%s/SAMPLES/%d.RAW", _songPath, sampleId0 + 1 + (bank0 * 24));
+}
+
+// Public version with 1-indexed bank/sample
+void SampleFSIO::getSampleFilePath(byte bank1, byte sampleId1, char* buffer) {
+  _getSampleFilePath(bank1 - 1, sampleId1 - 1, buffer);
+}
+
 // initializsation steps to fill project sample information arrays
 void SampleFSIO::setSongPath(char *songPath) {
   _songPath = songPath;
 
-  char buff[31];
-  char buffFilename[13];
-
-  // generate correct paths to samples
-  for (int b = 0; b < 3; b++) {
-    for (int s = 0; s < 24; s++) {    
-        strcpy(buff, _songPath);
-        sprintf(buffFilename, "/SAMPLES/%d.RAW", s+1+(b*24));
-        strcat(buff, buffFilename);
-        strcpy(sampleFilename[b][s], buff);
-    }
-  }
-
   // generate correct path where the recorder will save a new record
+  char buff[40];
   strcpy(buff, _songPath);
   strcat(buff, "/SAMPLES/RECORD.RAW");
   strcpy(recorderFilename, buff);
@@ -130,7 +125,12 @@ void SampleFSIO::generateWaveFormBufferForSample(byte bank0, byte sampleId0) {
       waveFormBuffer[bufferPosition][i][1] = 0;
     }
 
-    char * filename = (bufferPosition == 72 ? recorderFilename : sampleFilename[bank0][sampleId0]);
+    char filename[40];
+    if (bufferPosition == 72) {
+      strcpy(filename, recorderFilename);
+    } else {
+      _getSampleFilePath(bank0, sampleId0, filename);
+    }
 
     if (SD.exists(filename)) {
       sample = SD.open(filename);
@@ -430,7 +430,9 @@ boolean SampleFSIO::addSampleToMemory(byte bank1, byte sampleId1, boolean forceR
 
       offset = _nextOffset;
 
-      _nextOffset = copyRawFromSdToMemory(sampleFilename[bank1-1][sampleId1-1], offset);
+      char samplePath[40];
+      _getSampleFilePath(bank1-1, sampleId1-1, samplePath);
+      _nextOffset = copyRawFromSdToMemory(samplePath, offset);
 
       if (_nextOffset == -1) {
         _nextOffset = offset;
@@ -561,13 +563,11 @@ boolean SampleFSIO::sampleInMemory(byte sampleId) {
 // ------------------------------------------------------------------------------
 
 void SampleFSIO::readSampleBankStatusFromSD() {
- for (int b=0; b<3; b++) {
+  char samplePath[40];
+  for (int b=0; b<3; b++) {
     for (int s=0; s<24; s++) {
-      if (SD.exists(sampleFilename[b][s])) {
-        sampleBanksStatus[b][s] = true;
-      } else {
-        sampleBanksStatus[b][s] = false;
-      }
+      _getSampleFilePath(b, s, samplePath);
+      sampleBanksStatus[b][s] = SD.exists(samplePath);
     }
   }
 };

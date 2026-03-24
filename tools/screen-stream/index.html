@@ -7,8 +7,8 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: #000;
-            color: #eee;
+            background: #f0f0f0;
+            color: #333;
             font-family: 'Segoe UI', sans-serif;
             min-height: 100vh;
             display: flex;
@@ -16,55 +16,14 @@
             align-items: center;
             justify-content: center;
         }
-        .burger-icon {
+        .controls {
             position: fixed;
             top: 15px;
             left: 15px;
-            width: 30px;
-            height: 24px;
-            cursor: pointer;
-            z-index: 1000;
             display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .burger-icon span {
-            display: block;
-            height: 3px;
-            background: #fff;
-            border-radius: 2px;
-            transition: all 0.3s;
-        }
-        .burger-icon.open span:nth-child(1) {
-            transform: rotate(45deg) translate(6px, 6px);
-        }
-        .burger-icon.open span:nth-child(2) {
-            opacity: 0;
-        }
-        .burger-icon.open span:nth-child(3) {
-            transform: rotate(-45deg) translate(6px, -6px);
-        }
-        .menu-panel {
-            position: fixed;
-            top: 0;
-            left: -190px;
-            width: 190px;
-            height: 100vh;
-            background: #222;
-            padding: 50px 15px 15px;
-            transition: left 0.3s;
-            z-index: 999;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .menu-panel.open {
-            left: 0;
-        }
-        .controls {
-            display: flex;
-            flex-direction: column;
+            flex-direction: row;
             gap: 10px;
+            z-index: 1000;
         }
         button {
             padding: 10px 20px;
@@ -88,52 +47,34 @@
         #connectBtn.connected:hover {
             background: #dc2626;
         }
-        #dotsBtn, #saveBtn {
+        #saveBtn {
             background: #6b7280;
             color: white;
+            display: none;
         }
-        #dotsBtn:hover, #saveBtn:hover {
+        #saveBtn:hover {
             background: #4b5563;
         }
-        .scale-controls {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            background: #6b7280;
-            padding: 6px 12px;
-            border-radius: 6px;
-        }
-        .scale-controls label {
-            font-size: 14px;
-        }
-        .scale-controls select {
-            background: #1a1a2e;
-            color: #eee;
-            border: 1px solid #444;
-            padding: 4px 8px;
-            border-radius: 4px;
-        }
         .canvas-container {
-            background: #000;
-            padding: 5px;
+            background: #1a1a2e;
             overflow: hidden;
             position: relative;
         }
-        .corner-dot {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            background: white;
+        #deviceSvgWrapper {
+            background: #f0f0f0;
         }
-        .corner-dot.tl { top: 0; left: 0; }
-        .corner-dot.tr { top: 0; right: 0; }
-        .corner-dot.bl { bottom: 0; left: 0; }
-        .corner-dot.br { bottom: 0; right: 0; }
+        #deviceSvgWrapper svg {
+            display: block;
+        }
+        #fader-cap {
+            transition: transform 0.1s ease-out;
+        }
+
         canvas {
             display: block;
             image-rendering: pixelated;
             image-rendering: crisp-edges;
+            z-index: 10;
         }
         .stats {
             margin-top: 20px;
@@ -168,37 +109,54 @@
             border-radius: 4px;
             font-size: 13px;
         }
+        /* Device SVG container */
+        .device-container {
+            position: relative;
+            display: inline-block;
+        }
+        .device-container svg {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+        /* Screen canvas positioned over SVG screen-area */
+        #screenCanvas {
+            position: absolute;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        /* LED off state - show only black frame, no fill */
+        [id^="led-"].led-off {
+            fill: transparent !important;
+        }
+        /* Key pressed state */
+        .key-pressed rect,
+        .key-pressed path,
+        .key-pressed {
+            fill: #000 !important;
+        }
+        /* Encoder pushed state - fill circle with black */
+        [id^="encoder-"].encoder-pressed {
+            fill: #000 !important;
+        }
+        /* Encoder rotation - dashed stroke */
+        [id^="encoder-"].encoder-rotating {
+            stroke-dasharray: 8 4;
+        }
+        /* Encoder rotation animation */
+        [id^="encoder-"] {
+            transition: stroke-dashoffset 0.1s linear;
+        }
     </style>
 </head>
 <body>
-    <div class="burger-icon" id="burgerIcon">
-        <span></span>
-        <span></span>
-        <span></span>
+    <div class="controls">
+        <button id="connectBtn">Connect</button>
+        <button id="saveBtn">Save PNG</button>
     </div>
     
-    <div class="menu-panel" id="menuPanel">
-        <div class="controls">
-            <button id="connectBtn">Connect</button>
-            <button id="dotsBtn">Hide Dots</button>
-            <button id="saveBtn">Save PNG</button>
-            <div class="scale-controls">
-                <label>Scale:</label>
-                <select id="scaleSelect">
-                <option value="1" selected>1x</option>
-                <option value="2">2x</option>
-                <option value="3">3x</option>
-                <option value="4">4x</option>
-            </select>
-        </div>
-        </div>
-    </div>
-    
-    <div class="canvas-container">
-        <div class="corner-dot tl"></div>
-        <div class="corner-dot tr"></div>
-        <div class="corner-dot bl"></div>
-        <div class="corner-dot br"></div>
+    <div class="canvas-container" id="deviceContainer">
+        <!-- Device SVG loaded via JavaScript -->
         <canvas id="screen" width="320" height="240"></canvas>
     </div>
     
@@ -214,9 +172,216 @@ const CMD = {
     TRIANGLE: 0x07,
     TEXT: 0x08,
     BITMAP: 0x09,
-    SYNC: 0xFE,   // Sync marker: FE AA 55 AA 55
+    LED_STATE: 0x10,    // Hardware event: LED state change
+    KEY_EVENT: 0x11,    // Hardware event: Key press/release
+    ENCODER: 0x12,      // Hardware event: Encoder rotation
+    FADER: 0x13,        // Hardware event: Fader position
+    SYNC: 0xFE,         // Sync marker: FE AA 55 AA 55
     CLEAR: 0xFF
 };
+
+// LED ID (MCP pin) to SVG element ID mapping
+const LED_MAP = {
+    7: 'led-play',
+    52: 'led-record',
+    50: 'led-input-mic',
+    49: 'led-input-line',
+    48: 'led-input-resample',
+    15: 'led-bank-1',
+    14: 'led-bank-2',
+    13: 'led-bank-3',
+    19: 'led-f-1',
+    21: 'led-fs-1',
+    23: 'led-g-1',
+    27: 'led-gs-1',
+    25: 'led-a-1',
+    31: 'led-as-1',
+    29: 'led-b-1',
+    36: 'led-c-1',
+    39: 'led-cs-1',
+    38: 'led-d-1',
+    44: 'led-ds-1',
+    42: 'led-e-1',
+    47: 'led-f-2',
+    55: 'led-fs-2',
+    56: 'led-g-2',
+    60: 'led-gs-2',
+    58: 'led-a-2',
+    63: 'led-as-2',
+    68: 'led-b-2',
+    71: 'led-c-2',
+    74: 'led-cs-2',
+    72: 'led-d-2',
+    79: 'led-ds-2',
+    76: 'led-e-2',
+    255: 'led-fader'  // Special ID for fader LED
+};
+
+// Key index (MCP pin) to SVG element ID mapping  
+const KEY_MAP = {
+    18: 'key-fn',
+    17: 'key-menu',
+    16: 'key-set',
+    34: 'key-zoom',
+    33: 'key-play',
+    32: 'key-pause',
+    53: 'key-record',
+    51: 'key-input',
+    67: 'key-cursor-left',
+    66: 'key-cursor-up',
+    65: 'key-cursor-down',
+    64: 'key-cursor-right',
+    20: 'key-f-1',
+    22: 'key-fs-1',
+    24: 'key-g-1',
+    28: 'key-gs-1',
+    26: 'key-a-1',
+    35: 'key-as-1',
+    30: 'key-b-1',
+    37: 'key-c-1',
+    40: 'key-cs-1',
+    41: 'key-d-1',
+    45: 'key-ds-1',
+    43: 'key-e-1',
+    46: 'key-f-2',
+    54: 'key-fs-2',
+    57: 'key-g-2',
+    61: 'key-gs-2',
+    59: 'key-a-2',
+    62: 'key-as-2',
+    69: 'key-b-2',
+    70: 'key-c-2',
+    75: 'key-cs-2',
+    73: 'key-d-2',
+    78: 'key-ds-2',
+    77: 'key-e-2',
+    10: 'encoder-1',  // Encoder push buttons
+    6: 'encoder-2',
+    3: 'encoder-3',
+    0: 'encoder-4',
+    // FN + Encoder push combinations (offset +100)
+    110: 'encoder-1',
+    106: 'encoder-2',
+    103: 'encoder-3',
+    100: 'encoder-4',
+    // FN + note keys (offset +100)
+    120: 'key-f-1',
+    122: 'key-fs-1',
+    124: 'key-g-1',
+    128: 'key-gs-1',
+    126: 'key-a-1',
+    135: 'key-as-1',
+    130: 'key-b-1',
+    137: 'key-c-1',
+    140: 'key-cs-1',
+    141: 'key-d-1',
+    145: 'key-ds-1',
+    143: 'key-e-1',
+    146: 'key-f-2',
+    154: 'key-fs-2',
+    157: 'key-g-2',
+    161: 'key-gs-2',
+    159: 'key-a-2',
+    162: 'key-as-2',
+    169: 'key-b-2',
+    170: 'key-c-2',
+    175: 'key-cs-2',
+    173: 'key-d-2',
+    178: 'key-ds-2',
+    177: 'key-e-2',
+    // FN + operation keys (offset +100)
+    134: 'key-zoom',
+    133: 'key-play',
+    132: 'key-pause',
+    153: 'key-record',
+    151: 'key-input',
+    167: 'key-cursor-left',
+    166: 'key-cursor-up',
+    165: 'key-cursor-down',
+    164: 'key-cursor-right',
+    // MENU + Encoder push combinations (offset +200)
+    210: 'encoder-1',
+    206: 'encoder-2',
+    203: 'encoder-3',
+    200: 'encoder-4',
+    // MENU + cursor keys (offset +200)
+    267: 'key-cursor-left',
+    266: 'key-cursor-up',
+    265: 'key-cursor-down',
+    264: 'key-cursor-right',
+    // MENU + note keys (offset +200)
+    220: 'key-f-1',
+    222: 'key-fs-1',
+    224: 'key-g-1',
+    228: 'key-gs-1',
+    226: 'key-a-1',
+    235: 'key-as-1',
+    230: 'key-b-1',
+    237: 'key-c-1',
+    240: 'key-cs-1',
+    241: 'key-d-1',
+    245: 'key-ds-1',
+    243: 'key-e-1',
+    246: 'key-f-2',
+    254: 'key-fs-2',
+    257: 'key-g-2',
+    261: 'key-gs-2',
+    259: 'key-a-2',
+    262: 'key-as-2',
+    269: 'key-b-2',
+    270: 'key-c-2',
+    275: 'key-cs-2',
+    273: 'key-d-2',
+    278: 'key-ds-2',
+    277: 'key-e-2',
+    // MENU + operation keys (offset +200)
+    234: 'key-zoom',
+    233: 'key-play',
+    232: 'key-pause',
+    253: 'key-record',
+    251: 'key-input',
+    // SET + keys (offset +600) - add common ones
+    634: 'key-zoom',
+    633: 'key-play',
+    632: 'key-pause',
+    653: 'key-record',
+    651: 'key-input',
+    667: 'key-cursor-left',
+    666: 'key-cursor-up',
+    665: 'key-cursor-down',
+    664: 'key-cursor-right',
+    610: 'encoder-1',
+    606: 'encoder-2',
+    603: 'encoder-3',
+    600: 'encoder-4'
+};
+
+// Encoder ID to SVG element ID mapping
+// Base: 0-3, FN held: 100-103, MENU held: 200-203
+const ENCODER_MAP = {
+    0: 'encoder-1',
+    1: 'encoder-2',
+    2: 'encoder-3',
+    3: 'encoder-4',
+    // FN + encoder rotation
+    100: 'encoder-1',
+    101: 'encoder-2',
+    102: 'encoder-3',
+    103: 'encoder-4',
+    // MENU + encoder rotation
+    200: 'encoder-1',
+    201: 'encoder-2',
+    202: 'encoder-3',
+    203: 'encoder-4'
+};
+
+// Encoder rotation tracking
+const encoderRotation = { 0: 0, 1: 0, 2: 0, 3: 0 };
+
+// Fader dimensions from SVG (fader-track x range)
+const FADER_MIN_X = 182.296;
+const FADER_MAX_X = 814.409;
+const FADER_CAP_WIDTH = 118.593;
 
 // Sync marker pattern (after CMD_SYNC opcode) - uses 0x00 bytes that can't appear in text
 const SYNC_PATTERN = [0x00, 0x00, 0xFE, 0x00];
@@ -686,6 +851,118 @@ function drawText(fontId, text, x, y, color) {
     }
 }
 
+// Track encoder rotation state (for dash offset animation)
+const encoderDashOffset = { 0: 0, 1: 0, 2: 0, 3: 0 };
+
+// Handle LED state changes
+function handleLedState(ledId, state) {
+    const svgId = LED_MAP[ledId];
+    if (!svgId) {
+        // log(`Unknown LED ID: ${ledId}`, 'error');
+        return;
+    }
+    const el = document.getElementById(svgId);
+    if (el) {
+        if (state) {
+            el.classList.remove('led-off');
+        } else {
+            el.classList.add('led-off');
+        }
+    }
+}
+
+// Handle key press/release events
+function handleKeyEvent(keyIndex, pressed, keyType) {
+    const svgId = KEY_MAP[keyIndex];
+    // Debug: log key events to console
+    console.log(`Key event: index=${keyIndex}, pressed=${pressed}, type=${keyType}, svgId=${svgId}`);
+    
+    // On any key release, clear all modifier highlights as a safety net
+    // (in case a modifier release event was missed)
+    if (!pressed) {
+        document.getElementById('key-fn')?.classList.remove('key-pressed');
+        document.getElementById('key-menu')?.classList.remove('key-pressed');
+        document.getElementById('key-set')?.classList.remove('key-pressed');
+    }
+    
+    if (!svgId) {
+        return;
+    }
+    const el = document.getElementById(svgId);
+    if (el) {
+        // Check if this is an encoder button
+        if (svgId.startsWith('encoder-')) {
+            if (pressed) {
+                el.classList.add('encoder-pressed');
+            } else {
+                el.classList.remove('encoder-pressed');
+            }
+        } else {
+            if (pressed) {
+                el.classList.add('key-pressed');
+            } else {
+                el.classList.remove('key-pressed');
+            }
+        }
+    }
+}
+
+// Track encoder rotation timeout handles
+const encoderRotateTimeouts = { 0: null, 1: null, 2: null, 3: null };
+
+// Handle encoder rotation events
+function handleEncoderEvent(encoderId, clockwise) {
+    const svgId = ENCODER_MAP[encoderId];
+    // Debug: log encoder events to console
+    console.log(`Encoder event: id=${encoderId}, clockwise=${clockwise}, svgId=${svgId}`);
+    
+    if (!svgId) {
+        return;
+    }
+    
+    // Get base encoder number for tracking (0-3)
+    const baseEncoderId = encoderId % 100;
+    
+    const el = document.getElementById(svgId);
+    if (el) {
+        // Add rotating class to enable dashed stroke
+        el.classList.add('encoder-rotating');
+        
+        // Animate dash offset for rotation effect
+        const delta = clockwise ? 12 : -12;
+        encoderDashOffset[baseEncoderId] = (encoderDashOffset[baseEncoderId] || 0) + delta;
+        
+        // Apply directly to the encoder path element
+        el.style.strokeDashoffset = encoderDashOffset[baseEncoderId] + 'px';
+        
+        // Clear existing timeout and set new one to remove dashed line after 100ms
+        if (encoderRotateTimeouts[baseEncoderId]) {
+            clearTimeout(encoderRotateTimeouts[baseEncoderId]);
+        }
+        encoderRotateTimeouts[baseEncoderId] = setTimeout(() => {
+            el.classList.remove('encoder-rotating');
+        }, 100);
+    }
+}
+
+// Handle fader position updates
+function handleFaderPosition(percent) {
+    const faderCap = document.getElementById('fader-cap');
+    if (!faderCap) return;
+    
+    // Calculate x offset based on percentage
+    // The fader-cap starts at x=434.125 in the SVG (middle position)
+    // The center marker of the cap aligns with FADER_MIN_X at 0% and FADER_MAX_X at 100%
+    const originalX = 434.125; // Original x position of fader-cap in SVG
+    const halfCapWidth = FADER_CAP_WIDTH / 2;
+    const range = FADER_MAX_X - FADER_MIN_X;
+    const targetX = FADER_MIN_X - halfCapWidth + (percent / 100) * range;
+    const offsetX = targetX - originalX;
+    
+    // Update fader cap position using transform (since it's a group)
+    faderCap.setAttribute('transform', `translate(${offsetX}, 0)`);
+}
+
 // Process a single command from buffer
 function processCommand(data) {
     if (data.length < 1) return 0;
@@ -899,6 +1176,38 @@ function processCommand(data) {
             // Don't increment error count, just skip the byte silently
             return 1;
         }
+        case CMD.LED_STATE: {
+            // LED_STATE: ledId:1 state:1
+            if (data.length < 3) return 0;
+            const ledId = data[1];
+            const state = data[2];
+            handleLedState(ledId, state !== 0);
+            return 3;
+        }
+        case CMD.KEY_EVENT: {
+            // KEY_EVENT: index:2 pressed:1 type:1
+            if (data.length < 5) return 0;
+            const keyIndex = data[1] | (data[2] << 8);
+            const pressed = data[3] !== 0;
+            const keyType = data[4];
+            handleKeyEvent(keyIndex, pressed, keyType);
+            return 5;
+        }
+        case CMD.ENCODER: {
+            // ENCODER: encoderId:1 clockwise:1
+            if (data.length < 3) return 0;
+            const encoderId = data[1];
+            const clockwise = data[2] !== 0;
+            handleEncoderEvent(encoderId, clockwise);
+            return 3;
+        }
+        case CMD.FADER: {
+            // FADER: percent:1
+            if (data.length < 2) return 0;
+            const percent = data[1];
+            handleFaderPosition(percent);
+            return 2;
+        }
         default:
             // 0x00 bytes are common when desynced - skip silently
             if (opcode === 0x00) {
@@ -992,7 +1301,8 @@ function processData(data) {
     // Proactive sync detection: if first byte isn't a valid opcode but we have a sync marker
     // in the first 20 bytes, skip to it to avoid misinterpreting sync bytes as command data
     const validOpcodes = [CMD.FILL_RECT, CMD.LINE, CMD.PIXEL, CMD.HLINE, CMD.VLINE, 
-                          CMD.CIRCLE, CMD.TRIANGLE, CMD.TEXT, CMD.BITMAP, CMD.CLEAR, CMD.SYNC];
+                          CMD.CIRCLE, CMD.TRIANGLE, CMD.TEXT, CMD.BITMAP, CMD.CLEAR, CMD.SYNC,
+                          CMD.LED_STATE, CMD.KEY_EVENT, CMD.ENCODER, CMD.FADER];
     if (buffer.length > 5) {
         const syncPos = findPeriodicSync(buffer.slice(0, Math.min(buffer.length, 30)));
         if (syncPos > 0 && syncPos < 20) {
@@ -1034,6 +1344,7 @@ async function connect() {
         
         document.getElementById('connectBtn').textContent = 'Disconnect';
         document.getElementById('connectBtn').classList.add('connected');
+        document.getElementById('saveBtn').style.display = 'block';
         setStatus('Connected! Sending start command...', 'success');
         log('Port opened, sending STR command...', 'text');
         
@@ -1074,6 +1385,7 @@ async function disconnect() {
         
         document.getElementById('connectBtn').textContent = 'Connect';
         document.getElementById('connectBtn').classList.remove('connected');
+        document.getElementById('saveBtn').style.display = 'none';
         setStatus('Disconnected', 'info');
     } catch (e) {
         setStatus('Disconnect error: ' + e.message, 'error');
@@ -1110,6 +1422,78 @@ function setStatus(msg, type) {
     // Status display removed
 }
 
+// Load device SVG and position canvas over screen area
+async function loadDeviceSVG() {
+    const container = document.getElementById('deviceContainer');
+    
+    try {
+        const response = await fetch('device.svg');
+        const svgText = await response.text();
+        
+        // Create a div to hold the SVG
+        const svgWrapper = document.createElement('div');
+        svgWrapper.id = 'deviceSvgWrapper';
+        svgWrapper.innerHTML = svgText;
+        
+        // Insert SVG before the canvas
+        const canvas = document.getElementById('screen');
+        container.insertBefore(svgWrapper, canvas);
+        
+        // Get the SVG element and set it to scale properly
+        const svgEl = svgWrapper.querySelector('svg');
+        if (svgEl) {
+            // Store original viewBox dimensions
+            const viewBox = svgEl.viewBox.baseVal;
+            const svgWidth = viewBox.width || parseFloat(svgEl.getAttribute('width')) || 1024;
+            const svgHeight = viewBox.height || parseFloat(svgEl.getAttribute('height')) || 536;
+            
+            // Set SVG to fill container
+            svgEl.style.width = '100%';
+            svgEl.style.height = 'auto';
+            svgEl.style.display = 'block';
+            
+            // Position canvas over screen-area
+            // Screen area in SVG: x=492, y=80, width=320, height=240
+            const screenX = 492;
+            const screenY = 80;
+            const screenW = 320;
+            const screenH = 240;
+            
+            // Function to update canvas position based on SVG size
+            function updateCanvasPosition() {
+                const rect = svgEl.getBoundingClientRect();
+                const scaleX = rect.width / svgWidth;
+                const scaleY = rect.height / svgHeight;
+                
+                canvas.style.position = 'absolute';
+                canvas.style.left = (screenX * scaleX) + 'px';
+                canvas.style.top = (screenY * scaleY) + 'px';
+                canvas.style.width = (screenW * scaleX) + 'px';
+                canvas.style.height = (screenH * scaleY) + 'px';
+            }
+            
+            // Initial position
+            updateCanvasPosition();
+            
+            // Update on resize
+            window.addEventListener('resize', updateCanvasPosition);
+            
+            // Initialize all LEDs to off state
+            Object.values(LED_MAP).forEach(svgId => {
+                const el = document.getElementById(svgId);
+                if (el) el.classList.add('led-off');
+            });
+        }
+        
+        log('Device SVG loaded', 'text');
+    } catch (e) {
+        log('Failed to load device.svg: ' + e.message, 'error');
+    }
+}
+
+// Initialize device view on page load
+loadDeviceSVG();
+
 // Event handlers
 document.getElementById('connectBtn').addEventListener('click', () => {
     if (port) {
@@ -1119,34 +1503,11 @@ document.getElementById('connectBtn').addEventListener('click', () => {
     }
 });
 
-document.getElementById('scaleSelect').addEventListener('change', (e) => {
-    scale = parseInt(e.target.value);
-    canvas.width = 320 * scale;
-    canvas.height = 240 * scale;
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-});
-
-document.getElementById('dotsBtn').addEventListener('click', () => {
-    const dots = document.querySelectorAll('.corner-dot');
-    const btn = document.getElementById('dotsBtn');
-    const visible = dots[0].style.display !== 'none';
-    dots.forEach(dot => dot.style.display = visible ? 'none' : 'block');
-    btn.textContent = visible ? 'Show Dots' : 'Hide Dots';
-});
-
 document.getElementById('saveBtn').addEventListener('click', () => {
     const link = document.createElement('a');
     link.download = `screen-${Date.now()}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
-});
-
-document.getElementById('burgerIcon').addEventListener('click', () => {
-    const burger = document.getElementById('burgerIcon');
-    const menu = document.getElementById('menuPanel');
-    burger.classList.toggle('open');
-    menu.classList.toggle('open');
 });
 
 // Check WebSerial support

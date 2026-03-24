@@ -84,11 +84,22 @@ void SynthCopy::handleEvent(Sucofunkey::keyQueueStruct event) {
         int slot = _keyboard->getSampleIdByEventKey(event.index);
         int note = (_keyboard->getBank()-1)*24 + slot + 28;
 
-          if (event.pressed) {
-            _keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_NOTE_ON, note, 100, _channel);
-          } else {
-            _keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_NOTE_OFF, note, 0, _channel);
-          }              
+        if (event.pressed) {
+        _keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_NOTE_ON, note, 100, _channel);
+
+        char tb[5];
+        _keyboard->getMIDINoteName(note).toCharArray(tb, 4);
+        DebugPrint::print("Note on: ");
+        DebugPrint::print(note);
+        DebugPrint::print(" :: ");
+        DebugPrint::println(tb);
+
+        } else {
+        _keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_NOTE_OFF, note, 0, _channel);
+        }              
+
+
+
     }
 
     if (event.type == Sucofunkey::EVENT_APPLICATION) {
@@ -118,6 +129,7 @@ void SynthCopy::setActive(boolean active) {
     _keyboard->setBank(2);
     
     _synthCopyScreen.show();
+    DebugPrint::println("SynthCopy active");
     _keyboard->addApplicationEventToQueue(Sucofunkey::ROUTE_LINE_IN_THROUGH);
 
   } else {

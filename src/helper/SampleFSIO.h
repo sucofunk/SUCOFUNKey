@@ -86,19 +86,19 @@ class SampleFSIO {
                                             {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
                                             {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false}};
         
-        // ToDo: save RAM and delete these two arrays.. will become obsolete with _sampleInfos, but needs to be refactored!
-        char sampleFilename[3][24][40];
-        //char sampleDisplayTitle[3][24][40];
         char recorderFilename[40]; // waveformbuffer is saved at position 72 (--> bank0=3, sample0=0)
 
         void setSongPath(char *songPath);
         char * getSongPath();
+        
+        // Build sample file path on demand (bank1/sampleId1 are 1-indexed)
+        void getSampleFilePath(byte bank1, byte sampleId1, char* buffer);
    
         void generateWaveFormBufferForSample(byte bank0, byte sampleId0);
         void clearWaveFormBufferById(byte sampleId72);
         boolean isRecodingAvailable();
 
-        byte waveFormBuffer[73][320][2]; // ToDo: move to DMAMEM to save primary RAM
+        byte (*waveFormBuffer)[320][2]; // Pointer to DMAMEM storage (~47KB saved)
         long waveFormBufferLength[73];
         long pixelToWaveformSamples[73];
         long sampleLengthMS[73];
@@ -136,6 +136,9 @@ class SampleFSIO {
         long _sampleOffsets[72] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
         sampleInfosStruct _sampleInfos[72];
+        
+        // Helper to build sample file path on demand (saves ~2.8KB RAM)
+        void _getSampleFilePath(byte bank0, byte sampleId0, char* buffer);
 };
 
 #endif

@@ -39,7 +39,12 @@ void DebugPrint::init(Configuration* config) {
 bool DebugPrint::canPrint() {
     // Print if config not set yet, or if screen streaming is disabled
     if (_config == nullptr) return true;
-    return !_config->configurationValues.enableScreenStreaming;
+
+    #ifdef ENABLE_SCREEN_STREAMING
+     return !_config->configurationValues.enableScreenStreaming;
+    #endif
+
+    return true;    
 }
 
 void DebugPrint::print(const char* msg) {

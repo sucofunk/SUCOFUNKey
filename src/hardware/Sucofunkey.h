@@ -36,6 +36,10 @@
 #include <cppQueue.h> // https://github.com/SMFSW/Queue
 #include "Configuration.h"
 
+#ifdef ENABLE_SCREEN_STREAMING
+class ScreenStreaming;
+#endif
+
 // Version 3 for SUCOFUNKey V3 (PCB Revision)
 
 class Sucofunkey {
@@ -379,6 +383,10 @@ class Sucofunkey {
 
         Configuration* getConfig();
 
+#ifdef ENABLE_SCREEN_STREAMING
+        void setScreenStreaming(ScreenStreaming* streaming);
+#endif
+
     private:
         Configuration *_config;
        
@@ -571,6 +579,11 @@ class Sucofunkey {
         bool _dvsIsPlaying = false;
         float _dvsSpeed = 0.0;
         bool _dvsDirectionForward = true;
+
+#ifdef ENABLE_SCREEN_STREAMING
+        ScreenStreaming* _screenStreaming = nullptr;
+        uint8_t _lastStreamedFaderPercent = 255;  // For 5% threshold
+#endif
 };
 
 #endif

@@ -55,7 +55,7 @@
 
 // Screen streaming configuration (for mirroring display to web browser)
 // Uncomment to enable real-time screen command streaming via USB Serial
-#define ENABLE_SCREEN_STREAMING
+//#define ENABLE_SCREEN_STREAMING
 
 
 // ---------------------------------------------------

@@ -114,21 +114,212 @@ struct ConfigurationValues {
 
 ## Screen Streaming Feature
 
-Real-time USB screen mirroring to browser for screencasts.
+Real-time USB screen mirroring to browser for screencasts and documentation. Streams display output and hardware events (LEDs, keys, encoders, fader) over USB Serial to a WebSerial-based viewer.
 
-### Components
+### Architecture Overview
 
-- `src/helper/screen-streaming/ScreenStreaming.cpp` - Intercepts draw calls, sends binary commands
-- `src/helper/DebugPrint.cpp` - Suppresses Serial.print when streaming enabled
-- `tools/screen-stream/index.html` - WebSerial-based viewer (Chrome/Edge)
+```
+┌─────────────────────┐     USB Serial      ┌──────────────────────┐
+│   Teensy 4.1        │────────────────────▶│   Browser (WebSerial)│
+│                     │   Binary Protocol   │                      │
+│  Screen.cpp         │                     │  index.html          │
+│       │             │                     │       │              │
+│       ▼             │                     │       ▼              │
+│  ScreenStreaming    │                     │  Canvas 2D API       │
+│  (intercepts draws) │                     │  + SVG Hardware View │
+└─────────────────────┘                     └──────────────────────┘
+```
 
-### Protocol
+### Source Files
 
-Binary commands over USB Serial with sync markers (`FE 00 00 FE 00`) every 15 commands.
+| File | Purpose |
+|------|---------|
+| `src/helper/screen-streaming/ScreenStreaming.h` | Command opcodes, class definition |
+| `src/helper/screen-streaming/ScreenStreaming.cpp` | Binary protocol implementation |
+| `src/helper/DebugPrint.cpp/h` | Serial.print wrapper (suppresses when streaming) |
+| `tools/screen-stream/index.html` | WebSerial viewer with SVG hardware mockup |
+| `tools/screen-stream/device.svg` | Hardware device visualization |
 
-### Debug Output
+### Compile-Time Flag
 
-Use `DebugPrint::print()` / `DebugPrint::println()` instead of `Serial.print()` to avoid interfering with streaming protocol. The helper checks `Configuration::configurationValues.enableScreenStreaming` at runtime.
+Screen streaming is conditionally compiled:
+
+```cpp
+// In Configuration.h
+#define ENABLE_SCREEN_STREAMING
+
+// Usage in code
+#ifdef ENABLE_SCREEN_STREAMING
+#include "helper/screen-streaming/ScreenStreaming.h"
+#endif
+```
+
+### Binary Protocol
+
+Commands are sent as binary packets over USB Serial at native USB speed.
+
+#### Command Format
+
+| Opcode | Name | Bytes | Format |
+|--------|------|-------|--------|
+| `0x01` | FILL_RECT | 11 | `01 x0L x0H y0L y0H wL wH hL hH cL cH` |
+| `0x02` | LINE | 11 | `02 x0L x0H y0L y0H x1L x1H y1L y1H cL cH` |
+| `0x03` | PIXEL | 7 | `03 xL xH yL yH cL cH` |
+| `0x04` | HLINE | 9 | `04 xL xH yL yH wL wH cL cH` |
+| `0x05` | VLINE | 9 | `05 xL xH yL yH hL hH cL cH` |
+| `0x06` | CIRCLE | 10 | `06 xL xH yL yH rL rH fill cL cH` |
+| `0x07` | TRIANGLE | 16 | `07 x0L x0H y0L y0H x1L x1H y1L y1H x2L x2H y2L y2H fill cL cH` |
+| `0x08` | TEXT | 6+n | `08 xL xH yL yH cL cH font len text...` |
+| `0x09` | BITMAP | 11+n | `09 xL xH yL yH wL wH hL hH cL cH data...` |
+| `0x10` | LED_STATE | 3 | `10 ledId state` |
+| `0x11` | KEY_EVENT | 5 | `11 idxL idxH pressed type` |
+| `0x12` | ENCODER | 3 | `12 encoderId clockwise` |
+| `0x13` | FADER | 2 | `13 percent` |
+| `0xFE` | SYNC | 5 | `FE 00 00 FE 00` |
+| `0xFF` | CLEAR | 3 | `FF cL cH` |
+
+- All 16-bit values are **little-endian**
+- Colors are RGB565 format
+- Sync markers sent every 15 commands for recovery from byte drops
+
+#### Sync Marker Protocol
+
+The sync pattern `FE 00 00 FE 00` uses null bytes that cannot appear in text strings, making it unambiguous:
+
+```cpp
+// ScreenStreaming.cpp
+void ScreenStreaming::doSendSync() {
+    uint8_t sync[] = {CMD_SYNC, 0x00, 0x00, CMD_SYNC, 0x00};
+    Serial.write(sync, 5);
+    Serial.flush();
+}
+```
+
+### Memory Optimization
+
+Screen streaming uses memory-efficient techniques to minimize RAM usage:
+
+#### FLASHMEM Functions
+
+All `ScreenStreaming` methods use `FLASHMEM` attribute to store code in flash instead of ITCM (RAM):
+
+```cpp
+FLASHMEM void ScreenStreaming::logFillRect(...) { ... }
+FLASHMEM void ScreenStreaming::logLine(...) { ... }
+// etc.
+```
+
+This saves ~3.4KB of ITCM RAM and avoids ITCM block padding waste (~30KB).
+
+#### DMAMEM Buffer
+
+The streaming buffer is placed in RAM2 (DMAMEM) instead of primary RAM:
+
+```cpp
+// In ScreenStreaming.cpp
+DMAMEM static uint8_t _streamBuffer[STREAM_BUFFER_SIZE];  // 32KB
+```
+
+### Integration Points
+
+#### Screen Class Integration
+
+`Screen.cpp` calls streaming methods after each draw operation:
+
+```cpp
+void Screen::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
+    _tft->fillRect(x, y, w, h, color);
+    #ifdef ENABLE_SCREEN_STREAMING
+    if (_streaming) _streaming->logFillRect(x, y, w, h, color);
+    #endif
+}
+```
+
+#### Hardware Event Integration
+
+`Sucofunkey.cpp` logs hardware events:
+
+```cpp
+// LED state changes
+_screenStreaming->logLedState(ledId, state);
+
+// Key press/release
+_screenStreaming->logKeyEvent(index, pressed, keyType);
+
+// Encoder rotation
+_screenStreaming->logEncoderEvent(encoderId, clockwise);
+
+// Fader position
+_screenStreaming->logFaderPosition(percent);
+```
+
+#### Main Loop Integration
+
+```cpp
+// In main.cpp loop()
+#ifdef ENABLE_SCREEN_STREAMING
+screenStreaming.checkSerialCommand();  // Check for viewer requests
+#endif
+```
+
+### Web Viewer (`tools/screen-stream/index.html`)
+
+Single-file HTML application using WebSerial API (Chrome/Edge only).
+
+#### Features
+
+- **320×240 Canvas** - Renders screen content using Canvas 2D API
+- **SVG Hardware Mockup** - Shows device with interactive LEDs, keys, encoders, fader
+- **Font Rendering** - Embedded GFX font bitmaps for accurate text rendering
+- **Auto-Resync** - Recovers from byte drops using sync markers
+- **PNG Export** - Save current screen as image
+
+#### Hardware Visualization
+
+The viewer includes mappings from hardware IDs to SVG elements:
+
+```javascript
+const LED_MAP = {
+    7: 'led-play',
+    52: 'led-record',
+    // ... etc
+};
+
+const KEY_MAP = {
+    18: 'key-fn',
+    17: 'key-menu',
+    // ... etc
+};
+```
+
+#### Usage
+
+1. Enable screen streaming in device settings
+2. Open `tools/screen-stream/index.html` in Chrome/Edge
+3. Click "Connect" and select the Teensy serial port
+4. Device screen mirrors in real-time with hardware state
+
+### Debug Output Compatibility
+
+Use `DebugPrint` instead of `Serial.print` to avoid corrupting the binary stream:
+
+```cpp
+#include "../helper/DebugPrint.h"
+
+// Instead of: Serial.print("Debug: "); Serial.println(value);
+DebugPrint::print("Debug: ");
+DebugPrint::println(value);
+```
+
+`DebugPrint` checks `Configuration::configurationValues.enableScreenStreaming` and suppresses output when streaming is active.
+
+### Configuration
+
+Screen streaming is toggled via the Settings menu:
+
+1. **Settings screen** - Toggle "Screen Streaming" on/off
+2. Stored in `ConfigurationValues.enableScreenStreaming`
+3. Requires device restart to take effect
 
 ---
 

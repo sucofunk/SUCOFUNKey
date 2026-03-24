@@ -48,7 +48,11 @@
 #define CMD_BITMAP      0x09
 #define CMD_CLEAR       0xFF
 #define CMD_SYNC        0xFE  // Sync marker: FE 00 00 FE 00
-
+// Hardware event opcodes
+#define CMD_LED_STATE   0x10  // 3 bytes: opcode, ledId, state
+#define CMD_KEY_EVENT   0x11  // 5 bytes: opcode, indexLow, indexHigh, pressed, type
+#define CMD_ENCODER     0x12  // 3 bytes: opcode, encoderId, clockwise
+#define CMD_FADER       0x13  // 2 bytes: opcode, percent (0-100)
 // Sync every N commands to allow recovery from byte drops
 #define SYNC_INTERVAL   15  // More frequent sync for faster recovery
 
@@ -79,6 +83,12 @@ class ScreenStreaming {
         void logBitmap(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color, const uint8_t* data);
         void logClear(uint16_t color);
         void sendSync();  // Send sync marker
+        
+        // Hardware event logging
+        void logLedState(uint8_t ledId, bool state);
+        void logKeyEvent(int index, bool pressed, uint8_t type);
+        void logEncoderEvent(uint8_t encoderId, bool clockwise);
+        void logFaderPosition(uint8_t percent);
         
         // Set current font (called by Screen::setTextSize)
         void setCurrentFont(uint8_t fontId);

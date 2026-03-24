@@ -61,14 +61,11 @@ class SynthCopy {
 
         SynthCopyScreen _synthCopyScreen;
 
-        byte _channel = 10;
-        byte _startNote = 29; // 29  = E
-        byte _endNote = 100;  // 100 = F
+        byte _channel = 1;
+        byte _startNote = 60; // 29  = E -- 60 = C4
+        byte _endNote = 71;   // 100 = F -- 71 = B4
         long _releaseMS = 500;
         //int _treshold = 5;
-
-        
-        
 
         boolean _isRecording = false;
         byte _currentNote = 0;

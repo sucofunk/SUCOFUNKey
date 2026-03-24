@@ -35,6 +35,10 @@
 #include "Adafruit_MCP23017.h"
 #include <cppQueue.h> // https://github.com/SMFSW/Queue
 
+#ifdef ENABLE_SCREEN_STREAMING
+#include "../helper/screen-streaming/ScreenStreaming.h"
+#endif
+
 
 static volatile bool _keyPressedInterrupt1 = false;
 static volatile bool _keyPressedInterrupt2 = false;
@@ -300,6 +304,11 @@ void Sucofunkey::_mcpKeysPressedToQueueEvents(uint16_t mcpValuesCurrent, uint16_
             _fnKeyMillis = millis();
             _fnKeyInterrupted = false;
             sendKey = false;
+#ifdef ENABLE_SCREEN_STREAMING
+            if (_screenStreaming != nullptr && _screenStreaming->isEnabled()) {
+              _screenStreaming->logKeyEvent(FUNCTION, true, KEY_OPERATION);  // FN pressed
+            }
+#endif
           } else {
             // Function key pressed for at least 3 seconds? send event FN_FUNCTION -> FUNCTION + 100
             if (_fnKeyHold && !_fnKeyInterrupted && (millis() - _fnKeyMillis >= 3000)) {
@@ -315,6 +324,11 @@ void Sucofunkey::_mcpKeysPressedToQueueEvents(uint16_t mcpValuesCurrent, uint16_
             }
             _fnKeyHold = false;
             _fnKeyInterrupted = false;
+#ifdef ENABLE_SCREEN_STREAMING
+            if (_screenStreaming != nullptr && _screenStreaming->isEnabled()) {
+              _screenStreaming->logKeyEvent(FUNCTION, false, KEY_OPERATION);  // FN released
+            }
+#endif
           }          
         } else {
           if (_fnKeyHold) _fnKeyInterrupted = true;
@@ -328,6 +342,11 @@ void Sucofunkey::_mcpKeysPressedToQueueEvents(uint16_t mcpValuesCurrent, uint16_
             _menuKeyMillis = millis();
             _menuKeyInterrupted = false;
             sendKey = false;
+#ifdef ENABLE_SCREEN_STREAMING
+            if (_screenStreaming != nullptr && _screenStreaming->isEnabled()) {
+              _screenStreaming->logKeyEvent(MENU, true, KEY_OPERATION);  // MENU pressed
+            }
+#endif
           } else {
             // Menu key pressed for at least 3 seconds? send event FN_FUNCTION -> FUNCTION + 100
             if (_menuKeyHold && !_menuKeyInterrupted && (millis() - _menuKeyMillis >= 3000)) {
@@ -343,6 +362,11 @@ void Sucofunkey::_mcpKeysPressedToQueueEvents(uint16_t mcpValuesCurrent, uint16_
             }
             _menuKeyHold = false;
             _menuKeyInterrupted = false;
+#ifdef ENABLE_SCREEN_STREAMING
+            if (_screenStreaming != nullptr && _screenStreaming->isEnabled()) {
+              _screenStreaming->logKeyEvent(MENU, false, KEY_OPERATION);  // MENU released
+            }
+#endif
           }          
         } else {
           if (_menuKeyHold) _menuKeyInterrupted = true;
@@ -356,6 +380,11 @@ void Sucofunkey::_mcpKeysPressedToQueueEvents(uint16_t mcpValuesCurrent, uint16_
             _setKeyMillis = millis();
             _setKeyInterrupted = false;
             sendKey = false;
+#ifdef ENABLE_SCREEN_STREAMING
+            if (_screenStreaming != nullptr && _screenStreaming->isEnabled()) {
+              _screenStreaming->logKeyEvent(SET, true, KEY_OPERATION);  // SET pressed
+            }
+#endif
           } else {
             // set key pressed and released within 1 second, send set key to queue
             if (_setKeyHold && !_setKeyInterrupted && (millis() - _setKeyMillis < 1500)) {
@@ -366,6 +395,11 @@ void Sucofunkey::_mcpKeysPressedToQueueEvents(uint16_t mcpValuesCurrent, uint16_
 
             _setKeyHold = false;
             _setKeyInterrupted = false;
+#ifdef ENABLE_SCREEN_STREAMING
+            if (_screenStreaming != nullptr && _screenStreaming->isEnabled()) {
+              _screenStreaming->logKeyEvent(SET, false, KEY_OPERATION);  // SET released
+            }
+#endif
           }          
         } else {
           if (_setKeyHold) _setKeyInterrupted = true;
@@ -387,6 +421,14 @@ void Sucofunkey::_mcpKeysPressedToQueueEvents(uint16_t mcpValuesCurrent, uint16_
 
         keyQueueStruct k = {i+mcpOffset+offset, keyStatus, _ignoreKeys, inputType};
         keyQueue.push(&k);
+
+#ifdef ENABLE_SCREEN_STREAMING
+        // Skip screen streaming for modifier keys - they're handled separately above
+        if (_screenStreaming != nullptr && _screenStreaming->isEnabled() &&
+            i+mcpOffset != FUNCTION && i+mcpOffset != MENU && i+mcpOffset != SET) {
+          _screenStreaming->logKeyEvent(i+mcpOffset+offset, keyStatus, inputType);
+        }
+#endif
       }
     }
   }
@@ -401,12 +443,28 @@ int Sucofunkey::_readRotaryEncoder(byte encoderNr, uint8_t valuePinL, uint8_t va
       if(_encoderTempValues[encoderNr]==1) {
         _encoderTempValues[encoderNr]=p;
         keyQueueStruct k = {eventId, true, _ignoreKeys, ENCODER};
-        keyQueue.push(&k);        
+        keyQueue.push(&k);
+#ifdef ENABLE_SCREEN_STREAMING
+        if (_screenStreaming != nullptr && _screenStreaming->isEnabled()) {
+          uint8_t encId = encoderNr;
+          if (_fnKeyHold) encId += 100;
+          else if (_menuKeyHold) encId += 200;
+          _screenStreaming->logEncoderEvent(encId, true);  // clockwise
+        }
+#endif
         return +1;
       } else if(_encoderTempValues[encoderNr]==2) {
         _encoderTempValues[encoderNr]=p;        
         keyQueueStruct k = {eventId, false, _ignoreKeys, ENCODER};
         keyQueue.push(&k);
+#ifdef ENABLE_SCREEN_STREAMING
+        if (_screenStreaming != nullptr && _screenStreaming->isEnabled()) {
+          uint8_t encId = encoderNr;
+          if (_fnKeyHold) encId += 100;
+          else if (_menuKeyHold) encId += 200;
+          _screenStreaming->logEncoderEvent(encId, false);  // counter-clockwise
+        }
+#endif
         return -1;
       }
       break;
@@ -502,9 +560,21 @@ void Sucofunkey::setIgnoreKeys(boolean state) {
   _ignoreKeys = state;
 }
 
+#ifdef ENABLE_SCREEN_STREAMING
+void Sucofunkey::setScreenStreaming(ScreenStreaming* streaming) {
+  _screenStreaming = streaming;
+}
+#endif
+
 // -------------------------------------------------------------------------------------------------
 
 void Sucofunkey::setLEDState(int led, bool state) {
+#ifdef ENABLE_SCREEN_STREAMING
+  if (_screenStreaming != nullptr && _screenStreaming->isEnabled()) {
+    _screenStreaming->logLedState(static_cast<uint8_t>(led), state);
+  }
+#endif
+
   int mcp = led/16;
 
   switch(mcp) {
@@ -654,6 +724,22 @@ void Sucofunkey::updateContinuousFaderValue() {
 
   _faderReading = static_cast<int>(floor(_faderReading/5.0));
 
+#ifdef ENABLE_SCREEN_STREAMING
+  if (_screenStreaming != nullptr && _screenStreaming->isEnabled()) {
+    // Convert fader reading to percent (0-100)
+    uint8_t percent = static_cast<uint8_t>((_faderReading * 100) / 1023);
+    // Only send if changed by more than 5%
+    if (_lastStreamedFaderPercent == 255 || 
+        (percent > _lastStreamedFaderPercent + 5) || 
+        (percent + 5 < _lastStreamedFaderPercent) ||
+        (percent == 0 && _lastStreamedFaderPercent != 0) ||
+        (percent == 100 && _lastStreamedFaderPercent != 100)) {
+      _screenStreaming->logFaderPosition(percent);
+      _lastStreamedFaderPercent = percent;
+    }
+  }
+#endif
+
   if (!isScratchFaderAdjusting()) {
     if (_faderDirectionTempCount >= 200) {
       _faderDirectionTempCount = 0;
@@ -763,9 +849,12 @@ Sucofunkey::ScratchDirection Sucofunkey::getScratchDirection() {
 
 
 void Sucofunkey::switchFaderLED(bool on) {
+#ifdef ENABLE_SCREEN_STREAMING
+  if (_screenStreaming != nullptr && _screenStreaming->isEnabled()) {
+    _screenStreaming->logLedState(255, on);  // 255 = fader LED index
+  }
+#endif
   digitalWrite(faderLEDPin, on ? HIGH : LOW);
-//  Serial.print("faderLED::");
-//  Serial.println(on);
 }
 
 

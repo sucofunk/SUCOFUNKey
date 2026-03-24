@@ -47,10 +47,14 @@ long SynthCopyScreen::receiveTimerTick() {
 }
 
 void SynthCopyScreen::show() {
-//    _screen->fadeBacklightOut(2);
-//    _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);
-//    _screen->fadeBacklightIn(0);  
+    Screen::Area headlineArea = {0, 80, _screen->AREA_SCREEN.x2, 100, false, _screen->C_BLACK};
 
-    _screen->testBild("Synthkopierer");
+    _screen->fadeBacklightOut(2);
+    _screen->fillArea(_screen->AREA_SCREEN, _screen->C_BLACK);
+
+    _screen->drawTextInArea(headlineArea, _screen->TEXTPOSITION_HCENTER_VCENTER, true, _screen->TEXTSIZE_MEDIUM, false, _screen->C_WHITE, "Synthkopierer");
+
+
+    _screen->fadeBacklightIn(0);  
 }
 

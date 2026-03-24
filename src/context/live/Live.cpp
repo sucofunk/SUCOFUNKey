@@ -381,7 +381,9 @@ void Live::handleEvent(Sucofunkey::keyQueueStruct event) {
               _slots[_editingSlotId].sampleNumber = _keyboard->getSampleIdByEventKey(event.index) + ((_sampleBank-1)*24);
               _liveScreen.showSelectSample(_slots[_editingSlotId], false);
                // play for prelisten
-               _play->_audioResources->playSdRaw.play(_sfsio->sampleFilename[_sampleBank-1][_keyboard->getSampleIdByEventKey(event.index)-1]);
+               char samplePath[40];
+               _sfsio->getSampleFilePath(_sampleBank, _keyboard->getSampleIdByEventKey(event.index), samplePath);
+               _play->_audioResources->playSdRaw.play(samplePath);
             } else {
                // stop prelisten
               _play->_audioResources->playSdRaw.stop();
