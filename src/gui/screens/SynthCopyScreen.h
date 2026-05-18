@@ -41,11 +41,21 @@ class SynthCopyScreen {
         SynthCopyScreen(Sucofunkey *keyboard, Screen *screen);
         void handleEvent(Sucofunkey::keyQueueStruct event);
         long receiveTimerTick();
-        void show();        
+        void show(byte channel, byte startNote, byte endNote, long releaseMS);
+        void updateChannel(byte channel);
+        void updateRange(byte startNote, byte endNote);
+        void updateTriggerTime(long releaseMS);
+        void updateRecordingState(boolean isRecording, byte current = 0, byte total = 0);
     private:
         Sucofunkey *_keyboard;
         Screen *_screen;
         boolean _isRunning = false;
+        
+        Screen::Area _headlineArea;
+        Screen::Area _lineChannel;
+        Screen::Area _lineRange;
+        Screen::Area _lineTrigger;
+        Screen::Area _lineRecording;
 };
 
 #endif

@@ -62,12 +62,6 @@ void SynthCopy::handleEvent(Sucofunkey::keyQueueStruct event) {
             case Sucofunkey::CURSOR_RIGHT:
                 _keyboard->setBankUp();
                 break;
-            case Sucofunkey::CURSOR_UP:
-                _channel++;
-                break;
-            case Sucofunkey::CURSOR_DOWN:
-                _channel--;
-                break;
             case Sucofunkey::RECORD:
                 _startRecording();
                 break;
@@ -80,26 +74,57 @@ void SynthCopy::handleEvent(Sucofunkey::keyQueueStruct event) {
 
     }
 
+    if (event.type == Sucofunkey::ENCODER) {
+        switch (event.index) {
+            case Sucofunkey::ENCODER_1:
+                if (event.pressed && _channel < 16) {
+                    _channel++;
+                    _synthCopyScreen.updateChannel(_channel);
+                } else if (!event.pressed && _channel > 1) {
+                    _channel--;
+                    _synthCopyScreen.updateChannel(_channel);
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
     if (event.type == Sucofunkey::KEY_NOTE) {
         int slot = _keyboard->getSampleIdByEventKey(event.index);
         int note = (_keyboard->getBank()-1)*24 + slot + 28;
 
         if (event.pressed) {
-        _keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_NOTE_ON, note, 100, _channel);
+            _noteOnTimestamp = millis();
+            _keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_NOTE_ON, note, 100, _channel);
 
-        char tb[5];
-        _keyboard->getMIDINoteName(note).toCharArray(tb, 4);
-        DebugPrint::print("Note on: ");
-        DebugPrint::print(note);
-        DebugPrint::print(" :: ");
-        DebugPrint::println(tb);
+            char tb[5];
+            _keyboard->getMIDINoteName(note).toCharArray(tb, 4);
 
         } else {
-        _keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_NOTE_OFF, note, 0, _channel);
+            _keyboard->addApplicationEventWithDataToQueue(Sucofunkey::MIDI_SEND_NOTE_OFF, note, 0, _channel);
+            
+            // Only update if a note was pressed in this session
+            if (_noteOnTimestamp > 0) {
+                // Calculate release time
+                _releaseMS = millis() - _noteOnTimestamp;
+                _synthCopyScreen.updateTriggerTime(_releaseMS);
+                
+                // Range logic: new note and last pressed note form a pair
+                // Ignore if same note (minimum range of 2 notes required)
+                if (note != _lastPressedNote) {
+                    if (note < _lastPressedNote) {
+                        _startNote = note;
+                        _endNote = _lastPressedNote;
+                    } else {
+                        _startNote = _lastPressedNote;
+                        _endNote = note;
+                    }
+                    _lastPressedNote = note;
+                    _synthCopyScreen.updateRange(_startNote, _endNote);
+                }
+            }
         }              
-
-
-
     }
 
     if (event.type == Sucofunkey::EVENT_APPLICATION) {
@@ -109,6 +134,9 @@ void SynthCopy::handleEvent(Sucofunkey::keyQueueStruct event) {
                 break;
             case Sucofunkey::SYNTHCOPY_NEXT_NOTE_REQUEST:
                 _nextNote();
+                break;
+            case Sucofunkey::SYNTHCOPY_STOP_RECORDING:
+                _isRecording = false;
                 break;
             case Sucofunkey::SYNTHCOPY_NOTE_MARKER:
                 DebugPrint::print("Marker received: ");
@@ -127,8 +155,9 @@ void SynthCopy::setActive(boolean active) {
   if (active) {
     _isActive = true;
     _keyboard->setBank(2);
+    _noteOnTimestamp = 0;  // Reset to ignore stray release events
     
-    _synthCopyScreen.show();
+    _synthCopyScreen.show(_channel, _startNote, _endNote, _releaseMS);
     DebugPrint::println("SynthCopy active");
     _keyboard->addApplicationEventToQueue(Sucofunkey::ROUTE_LINE_IN_THROUGH);
 
@@ -140,15 +169,21 @@ void SynthCopy::setActive(boolean active) {
 
 void SynthCopy::_startRecording() {
     _currentNote = _startNote-1;
+    _isRecording = true;
+    byte total = _endNote - _startNote + 1;
+    _synthCopyScreen.updateRecordingState(true, 1, total);
     _keyboard->addApplicationEventToQueue(Sucofunkey::SYNTHCOPY_START_RECORDING);
 }
 
 
 void SynthCopy::_nextNote() { 
     _currentNote++;
+    byte total = _endNote - _startNote + 1;
+    byte current = _currentNote - _startNote + 1;
+    _synthCopyScreen.updateRecordingState(true, current, total);
 
-    DebugPrint::print("increasing to:: ");
-    DebugPrint::println(_currentNote);
+//    DebugPrint::print("increasing to:: ");
+//    DebugPrint::println(_currentNote);
     
     if (_currentNote < _endNote) {        
         _keyboard->addApplicationEventWithValueDataToQueue(Sucofunkey::SYNTHCOPY_START_NOTE, _releaseMS, _currentNote, 100, _channel);        

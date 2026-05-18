@@ -64,7 +64,9 @@ class SynthCopy {
         byte _channel = 1;
         byte _startNote = 60; // 29  = E -- 60 = C4
         byte _endNote = 71;   // 100 = F -- 71 = B4
+        byte _lastPressedNote = 60;
         long _releaseMS = 500;
+        unsigned long _noteOnTimestamp = 0;
         //int _treshold = 5;
 
         boolean _isRecording = false;
