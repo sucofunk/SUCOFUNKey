@@ -1,7 +1,7 @@
 # Beatmaker's Sketchbook — User Manual
 
 Firmware version: 0.9.9  
-Last updated: May 2026
+Last updated: 26.05.2026
 
 ---
 
@@ -211,7 +211,9 @@ Configure the silence threshold and the minimum silence duration, then record no
 ![Sampler Sample Selector](images/sampler2.png "Sampler Sample Selector")
 ![Sample](images/sampler3.png "Sample")
 
-The Sampler is where you view, trim, rename, and manage your samples.
+The Sampler is where you view, trim, rename, and manage your samples. All editing and playback-preview in the Sampler works **directly on the files stored on the SD card** — no RAM is consumed while you browse or trim.
+
+Once you switch to the Sequencer, Arrange, or Live / Play mode, the device loads every sample that is referenced in the current song into the **internal 16 MB sample RAM** so they can be played back with low latency. The amount of RAM already occupied is shown in the **top-left corner of the Sequencer screen** as a two-colour bar: the **green** portion represents free RAM and the **red** portion shows how much is already in use. If the bar turns fully red, new samples can no longer be loaded — keep an eye on it when working with many or long samples.
 
 ### 5.1 Banks and Slots
 
@@ -276,7 +278,7 @@ Open **MENU → C4** (the label shows the current note), then press the piano ke
 
 ## 6. Sequencer (Sketch)
 
-![Sequencer Grid](images/sketch.png "Sequencer Grid")
+![Sequencer Grid](images/Sketch.png "Sequencer Grid")
 
 The Sequencer is the main composition tool. It is a grid of **8 channels** (rows) × an almost unlimited number of **steps** (columns). The grid can be divided into **sheets** — equivalent to patterns on other devices.
 
@@ -286,6 +288,7 @@ The Sequencer is the main composition tool. It is a grid of **8 channels** (rows
 - **Steps:** Each column is one beat subdivision. Grid resolution is adjustable with Zoom.
 - **Sheets:** Vertical dividers split the grid into named sections that feed into the Arrange mode.
 - **Snippets:** Named sub-selections that can be triggered independently in the Live / Play mode.
+- **RAM bar:** A small two-colour bar in the **top-left corner** of the Sequencer screen shows sample RAM usage at a glance. Green = free, red = in use. See §5 for details.
 
 ### 6.2 Navigating the Grid
 
@@ -299,14 +302,26 @@ The Sequencer is the main composition tool. It is a grid of **8 channels** (rows
 | MENU + DOWN | Remove the sheet divider at the cursor position |
 | FUNK + ENCODER 3 | Move cursor horizontally (fast) |
 
-### 6.3 Placing and Removing Samples
+### 6.3 Sheets and Extending the Grid
+
+The name comes from music notation — a composition typically spans several physical sheets. In the Sequencer, the horizontal timeline can likewise be divided into any number of sections, each representing a distinct part of the song (intro, verse, chorus, etc.). If you are coming from other hardware or software, sheets are what most products call **patterns**.
+
+A **sheet divider** placed at any step marks the boundary between two sheets. The first sheet always starts at step 0. Sheets are numbered from left to right, and the Arrange mode maps each sheet number to a white key on the keyboard — sheet 1 is the leftmost white key, sheet 2 is the next, and so on.
+
+| Control | Action |
+|---|---|
+| MENU + UP | Place a sheet divider at the cursor position |
+| MENU + DOWN | Remove the sheet divider at the cursor position |
+| FUNK + ENCODER 4 | Extend or shorten the total grid length |
+
+### 6.4 Placing and Removing Samples
 
 - Press a **Note Key** to place the sample assigned to that key (in the current bank) at the cursor position.
 - Press **FUNK + Note Key** to preview a sample without placing it.
 - Press **FUNK + PLAY** to preview the sample already at the cursor position.
 - Press **FUNK + SET** to delete the entry at the cursor.
 
-### 6.4 Per-Sample Parameters
+### 6.5 Per-Sample Parameters
 
 Each placed sample has four adjustable parameters. Turn the corresponding encoder to change the value, or **push the encoder** to take the current fader value instead.
 
@@ -319,7 +334,7 @@ Each placed sample has four adjustable parameters. Turn the corresponding encode
 
 Rotating ENCODER 1 on an **empty** grid cell changes the global **BPM** for the sketch.
 
-### 6.5 Swing
+### 6.6 Swing
 
 Swing delays the playback of individual samples to add groove. Swing can only *delay* a sample — to play a sample slightly early, place it one step earlier and delay it with swing.
 
@@ -330,22 +345,21 @@ Swing delays the playback of individual samples to add groove. Swing can only *d
 
 Samples in the same **swing group** share a value — changing one member updates all others. Groups are colour-coded on the grid. A small vertical tick on a cell indicates swing is applied. The current swing value is shown below the grid.
 
-### 6.6 Zoom
+### 6.7 Zoom
 
 | Shortcut | Action |
 |---|---|
 | FUNK + UP | Zoom in (finer grid resolution) |
 | FUNK + DOWN | Zoom out (coarser resolution) |
-| FUNK + ENCODER 4 | Change the total song / grid length |
 
-### 6.7 Sample Banks in the Sequencer
+### 6.8 Sample Banks in the Sequencer
 
 | Shortcut | Action |
 |---|---|
 | FUNK + LEFT | Previous sample bank |
 | FUNK + RIGHT | Next sample bank |
 
-### 6.8 The Sequencer Menu
+### 6.9 The Sequencer Menu
 
 Press **MENU** to open the black-key menu:
 
@@ -361,16 +375,59 @@ Press **MENU** to open the black-key menu:
 | **MUT** | Mute / unmute the current channel. Muted channels show a red indicator on the right side of the screen. |
 | **CLS** | Clear the selection (if active), or clear the entire sketch (requires a second press to confirm). |
 
-### 6.9 Playback
+### 6.10 Parameter Changes
+
+A Parameter Change cell modifies the playback of a sample that is **already active on a channel** — without re-triggering it. This lets you automate volume, panning, or pitch transitions mid-pattern.
+
+To insert a Parameter Change cell, place the cursor on the target step and channel, then press **MENU → SND** once. The cell is displayed with a distinct visual indicator. Set the target values with the encoders:
+
+| Encoder | Parameter |
+|---|---|
+| ENCODER 1 | Velocity (volume) |
+| ENCODER 2 | Stereo panning |
+| ENCODER 3 | Pitch fine adjustment (not chromatically) |
+
+Pressing **SND** again on the same cell converts it to a **Note Off**, which stops the sample currently playing on that channel.
+
+**REV** can also be applied to a Parameter Change cell — it will affect the playback direction when the cell is encountered during playback.
+
+> **Tip:** Push any encoder to snap its parameter to the current fader position. Use **DBL** to duplicate the exact parameter values from the current step to the next one (the step size follows the active zoom level). By placing Parameter Change cells step by step and moving the fader between each placement, you can create smooth transitions across a pattern with minimal effort.
+
+### 6.11 Snippets
+
+A snippet is a saved selection of the sequencer grid — a rectangular region of steps and channels — that can be stored and triggered independently in the Live / Play mode (see section 8). Snippets let you build up a library of loops and fills that can be fired on demand during a performance without affecting the main arrangement.
+
+To create a snippet:
+
+1. Press **MENU → SEL** to start a selection. Move the cursor to expand the highlighted region across the desired steps and channels.
+2. Press **MENU → SNI** to save the selection. The white keys light up to show free slots — press one to assign the snippet to that slot.
+
+Up to **14 snippets** can be stored per song. To delete a snippet, position the cursor anywhere inside its region, press **MENU → SNI**, and press the key corresponding to that snippet.
+
+Saved snippets appear immediately in Live / Play mode (see section 8), where they can be triggered, looped, and synced with other snippets.
+
+### 6.12 Playback
 
 | Control | Action |
 |---|---|
 | PLAY | Start playback from the beginning of the sheet the cursor is in |
-| PLAY (while playing) | Stop and cue back to the beginning of the current sheet |
+| PLAY (while playing) | Stop and cue back to the beginning of the current sheet. Loops the sheep when playing again. |
 | STOP / PAUSE | Stop and cue to the very beginning of the sketch |
 | FUNK + ENCODER 1 (while playing) | Adjust BPM live |
 
-### 6.10 Shortcuts Summary
+### 6.13 Piano Pitch Mode
+
+Press **SWITCH** to open the Piano Pitch overlay. The keyboard turns into a chromatic pitch selector for the cell under the cursor.
+
+- **SWITCH** only activates if the cursor is on a sample or MIDI note cell — it has no effect on empty cells.
+- Press a **Note Key** to set the pitch of that cell and preview the result. Use **LEFT / RIGHT** to change the bank (octave range).
+- Press **SWITCH** again to exit Piano Pitch mode (the black-key menu reopens).
+
+**Placing a transposed copy:** If the cursor is on an empty cell and an origin cell was already set in the current Piano Pitch session, pressing a Note Key copies the origin cell to the empty cell with the chosen pitch. This makes it quick to lay out a melody by moving the cursor and pressing the target pitch each time.
+
+---
+
+### 6.14 Shortcuts Summary
 
 | Shortcut | Action |
 |---|---|
@@ -390,12 +447,13 @@ Press **MENU** to open the black-key menu:
 | MENU + UP / DOWN | Add / remove sheet divider |
 | ENCODER 1 (empty cell) | Set BPM |
 | FUNK + ENCODER 1 (playing) | Adjust BPM |
+| SWITCH | Enter / exit Piano Pitch mode |
 
 ---
 
 ## 7. Arrange Mode
 
-![Arrange Mode](images/arrange.png "Arrange Mode")
+![Arrange Mode](images/Arrange.png "Arrange Mode")
 
 The Arrange mode chains sheets from the Sequencer into a complete song. The grid plays **left to right, top to bottom**. Playback stops at the first empty cell, so multiple independent arrangements can coexist.
 
@@ -413,7 +471,7 @@ The Arrange mode chains sheets from the Sequencer into a complete song. The grid
 |---|---|
 | PLAY | Start from the cursor position |
 | PLAY (while playing) | Pause; pressing PLAY again resumes from the paused position |
-| FUNK + PLAY | Start from the very beginning of the arrangement |
+| FUNK + PLAY | Loop the arrangement from the beginning |
 | STOP / PAUSE | Stop; cursor resets to position 0 |
 
 ### 7.3 Channel Solo (for DAW recording)
@@ -440,7 +498,7 @@ When recording individual channels into a DAW via USB audio, you can isolate one
 
 ## 8. Live / Play Mode
 
-![Play Mode Overview](images/play.png "Play Mode Overview")
+![Play Mode Overview](images/Play.png "Play Mode Overview")
 
 Live mode provides **72 pads** (3 banks × 24 keys) to trigger samples, snippets, and scratch effects during a performance.
 
@@ -452,7 +510,7 @@ Each key can be assigned one of four slot types:
 |---|---|
 | **Sample** | Plays a single sample with configurable velocity, panning, pitch, and playback behaviour |
 | **Snippet** | Triggers a sequencer snippet (loop or one-shot) |
-| **Scratch / Unmute** | Unmutes a channel and controls playback speed with the fader |
+| **Scratch / Mute · Unmute** | Controls the volume (on/off) of the currently active scratch sample with the fader. Comes in two variants — **Mute** and **Unmute** — that act like the push-button version of a DJ crossfader on that sample. Only one scratchable sample can be active at a time; press **FUNK + key** to toggle a slot between the Mute and Unmute variant |
 | **Fader Adjust** | Repositions the fader without changing any parameter — used in Vinyl Scratch mode to reset the fader to a new position |
 
 ### 8.2 Slot Color Coding
@@ -468,8 +526,8 @@ Each key is filled with a color and a small icon that shows the slot type and co
 | ![Sample vinyl scratch](images/slot_sample_vinyl.png "Sample – Vinyl Scratch") | **Sample – Vinyl Scratch** — fader controls acceleration like a vinyl record. When the fader reaches an edge, press an assigned **Fader Adjust** key to reposition it without affecting playback |
 | ![Sample DVS scratch](images/slot_sample_dvs.png "Sample – DVS Scratch") | **Sample – DVS Scratch** — timecode signal from line-in controls playback |
 | ![Piano sample](images/slot_piano.png "Piano") | **Piano** — sample plays chromatically across the keyboard (up to 8 voices) |
-| ![Mute / scratch](images/slot_mute.png "Mute Scratch") | **Mute / Scratch** — mutes a channel; fader scratches it |
-| ![Unmute / scratch](images/slot_unmute.png "Unmute Scratch") | **Unmute / Scratch** — unmutes a channel; fader scratches it |
+| ![Mute / scratch](images/slot_mute.png "Mute Scratch") | **Mute / Scratch** — mutes the currently playing scratch sample; fader controls its playback speed |
+| ![Unmute / scratch](images/slot_unmute.png "Unmute Scratch") | **Unmute / Scratch** — unmutes the currently playing scratch sample; fader controls its playback speed |
 | ![Fader adjust](images/slot_fader.png "Fader Adjust") | **Fader Adjust** — press to move the fader to a new position without affecting any parameter; used to reset the fader in Vinyl Scratch mode |
 
 ### 8.3 Assigning a Slot
@@ -500,6 +558,15 @@ Each key is filled with a color and a small icon that shows the slot type and co
 - **Tape** — fader controls playback speed directly. Centre = stopped, right = forward, left = reverse.
 - **Vinyl** — fader controls acceleration, like nudging a vinyl record. When the fader reaches an edge, press the assigned **Fader Adjust** key to reposition the fader without changing playback — then continue scratching from the new position.
 - **DVS** — uses a 1 kHz timecode signal on the line-in (e.g. Serato timecode vinyl) to control playback.
+
+**Mute / Unmute and the scratch crossfader:**
+
+Only **one scratchable sample** can be active at a time. A scratchable sample is **muted by default** — you need a **Mute / Scratch** or **Unmute / Scratch** key in the same bank to hear it. These keys act like the push-button version of a DJ crossfader, applied to the currently playing scratch sample:
+
+- **Unmute / Scratch** — press to unmute the scratch sample and bring it into the mix; the fader controls its playback speed.
+- **Mute / Scratch** — press to cut the scratch sample from the mix.
+
+To switch a slot between its Mute and Unmute variant, press **FUNK + that key**.
 
 ### 8.5 Snippet Parameters
 
@@ -539,7 +606,10 @@ The Piano sample also responds to an external MIDI keyboard on the MIDI Piano ch
 | Control | Action |
 |---|---|
 | PLAY / PAUSE | Start / pause the background arrangement |
+| FUNK + PLAY | Loop the arrangement from the beginning |
 | ENCODER 1 (rotate) | Adjust playback BPM (independent from the Sequencer's BPM setting) |
+| ENCODER 1 (push) | Set BPM from the fader |
+| FUNK + ENCODER 1 (push) | Reset BPM to the sequencer's song speed |
 | LEFT / RIGHT | Change bank |
 
 ### 8.10 Recording a Live Session
@@ -549,6 +619,8 @@ The Piano sample also responds to an external MIDI keyboard on the MIDI Piano ch
 3. Press **RECORD** again to start recording.
 4. Switch back to Live mode with **MENU + ENCODER 4** and perform.
 5. Press **RECORD** to stop. The recording is saved and immediately available in the Sampler.
+
+> **Tip:** Keep recordings short. The resampled audio is captured in **mono**, and working with very long samples in the Sampler becomes noticeably slow. This feature shines for short, spontaneous ideas: live-scratched effects, a quick chord stab, or a polyphonic phrase played in Piano Pitch mode — all captured in a single take and ready to slot back into your sketch.
 
 ---
 
@@ -570,7 +642,7 @@ Access SynthCopy from the **Home screen → MENU → SCP**.
 | LEFT / RIGHT | Change bank (shifts the note range) |
 | Piano keys | Preview / send individual MIDI notes manually |
 
-The default recording range is **C4–B4** (one octave). Changing banks shifts the range up or down.
+The default recording range is **C4–B4** (one octave). To set a custom range, press two different piano keys — the lower key becomes the start note and the higher key becomes the end note. Changing banks shifts the entire range up or down by one octave.
 
 > **Tip:** Piano key presses are sent live to the synthesizer via MIDI while setting up. If you do not hear the synthesizer respond when pressing a key, check that the MIDI cable is connected correctly and that the MIDI channel matches the synthesizer's receive channel. Also verify that the synthesizer's audio output is connected to the device's line-in.
 
@@ -634,7 +706,7 @@ The SD card must be formatted as **FAT32**. Two directories are used at the root
 Screen streaming mirrors the device display to a web browser in real time over USB — useful for screencasts, tutorials, and documentation.
 
 1. Enable **Screen streaming via USB** in Settings.
-2. Open `tools/screen-stream/index.html` in a Chromium-based browser (Chrome or Edge).
+2. Open `tools/screen-stream/index.html` in a Chromium-based browser (Chrome or Edge). Or go to the [Online Version](https://sucofunk.com/bsb/stream/).
 3. Click **Connect** and select the device's USB serial port.
 4. The display content and hardware events (key presses, encoder turns, fader position) are reflected live in the browser.
 
@@ -693,6 +765,7 @@ Screen streaming mirrors the device display to a web browser in real time over U
 | MENU + UP / DOWN | Add / remove sheet divider |
 | ENCODER 1 (empty cell) | Set BPM |
 | FUNK + ENCODER 1 (playing) | Adjust BPM |
+| SWITCH | Enter / exit Piano Pitch mode |
 
 ### Arrange Mode
 
@@ -702,8 +775,7 @@ Screen streaming mirrors the device display to a web browser in real time over U
 | FUNK + SET | Remove sheet |
 | FUNK + UP / DOWN | Add / remove repetition |
 | PLAY | Start from cursor |
-| FUNK + PLAY | Start from beginning |
-| Black keys 1–8 | Solo channel 1–8 |
+| FUNK + PLAY | Loop from beginning |
 
 ### Live / Play Mode
 
@@ -713,7 +785,10 @@ Screen streaming mirrors the device display to a web browser in real time over U
 | FUNK + SET | Remove assignment |
 | LEFT / RIGHT | Change bank |
 | PLAY / PAUSE | Start / stop background arrangement |
-| ENCODER 1 | BPM |
+| FUNK + PLAY | Loop from beginning |
+| ENCODER 1 (rotate) | Adjust BPM |
+| ENCODER 1 (push) | Set BPM from fader |
+| FUNK + ENCODER 1 (push) | Reset BPM to song speed |
 | SWITCH | Assign piano sample |
 
 
